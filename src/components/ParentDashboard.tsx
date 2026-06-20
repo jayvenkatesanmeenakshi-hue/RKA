@@ -41,15 +41,15 @@ export const ParentDashboard = () => {
             <p className="text-slate-500 text-sm font-medium">Welcome back, {currentUser?.name}. Viewing student lifecycle.</p>
           </div>
           
-          <div className="flex bg-white p-1 rounded-xl shadow-sm border border-slate-200">
+          <div className="flex bg-slate-100 p-1 rounded-sm border border-slate-200">
             {parentStudents.map(student => (
               <button
                 key={student.id}
                 onClick={() => setSelectedStudentId(student.id)}
-                className={`px-5 py-2 rounded-lg text-xs font-bold transition-all ${
+                className={`px-6 py-2 rounded-sm text-[10px] font-black uppercase tracking-widest transition-all ${
                   selectedStudentId === student.id 
-                    ? 'bg-navy-900 text-yellow-400 shadow-sm' 
-                    : 'text-slate-500 hover:text-navy-900'
+                    ? 'bg-white text-navy-900 shadow-sm border border-slate-200' 
+                    : 'text-navy-400 hover:text-navy-900'
                 }`}
               >
                 {student.name}
@@ -154,30 +154,30 @@ export const ParentDashboard = () => {
 
           {/* Right Sidebar - Billing & Profile */}
           <div className="w-80 space-y-8 shrink-0">
-            {/* Student Info Card */}
-            <div className="bg-navy-900 rounded-2xl p-8 text-white relative overflow-hidden">
+            {/* Student Info Card - Light Theme */}
+            <div className="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm relative overflow-hidden">
                <div className="relative z-10 space-y-6">
                 <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 bg-yellow-400 rounded-xl flex items-center justify-center text-navy-900 font-black text-xl uppercase">
+                  <div className="w-14 h-14 bg-navy-900 border-4 border-white shadow-xl rounded-full flex items-center justify-center text-yellow-400 font-black text-xl uppercase">
                     {selectedStudent.name.split(' ').map(n => n[0]).join('')}
                   </div>
                   <div className="leading-tight">
-                    <h4 className="font-bold text-lg">{selectedStudent.name}</h4>
-                    <p className="text-navy-300 text-[10px] uppercase font-bold tracking-widest mt-1">Age {selectedStudent.age} • Mambakkam</p>
+                    <h4 className="font-bold text-lg text-navy-900">{selectedStudent.name}</h4>
+                    <p className="text-navy-400 text-[10px] uppercase font-bold tracking-widest mt-1">Mambakkam Center Member</p>
                   </div>
                 </div>
-                <div className="pt-6 border-t border-white/10 grid grid-cols-2 gap-4">
+                <div className="pt-6 border-t border-slate-100 grid grid-cols-2 gap-4">
                   <div>
-                    <p className="text-navy-400 text-[9px] uppercase font-black tracking-widest">Active Tracks</p>
-                    <p className="text-xl font-bold text-yellow-400">{selectedStudent.enrolledPrograms.length}</p>
+                    <p className="text-navy-300 text-[9px] uppercase font-black tracking-widest">Active Tracks</p>
+                    <p className="text-xl font-bold text-navy-900">{selectedStudent.enrolledPrograms.length}</p>
                   </div>
                   <div>
-                    <p className="text-navy-400 text-[9px] uppercase font-black tracking-widest">Status</p>
-                    <p className="text-xl font-bold text-emerald-400">Elite</p>
+                    <p className="text-navy-300 text-[9px] uppercase font-black tracking-widest">Enrollment</p>
+                    <p className="text-xl font-bold text-yellow-600">Active</p>
                   </div>
                 </div>
                </div>
-               <div className="absolute top-0 right-0 w-32 h-32 bg-yellow-400/10 rounded-full blur-3xl"></div>
+               <div className="absolute -bottom-4 -right-4 w-24 h-24 bg-slate-50 rounded-full"></div>
             </div>
 
             {/* Invoices/Billing Ledger */}

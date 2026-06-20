@@ -124,18 +124,18 @@ export const StaffDashboard = () => {
               exit={{ opacity: 0, y: -10 }}
               className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden"
             >
-              <div className="bg-slate-50/50 px-8 py-5 border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="bg-white px-8 py-6 border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
-                  <div className="bg-yellow-400 w-10 h-10 rounded-lg flex items-center justify-center text-navy-900">
-                    <Users size={20} />
+                  <div className="bg-yellow-50 w-12 h-12 rounded-lg flex items-center justify-center text-yellow-600 border border-yellow-100">
+                    <Users size={24} />
                   </div>
                   <div>
-                    <h3 className="text-sm font-bold text-navy-900 uppercase tracking-wider">Session Roster Engine</h3>
-                    <p className="text-slate-500 text-[10px] font-bold mt-0.5">BATCH: {activeBatch?.programId} • {activeBatch?.time}</p>
+                    <h3 className="text-sm font-black text-navy-900 uppercase tracking-widest">Session Roster</h3>
+                    <p className="text-slate-400 text-[10px] font-bold mt-0.5">TRACK: {activeBatch?.programId} • {activeBatch?.time}</p>
                   </div>
                 </div>
-                <button className="text-[10px] bg-navy-900 text-yellow-400 px-4 py-1.5 rounded-lg font-bold hover:opacity-90">
-                  Broadcast Update
+                <button className="text-[9px] bg-navy-900 text-white px-6 py-2.5 rounded-sm font-black uppercase tracking-widest hover:bg-yellow-500 hover:text-navy-900 transition-all cursor-pointer">
+                  Update Session
                 </button>
               </div>
 

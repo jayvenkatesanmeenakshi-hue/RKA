@@ -38,11 +38,11 @@ export const AdminDashboard = () => {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 shrink-0">
           <div>
             <h2 className="text-3xl font-bold text-navy-900 tracking-tight">Admin Console</h2>
-            <p className="text-slate-500 text-sm font-medium">Mambakkam Branch Management Suite</p>
+            <p className="text-slate-500 text-sm font-medium">Mambakkam Center Management Suite</p>
           </div>
-          <button className="bg-navy-900 text-yellow-400 px-6 py-3 rounded-xl font-bold text-sm hover:opacity-90 transition-all flex items-center justify-center gap-2 shadow-sm border-b-2 border-yellow-500/20">
-            <Plus size={18} />
-            <span>Master Registration</span>
+          <button className="bg-navy-900 text-white px-6 py-3 rounded-lg font-black text-[10px] uppercase tracking-widest hover:bg-yellow-500 hover:text-navy-900 transition-all shadow-xl shadow-navy-900/10 cursor-pointer">
+            <Plus size={16} className="inline mr-2" />
+            Master Registration
           </button>
         </div>
 
