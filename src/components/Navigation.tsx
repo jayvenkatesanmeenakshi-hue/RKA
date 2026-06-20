@@ -1,0 +1,60 @@
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+import React from 'react';
+import { useAcademy } from '../context/AcademyContext';
+import { LogOut, User as UserIcon, BookOpen } from 'lucide-react';
+
+export const Navigation = ({ onLoginClick }: { onLoginClick: () => void }) => {
+  const { currentUser, logout } = useAcademy();
+
+  return (
+    <nav className="bg-navy-900 border-b-2 border-white/5 sticky top-0 z-50 h-20 flex items-center px-8">
+      <div className="max-w-7xl mx-auto w-full flex justify-between items-center text-white">
+        <div className="flex items-center gap-4">
+           <div className="bg-yellow-400 text-navy-900 w-10 h-10 flex items-center justify-center font-black rounded-sm text-lg">
+             RK
+           </div>
+           <div>
+              <h1 className="text-xl font-bold tracking-tight">Rocking Kids Academy</h1>
+              <p className="text-[10px] uppercase font-black tracking-[0.2em] text-yellow-400 opacity-80">Mambakkam Center</p>
+           </div>
+        </div>
+
+        <div className="flex items-center gap-10">
+           <div className="hidden md:flex items-center gap-10 text-[10px] font-black uppercase tracking-widest text-navy-200">
+              <a href="#prospectus" className="hover:text-yellow-400 transition-colors">Prospectus</a>
+              <a href="#curriculum" className="hover:text-yellow-500 transition-colors">Curriculum</a>
+              <a href="#faculty" className="hover:text-yellow-500 transition-colors">Faculty</a>
+           </div>
+
+           <div className="flex items-center gap-4">
+             {currentUser ? (
+               <div className="flex items-center gap-4 border-l border-white/10 pl-6">
+                 <div className="text-right hidden sm:block">
+                   <p className="text-white text-[10px] font-black uppercase tracking-tight">{currentUser.name}</p>
+                   <p className="text-yellow-400 text-[10px] font-black uppercase tracking-[0.2em]">{currentUser.role} Control</p>
+                 </div>
+                 <button 
+                   onClick={logout}
+                   className="w-10 h-10 rounded-sm bg-white text-navy-900 flex items-center justify-center hover:bg-yellow-400 transition-colors"
+                 >
+                   <LogOut size={16} />
+                 </button>
+               </div>
+             ) : (
+               <button 
+                 onClick={onLoginClick}
+                 className="bg-yellow-400 text-navy-900 px-6 py-2.5 rounded-sm font-black text-[10px] uppercase tracking-widest hover:bg-white transition-all shadow-xl shadow-black/20 cursor-pointer"
+               >
+                 Institutional Login
+               </button>
+             )}
+           </div>
+        </div>
+      </div>
+    </nav>
+  );
+};
