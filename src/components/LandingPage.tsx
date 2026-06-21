@@ -7,6 +7,7 @@ import React from 'react';
 import { motion } from 'motion/react';
 import { useAcademy } from '../context/AcademyContext';
 import { MapPin, Clock, Phone, Mail, ChevronRight, Award, Zap, MessageCircle, PenTool } from 'lucide-react';
+import { AcademyMap } from './AcademyMap';
 
 export const LandingPage = () => {
   const { programs } = useAcademy();
@@ -176,6 +177,42 @@ export const LandingPage = () => {
                     Contact Admissions
                  </button>
              </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Campus Presence Section */}
+      <section className="py-24 px-8 bg-white overflow-hidden">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row gap-20">
+          <div className="w-full md:w-1/3 space-y-8">
+            <div className="space-y-4">
+              <p className="text-yellow-600 text-[10px] font-black uppercase tracking-[0.4em] font-sans">Campus Presence</p>
+              <h2 className="text-4xl font-bold text-navy-900 tracking-tight">Visit our Center</h2>
+              <p className="text-navy-500 font-sans leading-relaxed text-sm">
+                Strategically located on Ponmar Main Road, our activity center is easily accessible for residents of Mambakkam and surrounding educational hubs.
+              </p>
+            </div>
+            
+            <div className="space-y-6">
+              <div className="flex gap-4 p-6 bg-slate-50 border border-slate-100 rounded-lg">
+                <MapPin className="text-navy-900 shrink-0" size={20} />
+                <div className="space-y-1">
+                  <p className="text-xs font-black uppercase tracking-widest text-navy-900">Mambakkam Campus</p>
+                  <p className="text-[11px] text-navy-500 leading-normal font-sans">
+                    Trivesh Complex, Ponmar Main Road,<br/>
+                    Near SBIOA School, Chennai 600127
+                  </p>
+                </div>
+              </div>
+            </div>
+            
+            <button className="text-[10px] font-black uppercase tracking-widest text-navy-900 border-b-2 border-yellow-500 pb-1 hover:text-yellow-600 transition-colors cursor-pointer">
+              Get Driving Directions
+            </button>
+          </div>
+          
+          <div className="flex-1">
+            <AcademyMap />
           </div>
         </div>
       </section>
