@@ -8,44 +8,23 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState } from 'react';
-import { AcademyProvider, useAcademy } from './context/AcademyContext';
+import React from 'react';
+import { AcademyProvider } from './context/AcademyContext';
 import { Navigation } from './components/Navigation';
 import { LandingPage } from './components/LandingPage';
-import { ParentDashboard } from './components/ParentDashboard';
-import { StaffDashboard } from './components/StaffDashboard';
-import { AdminDashboard } from './components/AdminDashboard';
-import { Login } from './components/Login';
-import { AnimatePresence } from 'motion/react';
 
 function AppContent() {
-  const { currentUser } = useAcademy();
-  const [showLogin, setShowLogin] = useState(false);
-
-  const renderView = () => {
-    if (!currentUser) return <LandingPage />;
-    
-    switch (currentUser.role) {
-      case 'parent': return <ParentDashboard />;
-      case 'staff': return <StaffDashboard />;
-      case 'admin': return <AdminDashboard />;
-      default: return <LandingPage />;
-    }
-  };
-
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col font-sans">
-      <Navigation onLoginClick={() => setShowLogin(true)} />
+    <div className="min-h-screen bg-gray-50 flex flex-col font-sans text-navy-900 selection:bg-yellow-100">
+      <Navigation />
       
       <main className="flex-grow">
-        {renderView()}
+        <LandingPage />
       </main>
 
-      <AnimatePresence>
-        {showLogin && (
-          <Login onClose={() => setShowLogin(false)} />
-        )}
-      </AnimatePresence>
+      <div className="bg-navy-900 py-3 text-center">
+        <p className="text-[10px] text-navy-400 font-black uppercase tracking-[0.3em]">Institutional Landing Platform • Mambakkam</p>
+      </div>
     </div>
   );
 }
