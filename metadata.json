@@ -1,5 +1,5 @@
 {
-  "name": "Rocking Kids Academy - Mambakkam",
+  "name": "Rocking Kids Academy",
   "description": "Premium Academy Management Portal for skill development tracks: Abacus, Phonics, English, and Handwriting.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
