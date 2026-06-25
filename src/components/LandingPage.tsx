@@ -361,12 +361,12 @@ export const LandingPage = () => {
               <h3 className="text-xl font-bold text-navy-900 mb-2">Phone / WhatsApp</h3>
               <p className="text-navy-500 text-sm font-sans mb-6">Reach out to us for admissions or general inquiries.</p>
               <a 
-                href="https://wa.me/918754431230" 
+                href="https://wa.me/918754431210" 
                 target="_blank" 
                 rel="noreferrer"
                 className="inline-flex items-center gap-2 text-navy-900 font-black text-[10px] uppercase tracking-widest hover:text-yellow-600 transition-colors"
               >
-                +91 87544 31230 <MessageCircle size={14} className="text-green-500" />
+                +91 87544 31210 <MessageCircle size={14} className="text-green-500" />
               </a>
             </motion.div>
 
