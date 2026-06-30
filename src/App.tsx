@@ -22,9 +22,6 @@ function AppContent() {
         <LandingPage />
       </main>
 
-      <div className="bg-navy-900 py-3 text-center">
-        <p className="text-[10px] text-navy-400 font-black uppercase tracking-[0.3em]">Institutional Landing Platform</p>
-      </div>
     </div>
   );
 }

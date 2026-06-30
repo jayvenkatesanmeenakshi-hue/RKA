@@ -3,23 +3,24 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { useAcademy } from '../context/AcademyContext';
-import { MapPin, Clock, Phone, Mail, Award, Zap, MessageCircle, PenTool, Instagram, Facebook } from 'lucide-react';
+import { MapPin, Clock, Phone, Mail, Award, Zap, MessageCircle, PenTool, Instagram, Facebook, Send, Loader2 } from 'lucide-react';
 import { AcademyMap } from './AcademyMap';
+import logoIcon from '../assets/images/logo_icon_1782800321150.jpg';
 
 const cardVariants = {
-  hidden: { opacity: 0, y: 40, scale: 0.95 },
+  hidden: { opacity: 0, y: 30, scale: 0.98 },
   visible: { 
     opacity: 1, 
     y: 0, 
     scale: 1,
     transition: { 
       type: "spring",
-      stiffness: 100,
+      stiffness: 70,
       damping: 20,
-      mass: 1
+      mass: 0.8
     }
   }
 };
@@ -29,27 +30,85 @@ const containerVariants = {
   visible: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.1,
-      delayChildren: 0.1
+      staggerChildren: 0.15,
+      delayChildren: 0.2
     }
   }
 };
 
 const textRevealVariants = {
-  hidden: { opacity: 0, y: 20 },
+  hidden: { opacity: 0, y: 15 },
   visible: { 
     opacity: 1, 
     y: 0,
     transition: { 
       type: "spring",
-      stiffness: 100,
-      damping: 25
+      stiffness: 80,
+      damping: 24,
+      mass: 0.5
     }
   }
 };
 
 export const LandingPage = () => {
   const { programs } = useAcademy();
+
+  const [formData, setFormData] = useState({
+    parentName: '',
+    mobileNumber: '',
+    email: '',
+    message: ''
+  });
+  const [formStatus, setFormStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
+  const [formError, setFormError] = useState('');
+  const [formWarning, setFormWarning] = useState('');
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setFormStatus('submitting');
+    setFormError('');
+    setFormWarning('');
+
+    try {
+      const response = await fetch('/api/enquiry', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to submit enquiry');
+      }
+
+      if (data.warning) {
+        setFormWarning(data.warning);
+      }
+
+      setFormStatus('success');
+      setFormData({
+        parentName: '',
+        mobileNumber: '',
+        email: '',
+        message: ''
+      });
+    } catch (err: any) {
+      console.error('Error submitting enquiry form:', err);
+      setFormStatus('error');
+      setFormError(err.message || 'Something went wrong. Please try again.');
+    }
+  };
 
   const getIcon = (id: string) => {
     switch (id) {
@@ -104,15 +163,15 @@ export const LandingPage = () => {
             </motion.div>
           </motion.div>
           <motion.div 
-            initial={{ opacity: 0, scale: 1.1, x: 40 }}
+            initial={{ opacity: 0, scale: 1.05, x: 20 }}
             whileInView={{ opacity: 1, scale: 1, x: 0 }}
             viewport={{ once: true }}
             transition={{ 
               type: "spring",
-              stiffness: 50,
-              damping: 20,
-              mass: 1.5,
-              delay: 0.2
+              stiffness: 40,
+              damping: 24,
+              mass: 1.2,
+              delay: 0.3
             }}
             className="flex-1 w-full"
           >
@@ -229,10 +288,15 @@ export const LandingPage = () => {
             </motion.div>
           </motion.div>
           <motion.div 
-            initial={{ opacity: 0, scale: 0.9, rotateY: 15 }}
+            initial={{ opacity: 0, scale: 0.95, rotateY: 8 }}
             whileInView={{ opacity: 1, scale: 1, rotateY: 0 }}
             viewport={{ once: true, amount: 0.3 }}
-            transition={{ type: "spring", stiffness: 100, damping: 20 }}
+            transition={{ 
+              type: "spring", 
+              stiffness: 60, 
+              damping: 22,
+              mass: 1
+            }}
             className="flex-1 bg-white shadow-2xl relative border border-slate-100 rounded-sm overflow-hidden"
           >
              <div className="aspect-video w-full overflow-hidden">
@@ -245,7 +309,7 @@ export const LandingPage = () => {
              <div className="flex flex-col gap-8 p-12">
                  <div className="space-y-2">
                     <p className="text-[10px] font-black text-yellow-600 uppercase tracking-widest">Campus Information</p>
-                    <h3 className="text-2xl font-bold text-navy-900">Our Activity Center</h3>
+                    <h3 className="text-2xl font-bold text-navy-900">Rocking Kids Academy</h3>
                  </div>
                  
                  <div className="space-y-6">
@@ -316,10 +380,15 @@ export const LandingPage = () => {
           </motion.div>
           
           <motion.div 
-            initial={{ opacity: 0, x: 40 }}
+            initial={{ opacity: 0, x: 20 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true, amount: 0.2 }}
-            transition={{ type: "spring", stiffness: 80, damping: 20 }}
+            transition={{ 
+              type: "spring", 
+              stiffness: 60, 
+              damping: 24,
+              mass: 1
+            }}
             className="flex-1"
           >
             <AcademyMap />
@@ -342,106 +411,249 @@ export const LandingPage = () => {
             <motion.div variants={textRevealVariants} className="w-12 h-1 bg-navy-100 mx-auto"></motion.div>
           </motion.div>
 
-          <motion.div 
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, amount: 0.2 }}
-            variants={containerVariants}
-            className="grid grid-cols-1 md:grid-cols-3 gap-8"
-          >
-            {/* WhatsApp/Phone Card */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+            {/* Left Column: Social/Phone Channels */}
             <motion.div 
-              variants={cardVariants}
-              whileHover={{ y: -5, scale: 1.02 }}
-              className="bg-white p-10 border border-slate-100 rounded-lg shadow-sm hover:shadow-md transition-all group"
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, amount: 0.2 }}
+              variants={containerVariants}
+              className="lg:col-span-5 space-y-6"
             >
-              <div className="w-12 h-12 bg-slate-50 flex items-center justify-center rounded-sm mb-6 group-hover:bg-yellow-400 transition-colors">
-                <Phone className="text-navy-900" size={24} />
-              </div>
-              <h3 className="text-xl font-bold text-navy-900 mb-2">Phone / WhatsApp</h3>
-              <p className="text-navy-500 text-sm font-sans mb-6">Reach out to us for admissions or general inquiries.</p>
-              <a 
-                href="https://wa.me/918754431210" 
-                target="_blank" 
-                rel="noreferrer"
-                className="inline-flex items-center gap-2 text-navy-900 font-black text-[10px] uppercase tracking-widest hover:text-yellow-600 transition-colors"
+              <p className="text-navy-500 font-sans text-sm leading-relaxed mb-8">
+                Have questions about our curriculum, class schedules, or admissions? Please submit an enquiry using the form. Our admissions desk will review your submission and connect with you shortly.
+              </p>
+
+              {/* WhatsApp/Phone Card */}
+              <motion.div 
+                variants={cardVariants}
+                whileHover={{ y: -3, scale: 1.01 }}
+                className="bg-white p-6 border border-slate-100 rounded-lg shadow-sm hover:shadow-md transition-all group flex items-start gap-5"
               >
-                +91 87544 31210 <MessageCircle size={14} className="text-green-500" />
-              </a>
+                <div className="w-10 h-10 bg-slate-50 flex items-center justify-center rounded-sm group-hover:bg-yellow-400 transition-colors shrink-0">
+                  <Phone className="text-navy-900" size={20} />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-navy-900 mb-1">Phone / WhatsApp</h3>
+                  <p className="text-navy-500 text-xs font-sans mb-3">Direct assistance for admissions and general inquiries.</p>
+                  <a 
+                    href="https://wa.me/918754431210" 
+                    target="_blank" 
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-2 text-navy-900 font-black text-[9px] uppercase tracking-widest hover:text-yellow-600 transition-colors"
+                  >
+                    +91 87544 31210 <MessageCircle size={12} className="text-green-500" />
+                  </a>
+                </div>
+              </motion.div>
+
+              {/* Instagram Card */}
+              <motion.div 
+                variants={cardVariants}
+                whileHover={{ y: -3, scale: 1.01 }}
+                className="bg-white p-6 border border-slate-100 rounded-lg shadow-sm hover:shadow-md transition-all group flex items-start gap-5"
+              >
+                <div className="w-10 h-10 bg-slate-50 flex items-center justify-center rounded-sm group-hover:bg-yellow-400 transition-colors shrink-0">
+                  <Instagram className="text-navy-900" size={20} />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-navy-900 mb-1">Instagram</h3>
+                  <p className="text-navy-500 text-xs font-sans mb-3">Follow daily activities and academy milestones.</p>
+                  <a 
+                    href="https://www.instagram.com/rockingkidsacademy/" 
+                    target="_blank" 
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-2 text-navy-900 font-black text-[9px] uppercase tracking-widest hover:text-yellow-600 transition-colors"
+                  >
+                    @rockingkidsacademy
+                  </a>
+                </div>
+              </motion.div>
+
+              {/* Facebook Card */}
+              <motion.div 
+                variants={cardVariants}
+                whileHover={{ y: -3, scale: 1.01 }}
+                className="bg-white p-6 border border-slate-100 rounded-lg shadow-sm hover:shadow-md transition-all group flex items-start gap-5"
+              >
+                <div className="w-10 h-10 bg-slate-50 flex items-center justify-center rounded-sm group-hover:bg-yellow-400 transition-colors shrink-0">
+                  <Facebook className="text-navy-900" size={20} />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-navy-900 mb-1">Facebook</h3>
+                  <p className="text-navy-500 text-xs font-sans mb-3">Stay updated with our community announcements.</p>
+                  <a 
+                    href="https://www.facebook.com/rockingkidsacademy/" 
+                    target="_blank" 
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-2 text-navy-900 font-black text-[9px] uppercase tracking-widest hover:text-yellow-600 transition-colors"
+                  >
+                    /rockingkidsacademy
+                  </a>
+                </div>
+              </motion.div>
             </motion.div>
 
-            {/* Instagram Card */}
-            <motion.div 
-              initial={{ opacity: 0, y: 10 }}
+            {/* Right Column: Interactive Enquiry Form */}
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="bg-white p-10 border border-slate-100 rounded-lg shadow-sm hover:shadow-md transition-all group"
+              viewport={{ once: true, amount: 0.2 }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+              className="lg:col-span-7 bg-white p-8 md:p-10 border border-slate-100 rounded-lg shadow-xl shadow-slate-200/40"
             >
-              <div className="w-12 h-12 bg-slate-50 flex items-center justify-center rounded-sm mb-6 group-hover:bg-yellow-400 transition-colors">
-                <Instagram className="text-navy-900" size={24} />
+              <div className="mb-6">
+                <h3 className="text-xl font-bold text-navy-900 mb-1">Send an Enquiry</h3>
+                <p className="text-navy-400 text-xs font-sans">Submit your contact info and our academic counselor will respond promptly.</p>
               </div>
-              <h3 className="text-xl font-bold text-navy-900 mb-2">Instagram</h3>
-              <p className="text-navy-500 text-sm font-sans mb-6">Follow our daily activities and student milestones.</p>
-              <a 
-                href="https://www.instagram.com/rockingkidsacademy/" 
-                target="_blank" 
-                rel="noreferrer"
-                className="inline-flex items-center gap-2 text-navy-900 font-black text-[10px] uppercase tracking-widest hover:text-yellow-600 transition-colors"
-              >
-                @rockingkidsacademy
-              </a>
-            </motion.div>
 
-            {/* Facebook Card */}
-            <motion.div 
-              initial={{ opacity: 0, y: 10 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="bg-white p-10 border border-slate-100 rounded-lg shadow-sm hover:shadow-md transition-all group"
-            >
-              <div className="w-12 h-12 bg-slate-50 flex items-center justify-center rounded-sm mb-6 group-hover:bg-yellow-400 transition-colors">
-                <Facebook className="text-navy-900" size={24} />
-              </div>
-              <h3 className="text-xl font-bold text-navy-900 mb-2">Facebook</h3>
-              <p className="text-navy-500 text-sm font-sans mb-6">Stay updated with our latest events and announcements.</p>
-              <a 
-                href="https://www.facebook.com/rockingkidsacademy/" 
-                target="_blank" 
-                rel="noreferrer"
-                className="inline-flex items-center gap-2 text-navy-900 font-black text-[10px] uppercase tracking-widest hover:text-yellow-600 transition-colors"
-              >
-                /rockingkidsacademy
-              </a>
+              {formStatus === 'success' ? (
+                <motion.div 
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="bg-green-50 border border-green-200 p-8 rounded-lg text-center space-y-4"
+                >
+                  <div className="w-12 h-12 bg-green-100 text-green-600 mx-auto flex items-center justify-center rounded-full">
+                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <h4 className="text-lg font-bold text-green-900">Enquiry Received!</h4>
+                  <p className="text-green-700 text-sm font-sans max-w-md mx-auto">
+                    Thank you for reaching out to Rocking Kids Academy. Your inquiry has been processed and logged. Our team is excited to assist you!
+                  </p>
+
+                  {formWarning && (
+                    <div className="bg-amber-50 border border-amber-200 text-amber-800 p-4 rounded-lg text-xs text-left font-sans mt-4 space-y-1 max-w-md mx-auto">
+                      <div className="font-bold flex items-center gap-1.5">
+                        <span className="inline-block w-2 h-2 bg-amber-500 rounded-full animate-pulse animate-duration-1000"></span>
+                        System Notice (Mail Server):
+                      </div>
+                      <p className="opacity-95 text-[11px] leading-relaxed">{formWarning}</p>
+                    </div>
+                  )}
+
+                  <button 
+                    onClick={() => setFormStatus('idle')}
+                    className="mt-4 bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded font-black text-[10px] uppercase tracking-wider transition-colors cursor-pointer"
+                  >
+                    Submit Another Enquiry
+                  </button>
+                </motion.div>
+              ) : (
+                <form onSubmit={handleFormSubmit} className="space-y-5">
+                  {formStatus === 'error' && (
+                    <div className="bg-red-50 border border-red-200 p-4 rounded text-xs text-red-600 font-sans">
+                      <strong>Submission Error:</strong> {formError}
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div className="space-y-1.5">
+                      <label htmlFor="parentName" className="block text-[10px] font-black uppercase tracking-wider text-navy-600">Parent's Name <span className="text-yellow-600">*</span></label>
+                      <input 
+                        type="text" 
+                        id="parentName" 
+                        name="parentName"
+                        value={formData.parentName}
+                        onChange={handleInputChange}
+                        required
+                        placeholder="John Doe"
+                        className="w-full bg-slate-50 border border-slate-200 focus:border-yellow-500 focus:bg-white px-4 py-3 text-sm rounded outline-none transition-all font-sans text-navy-900"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label htmlFor="mobileNumber" className="block text-[10px] font-black uppercase tracking-wider text-navy-600">Mobile Number <span className="text-yellow-600">*</span></label>
+                      <input 
+                        type="tel" 
+                        id="mobileNumber" 
+                        name="mobileNumber"
+                        value={formData.mobileNumber}
+                        onChange={handleInputChange}
+                        required
+                        placeholder="+91 XXXXX XXXXX"
+                        className="w-full bg-slate-50 border border-slate-200 focus:border-yellow-500 focus:bg-white px-4 py-3 text-sm rounded outline-none transition-all font-sans text-navy-900"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label htmlFor="email" className="block text-[10px] font-black uppercase tracking-wider text-navy-600">Email Address <span className="text-yellow-600">*</span></label>
+                    <input 
+                      type="email" 
+                      id="email" 
+                      name="email"
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      required
+                      placeholder="parent@example.com"
+                      className="w-full bg-slate-50 border border-slate-200 focus:border-yellow-500 focus:bg-white px-4 py-3 text-sm rounded outline-none transition-all font-sans text-navy-900"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label htmlFor="message" className="block text-[10px] font-black uppercase tracking-wider text-navy-600">Enquiry Message <span className="text-yellow-600">*</span></label>
+                    <textarea 
+                      id="message" 
+                      name="message"
+                      rows={4}
+                      value={formData.message}
+                      onChange={handleInputChange}
+                      required
+                      placeholder="I would like to enquire about active learning tracks..."
+                      className="w-full bg-slate-50 border border-slate-200 focus:border-yellow-500 focus:bg-white px-4 py-3 text-sm rounded outline-none transition-all font-sans text-navy-900 resize-none"
+                    ></textarea>
+                  </div>
+
+                  <button 
+                    type="submit"
+                    disabled={formStatus === 'submitting'}
+                    className="w-full bg-navy-900 hover:bg-yellow-500 hover:text-navy-900 disabled:bg-slate-300 disabled:text-slate-500 disabled:cursor-not-allowed text-white px-8 py-4 rounded-sm font-black text-[10px] uppercase tracking-widest transition-all shadow-lg flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    {formStatus === 'submitting' ? (
+                      <>
+                        <Loader2 className="animate-spin" size={14} />
+                        Sending Enquiry...
+                      </>
+                    ) : (
+                      <>
+                        <Send size={12} />
+                        Submit Enquiry
+                      </>
+                    )}
+                  </button>
+                </form>
+              )}
             </motion.div>
-          </motion.div>
+          </div>
         </div>
       </section>
 
-      {/* Structured Footer */}
-      <footer className="py-24 px-8 border-t border-navy-100 bg-white">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-16 mb-24">
-           <div className="md:col-span-2 space-y-6">
-              <div className="flex items-center gap-3">
-                 <div className="bg-navy-900 text-yellow-400 w-10 h-10 flex items-center justify-center font-black rounded-sm">RK</div>
-                 <h2 className="text-xl font-bold text-navy-900 tracking-tight">Rocking Kids Academy</h2>
-              </div>
-              <p className="text-navy-400 text-sm font-medium leading-relaxed max-w-sm font-sans">The premier skill development institute for children, dedicated to building strong cognitive foundations through specialized academic tracks.</p>
-           </div>
-           <div className="space-y-6 px-4">
-              <p className="text-[10px] font-black uppercase tracking-widest text-navy-300">Quick Links</p>
-              <ul className="space-y-3 text-sm font-bold text-navy-600">
-                 <li><a href="#programs" className="hover:text-yellow-500 transition-colors">Our Programs</a></li>
-                 <li><a href="#contact" className="hover:text-yellow-500 transition-colors">Find Us</a></li>
-              </ul>
-           </div>
-        </div>
-        <div className="max-w-7xl mx-auto pt-12 border-t border-navy-50 flex flex-col md:flex-row justify-between items-center gap-6">
-           <p className="text-[10px] font-black text-navy-300 uppercase tracking-widest">© 2026 Rocking Kids Academy • Chennai 600127</p>
-           <div className="flex gap-8">
-              <div className="w-1.5 h-1.5 bg-yellow-400 rounded-full"></div>
-              <div className="w-1.5 h-1.5 bg-navy-100 rounded-full"></div>
-              <div className="w-1.5 h-1.5 bg-navy-100 rounded-full"></div>
-           </div>
+      {/* Simplified Footer */}
+      <footer className="py-12 px-8 border-t border-slate-100 bg-white">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-10">
+          <div className="flex flex-col md:flex-row items-center gap-6">
+            <div className="flex items-center gap-3">
+              <img 
+                src={logoIcon} 
+                alt="Rocking Kids Academy Logo" 
+                className="w-10 h-10 object-contain"
+                referrerPolicy="no-referrer"
+              />
+              <h2 className="text-lg font-bold text-navy-900 tracking-tight">Rocking Kids Academy</h2>
+            </div>
+            <div className="hidden md:block w-px h-6 bg-slate-100"></div>
+            <p className="text-navy-400 text-[10px] font-black uppercase tracking-widest">Chennai 600127</p>
+          </div>
+          
+          <div className="flex items-center gap-8 text-[10px] font-black uppercase tracking-widest text-navy-600">
+            <a href="#curriculum" className="hover:text-yellow-500 transition-colors">Curriculum</a>
+            <a href="#location" className="hover:text-yellow-500 transition-colors">Location</a>
+            <a href="#contact" className="hover:text-yellow-500 transition-colors">Contact</a>
+          </div>
+          
+          <p className="text-[10px] font-black text-navy-300 uppercase tracking-widest">© 2026</p>
         </div>
       </footer>
     </div>

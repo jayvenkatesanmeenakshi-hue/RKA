@@ -36,6 +36,10 @@
   animation: shake 0.2s ease-in-out 0s 2;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   @apply font-sans text-navy-800 bg-[#F8FAFC];
 }

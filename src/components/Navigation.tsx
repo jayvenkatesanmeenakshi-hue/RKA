@@ -4,26 +4,26 @@
  */
 
 import React from 'react';
+import logoHorizontal from '../assets/images/logo_horizontal_wide_1782801473176.jpg';
 
 export const Navigation = () => {
   return (
-    <nav className="bg-white border-b border-slate-100 sticky top-0 z-50 h-20 flex items-center px-8 shadow-sm">
+    <nav className="bg-white border-b border-slate-100 sticky top-0 z-50 py-3 md:py-4 min-h-20 md:min-h-24 flex items-center px-8 shadow-sm">
       <div className="max-w-7xl mx-auto w-full flex justify-between items-center text-navy-900">
-        <div className="flex items-center gap-4">
-           <div className="bg-navy-900 text-yellow-400 w-10 h-10 flex items-center justify-center font-black rounded-sm text-lg">
-             RK
-           </div>
-           <div>
-              <h1 className="text-xl font-bold tracking-tight">Rocking Kids</h1>
-              <p className="text-[10px] uppercase font-black tracking-[0.2em] text-navy-400">Activity Center</p>
-           </div>
+        <div className="flex items-center">
+           <img 
+             src={logoHorizontal} 
+             alt="Rocking Kids Academy" 
+             className="h-16 md:h-24 w-auto object-contain max-w-[320px] md:max-w-[480px]"
+             referrerPolicy="no-referrer"
+           />
         </div>
 
         <div className="hidden md:flex items-center gap-10 text-[10px] font-black uppercase tracking-widest text-navy-400">
-          <a href="#prospectus" className="hover:text-yellow-600 transition-colors">Prospectus</a>
-          <a href="#curriculum" className="hover:text-yellow-600 transition-colors">Curriculum</a>
-          <a href="#faculty" className="hover:text-yellow-600 transition-colors">Faculty</a>
-          <a href="#location" className="hover:text-yellow-600 transition-colors">Location</a>
+          <a href="#prospectus" className="hover:text-yellow-600 transition-all hover:translate-y-[-1px]">Prospectus</a>
+          <a href="#curriculum" className="hover:text-yellow-600 transition-all hover:translate-y-[-1px]">Curriculum</a>
+          <a href="#faculty" className="hover:text-yellow-600 transition-all hover:translate-y-[-1px]">Faculty</a>
+          <a href="#location" className="hover:text-yellow-600 transition-all hover:translate-y-[-1px]">Location</a>
         </div>
 
         <div className="flex items-center gap-4">
