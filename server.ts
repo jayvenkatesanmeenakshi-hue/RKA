@@ -277,10 +277,19 @@ app.post("/api/enquiry", async (req, res) => {
       });
     }
   } catch (error: any) {
-    console.error("Error processing enquiry:", error);
+    console.error("Enquiry Email Delivery Error Details:", {
+      error: error.message || error,
+      code: error.code,
+      command: error.command,
+      response: error.response,
+      smtpHost: process.env.SMTP_HOST,
+      recipientEmail: process.env.ENQUIRY_RECIPIENT_EMAIL || "meenakshidevarajan@gmail.com",
+      smtpFrom: process.env.SMTP_FROM,
+      resolvedSender: process.env.SMTP_FROM || (process.env.SMTP_USER && process.env.SMTP_USER.includes("@") ? process.env.SMTP_USER : (process.env.ENQUIRY_RECIPIENT_EMAIL || "meenakshidevarajan@gmail.com"))
+    });
     res.status(200).json({ 
       success: true,
-      warning: `Enquiry was received by the server, but email delivery failed due to SMTP error: "${error.message || error}". Please configure valid SMTP keys in your environment variables to receive live emails.`,
+      warning: `Enquiry was received by the server, but email delivery failed: "${error.message || error}"`,
       previewData: req.body
     });
   }
