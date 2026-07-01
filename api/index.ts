@@ -55,9 +55,41 @@ function serveSitemap(req: express.Request, res: express.Response) {
   let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
   xml += `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
   
-  const urls = seo.sitemapUrls && seo.sitemapUrls.length > 0 ? seo.sitemapUrls : [
-    { url: "/", changefreq: "daily", priority: "1.0" }
+  // Start with sitemapUrls from seo.json
+  const urls = seo.sitemapUrls && seo.sitemapUrls.length > 0 ? [...seo.sitemapUrls] : [];
+  
+  // Ensure the homepage is there
+  if (!urls.some((u: any) => u.url === "/")) {
+    urls.unshift({ url: "/", changefreq: "daily", priority: "1.0" });
+  }
+  
+  // Dynamically append new program routes
+  const programUrls = [
+    { url: "/program/Abacus", changefreq: "weekly", priority: "0.9" },
+    { url: "/program/Phonics", changefreq: "weekly", priority: "0.9" },
+    { url: "/program/English", changefreq: "weekly", priority: "0.9" },
+    { url: "/program/Handwriting", changefreq: "weekly", priority: "0.9" }
   ];
+  
+  // Dynamically append blog routes
+  const blogUrls = [
+    { url: "/blog", changefreq: "daily", priority: "0.8" },
+    { url: "/blog/power-of-abacus-mental-math-brain-development", changefreq: "monthly", priority: "0.7" },
+    { url: "/blog/phonics-vs-whole-language-why-essential-reading-success", changefreq: "monthly", priority: "0.7" },
+    { url: "/blog/effective-ways-improve-child-handwriting-motor-skills", changefreq: "monthly", priority: "0.7" }
+  ];
+
+  programUrls.forEach(item => {
+    if (!urls.some((u: any) => u.url === item.url)) {
+      urls.push(item);
+    }
+  });
+
+  blogUrls.forEach(item => {
+    if (!urls.some((u: any) => u.url === item.url)) {
+      urls.push(item);
+    }
+  });
   
   urls.forEach((item: any) => {
     const urlPath = item.url.startsWith("http") ? item.url : `${domain.replace(/\/$/, '')}${item.url.startsWith('/') ? '' : '/'}${item.url}`;

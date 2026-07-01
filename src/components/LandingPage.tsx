@@ -50,7 +50,7 @@ const textRevealVariants = {
   }
 };
 
-export const LandingPage = () => {
+export const LandingPage = ({ navigateTo }: { navigateTo: (path: string) => void }) => {
   const { programs } = useAcademy();
 
   const [formData, setFormData] = useState({
@@ -180,6 +180,7 @@ export const LandingPage = () => {
                 src="https://images.jdmagicbox.com/v2/comp/chennai/z1/044pxx44.xx44.140111110123.q7z1/catalogue/rocking-kids-mandaveli-chennai-handwriting-classes-elkuhnvsl7.jpg" 
                 alt="Learning at Rocking Kids Academy" 
                 className="w-full h-full object-cover grayscale-[0.1] group-hover:grayscale-0 transition-all duration-1000 group-hover:scale-105"
+                fetchPriority="high"
               />
               <div className="absolute inset-0 bg-navy-900/5"></div>
               <div className="absolute -bottom-1 -right-1 bg-yellow-400 p-8 shadow-xl">
@@ -222,6 +223,7 @@ export const LandingPage = () => {
                 key={program.id}
                 variants={cardVariants}
                 whileHover={{ y: -10, transition: { type: "spring", stiffness: 300 } }}
+                onClick={() => navigateTo(`/program/${program.id}`)}
                 className="overflow-hidden bg-white border border-slate-100 hover:border-yellow-400 hover:shadow-xl transition-all group rounded-lg flex flex-col cursor-pointer"
               >
                 <div className={`aspect-[16/10] overflow-hidden relative ${program.id === 'Abacus' ? 'bg-white p-4' : ''}`}>
@@ -229,6 +231,7 @@ export const LandingPage = () => {
                       src={getProgramImage(program.id)} 
                       alt={program.title}
                       className={`w-full h-full ${program.id === 'Abacus' ? 'object-contain' : 'object-cover'} group-hover:scale-110 transition-transform duration-500`}
+                      loading="lazy"
                    />
                    <div className="absolute top-4 left-4 w-10 h-10 bg-white/90 backdrop-blur-sm flex items-center justify-center rounded-sm shadow-sm">
                       {getIcon(program.id)}
@@ -239,13 +242,16 @@ export const LandingPage = () => {
                   <p className="text-navy-500 text-xs font-medium leading-relaxed font-sans mb-6">
                     {program.description}
                   </p>
-                  <div className="mt-auto pt-4 border-t border-slate-50">
-                    <ul className="flex flex-wrap gap-2">
-                       {program.levels.slice(0, 3).map(level => (
+                  <div className="mt-auto pt-4 border-t border-slate-50 flex items-center justify-between">
+                    <ul className="flex flex-wrap gap-1.5">
+                       {program.levels.slice(0, 2).map(level => (
                           <li key={level} className="text-[9px] font-black uppercase tracking-wider text-navy-300 bg-slate-50 px-2 py-1 rounded-sm">{level}</li>
                        ))}
-                       {program.levels.length > 3 && <li className="text-[9px] font-black uppercase tracking-wider text-yellow-600 bg-yellow-50 px-2 py-1 rounded-sm">+{program.levels.length - 3} More</li>}
+                       {program.levels.length > 2 && <li className="text-[9px] font-black uppercase tracking-wider text-yellow-600 bg-yellow-50 px-2 py-1 rounded-sm">+{program.levels.length - 2} More</li>}
                     </ul>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-navy-400 group-hover:text-yellow-600 transition-colors inline-flex items-center gap-1">
+                      Explore →
+                    </span>
                   </div>
                 </div>
               </motion.div>
@@ -304,6 +310,7 @@ export const LandingPage = () => {
                   src="https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&q=80&w=1200" 
                   alt="Student Excellence at our Center" 
                   className="w-full h-full object-cover"
+                  loading="lazy"
                 />
              </div>
              <div className="flex flex-col gap-8 p-12">
@@ -673,6 +680,7 @@ export const LandingPage = () => {
                 alt="Rocking Kids Academy Logo" 
                 className="w-10 h-10 object-contain"
                 referrerPolicy="no-referrer"
+                loading="lazy"
               />
               <h2 className="text-lg font-bold text-navy-900 tracking-tight">Rocking Kids Academy</h2>
             </div>

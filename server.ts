@@ -94,9 +94,41 @@ function serveSitemap(req: express.Request, res: express.Response) {
   let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
   xml += `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
   
-  const urls = seo.sitemapUrls && seo.sitemapUrls.length > 0 ? seo.sitemapUrls : [
-    { url: "/", changefreq: "daily", priority: "1.0" }
+  // Start with sitemapUrls from seo.json
+  const urls = seo.sitemapUrls && seo.sitemapUrls.length > 0 ? [...seo.sitemapUrls] : [];
+  
+  // Ensure the homepage is there
+  if (!urls.some((u: any) => u.url === "/")) {
+    urls.unshift({ url: "/", changefreq: "daily", priority: "1.0" });
+  }
+  
+  // Dynamically append new program routes
+  const programUrls = [
+    { url: "/program/Abacus", changefreq: "weekly", priority: "0.9" },
+    { url: "/program/Phonics", changefreq: "weekly", priority: "0.9" },
+    { url: "/program/English", changefreq: "weekly", priority: "0.9" },
+    { url: "/program/Handwriting", changefreq: "weekly", priority: "0.9" }
   ];
+  
+  // Dynamically append blog routes
+  const blogUrls = [
+    { url: "/blog", changefreq: "daily", priority: "0.8" },
+    { url: "/blog/power-of-abacus-mental-math-brain-development", changefreq: "monthly", priority: "0.7" },
+    { url: "/blog/phonics-vs-whole-language-why-essential-reading-success", changefreq: "monthly", priority: "0.7" },
+    { url: "/blog/effective-ways-improve-child-handwriting-motor-skills", changefreq: "monthly", priority: "0.7" }
+  ];
+
+  programUrls.forEach(item => {
+    if (!urls.some((u: any) => u.url === item.url)) {
+      urls.push(item);
+    }
+  });
+
+  blogUrls.forEach(item => {
+    if (!urls.some((u: any) => u.url === item.url)) {
+      urls.push(item);
+    }
+  });
   
   urls.forEach((item: any) => {
     const urlPath = item.url.startsWith("http") ? item.url : `${domain.replace(/\/$/, '')}${item.url.startsWith('/') ? '' : '/'}${item.url}`;
@@ -114,8 +146,91 @@ function serveSitemap(req: express.Request, res: express.Response) {
   res.status(200).send(xml);
 }
 
+// Route-specific dynamic SEO parameters
+function getOverrideSeo(reqPath: string, baseSeo: any) {
+  const domain = baseSeo.canonical || "https://rockingkidsacademy.in";
+  
+  if (reqPath === '/blog') {
+    return {
+      ...baseSeo,
+      title: "Learning Resource Hub & Blog | Rocking Kids Academy Chennai",
+      description: "Discover research-backed parenting tips, child cognitive development guides, phonics reading keys, and handwriting improvement techniques.",
+      canonical: `${domain}/blog`,
+      ogTitle: "Learning Resource Hub & Blog | Rocking Kids Academy Chennai",
+      ogDescription: "Discover research-backed parenting tips, child cognitive development guides, phonics reading keys, and handwriting improvement techniques."
+    };
+  }
+  
+  if (reqPath.startsWith('/program/')) {
+    const prog = reqPath.replace('/program/', '');
+    let title = "";
+    let description = "";
+    
+    if (prog === 'Abacus') {
+      title = "Abacus & Brainobrain Affiliation Class Chennai | Rocking Kids Academy";
+      description = "Master lightning-fast mental arithmetic computations and boost brain development with our certified Brainobrain abacus program at Ponmar, Chennai. Book a trial.";
+    } else if (prog === 'Phonics') {
+      title = "Structured Phonics Mastery Course Chennai | Rocking Kids Academy";
+      description = "Synthetic phonics class for early reading fluency, letter sounds, and spelling mastery. Ideal for children aged 4 to 8 at our Chennai center.";
+    } else if (prog === 'English') {
+      title = "English Speaking & Communication Course | Rocking Kids Academy";
+      description = "Elevate grammar, descriptive vocabulary, creative writing, and public speaking confidence for children ages 6 to 14. Located in Ponmar, Chennai.";
+    } else if (prog === 'Handwriting') {
+      title = "Handwriting & Cursive Improvement Course | Rocking Kids Academy";
+      description = "Scientific handwriting improvement class correcting physical pencil grip, posture, letter sizing, and writing speed. Chennai Ponmar Main Road center.";
+    } else {
+      return baseSeo;
+    }
+    
+    return {
+      ...baseSeo,
+      title,
+      description,
+      canonical: `${domain}${reqPath}`,
+      ogTitle: title,
+      ogDescription: description,
+      twitterTitle: title,
+      twitterDescription: description
+    };
+  }
+  
+  if (reqPath.startsWith('/blog/')) {
+    const slug = reqPath.replace('/blog/', '');
+    let title = "";
+    let description = "";
+    
+    if (slug === 'power-of-abacus-mental-math-brain-development') {
+      title = "The Power of Abacus: How Mental Math Boosts Brain Development";
+      description = "Learn how abacus training builds whole-brain connectivity, visual working memory, concentration, and lifetime confidence in children.";
+    } else if (slug === 'phonics-vs-whole-language-why-essential-reading-success') {
+      title = "Phonics vs. Whole Language: Why Phonics is Essential for Reading";
+      description = "Discover the cognitive science of reading and why systematic synthetic phonics is the absolute best way to build early literacy fluency.";
+    } else if (slug === 'effective-ways-improve-child-handwriting-motor-skills') {
+      title = "5 Effective Ways to Improve Your Child's Handwriting & Motor Skills";
+      description = "Struggling with messy cursive? Read these practical, fine motor and ergonomic tips to improve your child's hand coordination.";
+    } else {
+      return baseSeo;
+    }
+    
+    return {
+      ...baseSeo,
+      title,
+      description,
+      canonical: `${domain}${reqPath}`,
+      ogTitle: title,
+      ogDescription: description,
+      twitterTitle: title,
+      twitterDescription: description
+    };
+  }
+  
+  return baseSeo;
+}
+
 // Dynamic SEO Injection function
-function injectSeo(htmlStr: string, seo: any): string {
+function injectSeo(htmlStr: string, baseSeo: any, reqPath?: string): string {
+  const seo = reqPath ? getOverrideSeo(reqPath, baseSeo) : baseSeo;
+
   // Replace title
   htmlStr = htmlStr.replace(/<title>[^<]*<\/title>/i, `<title>${seo.title}</title>`);
   
@@ -343,7 +458,7 @@ async function startServer() {
       }
       try {
         const rawHtml = fs.readFileSync(path.join(process.cwd(), "index.html"), "utf-8");
-        const injected = injectSeo(rawHtml, loadSeoData());
+        const injected = injectSeo(rawHtml, loadSeoData(), req.path);
         const transformed = await vite.transformIndexHtml(req.url, injected);
         res.status(200).set({ "Content-Type": "text/html" }).end(transformed);
       } catch (e) {
@@ -361,7 +476,7 @@ async function startServer() {
     app.get("*", (req, res) => {
       try {
         const rawHtml = fs.readFileSync(path.join(distPath, "index.html"), "utf-8");
-        const injected = injectSeo(rawHtml, loadSeoData());
+        const injected = injectSeo(rawHtml, loadSeoData(), req.path);
         res.status(200).set({ "Content-Type": "text/html" }).end(injected);
       } catch (e) {
         console.error("Failed to inject SEO tags in production, sending raw index.html:", e);
