@@ -1,0 +1,19 @@
+{
+  "title": "Rocking Kids Academy | Premier Learning Center for Abacus, Phonics & English",
+  "description": "Rocking Kids Academy is a premier learning center dedicated to skill development for children ages 4 to 14. We offer expert-led courses in Abacus, Phonics, English, and Handwriting mastery.",
+  "keywords": "Rocking Kids Academy, Abacus for kids, Phonics training, English speaking kids, Handwriting mastery, Child development academy, Skill development classes",
+  "canonical": "https://rockingkidsacademy.in",
+  "ogTitle": "Rocking Kids Academy | Premier Learning Center for Abacus, Phonics & English",
+  "ogDescription": "Dedicated to skill development for children ages 4 to 14. Discover our nurturing environment for Abacus, Phonics, English, and Handwriting mastery.",
+  "ogImage": "https://rockingkidsacademy.in/assets/images/logo-icon.png",
+  "twitterTitle": "Rocking Kids Academy | Premier Learning Center for Abacus, Phonics & English",
+  "twitterDescription": "Dedicated to skill development for children ages 4 to 14. Discover our nurturing environment for Abacus, Phonics, English, and Handwriting mastery.",
+  "twitterImage": "https://rockingkidsacademy.in/assets/images/logo-icon.png",
+  "sitemapUrls": [
+    { "url": "/", "changefreq": "daily", "priority": "1.0" },
+    { "url": "/#prospectus", "changefreq": "weekly", "priority": "0.8" },
+    { "url": "/#curriculum", "changefreq": "weekly", "priority": "0.8" },
+    { "url": "/#faculty", "changefreq": "weekly", "priority": "0.7" },
+    { "url": "/#location", "changefreq": "weekly", "priority": "0.7" }
+  ]
+}

@@ -686,7 +686,21 @@ export const LandingPage = () => {
             <a href="#contact" className="hover:text-yellow-500 transition-colors">Contact</a>
           </div>
           
-          <p className="text-[10px] font-black text-navy-300 uppercase tracking-widest">© 2026</p>
+          <div className="flex items-center gap-3">
+            <p className="text-[10px] font-black text-navy-300 uppercase tracking-widest">© 2026</p>
+            <span className="text-slate-200">|</span>
+            <a 
+              href="/admin" 
+              onClick={(e) => {
+                e.preventDefault();
+                window.history.pushState({}, '', '/admin');
+                window.dispatchEvent(new Event('popstate'));
+              }}
+              className="text-[10px] font-black text-navy-300 hover:text-yellow-600 uppercase tracking-widest transition-colors"
+            >
+              SEO Portal
+            </a>
+          </div>
         </div>
       </footer>
     </div>
