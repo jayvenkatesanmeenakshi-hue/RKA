@@ -8,7 +8,7 @@ import { motion } from 'motion/react';
 import { useAcademy } from '../context/AcademyContext';
 import { MapPin, Clock, Phone, Mail, Award, Zap, MessageCircle, PenTool, Instagram, Facebook, Send, Loader2 } from 'lucide-react';
 import { AcademyMap } from './AcademyMap';
-import logoIcon from '../assets/images/logo_icon_1782800321150.jpg';
+import logoIcon from '../assets/images/logo-icon.png';
 
 const cardVariants = {
   hidden: { opacity: 0, y: 30, scale: 0.98 },
