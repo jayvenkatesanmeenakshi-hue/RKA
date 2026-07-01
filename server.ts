@@ -14,6 +14,26 @@ const PORT = 3000;
 // Body parsing middleware
 app.use(express.json());
 
+// Robust sitemap detection middleware
+app.use((req, res, next) => {
+  const url = req.url || "";
+  const originalUrl = req.originalUrl || "";
+  const querySitemap = req.query.sitemap === "true";
+  const forwardedUrl = (req.headers["x-forwarded-url"] as string) || "";
+  const matchedPath = (req.headers["x-matched-path"] as string) || "";
+  
+  if (
+    querySitemap ||
+    url.includes("sitemap.xml") ||
+    originalUrl.includes("sitemap.xml") ||
+    forwardedUrl.includes("sitemap.xml") ||
+    matchedPath.includes("sitemap.xml")
+  ) {
+    return serveSitemap(req, res);
+  }
+  next();
+});
+
 // SEO JSON File Path
 const LOCAL_SEO_FILE = path.join(process.cwd(), "seo.json");
 const TMP_SEO_FILE = path.join("/tmp", "seo.json");
@@ -64,6 +84,34 @@ function saveSeoData(data: any) {
       console.error("Failed to write to /tmp/seo.json:", tmpErr);
     }
   }
+}
+
+// Helper to serve sitemap XML dynamically
+function serveSitemap(req: express.Request, res: express.Response) {
+  const seo = loadSeoData();
+  const domain = seo.canonical || "https://rockingkidsacademy.in";
+  
+  let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
+  xml += `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
+  
+  const urls = seo.sitemapUrls && seo.sitemapUrls.length > 0 ? seo.sitemapUrls : [
+    { url: "/", changefreq: "daily", priority: "1.0" }
+  ];
+  
+  urls.forEach((item: any) => {
+    const urlPath = item.url.startsWith("http") ? item.url : `${domain.replace(/\/$/, '')}${item.url.startsWith('/') ? '' : '/'}${item.url}`;
+    xml += `  <url>\n`;
+    xml += `    <loc>${urlPath}</loc>\n`;
+    xml += `    <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>\n`;
+    xml += `    <changefreq>${item.changefreq || 'weekly'}</changefreq>\n`;
+    xml += `    <priority>${item.priority || '0.8'}</priority>\n`;
+    xml += `  </url>\n`;
+  });
+  
+  xml += `</urlset>\n`;
+  
+  res.header("Content-Type", "application/xml");
+  res.status(200).send(xml);
 }
 
 // Dynamic SEO Injection function
@@ -149,32 +197,13 @@ app.post("/api/seo", (req, res) => {
   res.json({ success: true, message: "SEO configuration updated successfully!", data: newSeo });
 });
 
-// Dynamic public sitemap.xml endpoint
+// Dynamic public sitemap.xml endpoints
 app.get("/sitemap.xml", (req, res) => {
-  const seo = loadSeoData();
-  const domain = seo.canonical || "https://rockingkidsacademy.in";
-  
-  let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
-  xml += `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
-  
-  const urls = seo.sitemapUrls && seo.sitemapUrls.length > 0 ? seo.sitemapUrls : [
-    { url: "/", changefreq: "daily", priority: "1.0" }
-  ];
-  
-  urls.forEach((item: any) => {
-    const urlPath = item.url.startsWith("http") ? item.url : `${domain.replace(/\/$/, '')}${item.url.startsWith('/') ? '' : '/'}${item.url}`;
-    xml += `  <url>\n`;
-    xml += `    <loc>${urlPath}</loc>\n`;
-    xml += `    <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>\n`;
-    xml += `    <changefreq>${item.changefreq || 'weekly'}</changefreq>\n`;
-    xml += `    <priority>${item.priority || '0.8'}</priority>\n`;
-    xml += `  </url>\n`;
-  });
-  
-  xml += `</urlset>\n`;
-  
-  res.header("Content-Type", "application/xml");
-  res.status(200).send(xml);
+  serveSitemap(req, res);
+});
+
+app.get("/api/sitemap.xml", (req, res) => {
+  serveSitemap(req, res);
 });
 
 // API Enquiry Endpoint

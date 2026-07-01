@@ -7,7 +7,7 @@
     },
     {
       "source": "/sitemap.xml",
-      "destination": "/api"
+      "destination": "/api?sitemap=true"
     },
     {
       "source": "/(.*)",
