@@ -3,18 +3,16 @@ import path from "path";
 import nodemailer from "nodemailer";
 import dotenv from "dotenv";
 import fs from "fs";
-import { createServer as createViteServer } from "vite";
 
 // Load environment variables
 dotenv.config();
 
 const app = express();
-const PORT = 3000;
 
 // Body parsing middleware
 app.use(express.json());
 
-// SEO JSON File Path
+// Paths
 const LOCAL_SEO_FILE = path.join(process.cwd(), "seo.json");
 const TMP_SEO_FILE = path.join("/tmp", "seo.json");
 
@@ -64,50 +62,6 @@ function saveSeoData(data: any) {
       console.error("Failed to write to /tmp/seo.json:", tmpErr);
     }
   }
-}
-
-// Dynamic SEO Injection function
-function injectSeo(htmlStr: string, seo: any): string {
-  // Replace title
-  htmlStr = htmlStr.replace(/<title>[^<]*<\/title>/i, `<title>${seo.title}</title>`);
-  
-  // Replace meta description
-  htmlStr = htmlStr.replace(/<meta[^>]*?name="description"[^>]*?content="[^"]*"[^>]*?>/i, `<meta name="description" content="${seo.description}" />`);
-  htmlStr = htmlStr.replace(/<meta[^>]*?content="[^"]*"[^>]*?name="description"[^>]*?>/i, `<meta name="description" content="${seo.description}" />`);
-  
-  // Replace meta keywords
-  htmlStr = htmlStr.replace(/<meta[^>]*?name="keywords"[^>]*?content="[^"]*"[^>]*?>/i, `<meta name="keywords" content="${seo.keywords}" />`);
-  htmlStr = htmlStr.replace(/<meta[^>]*?content="[^"]*"[^>]*?name="keywords"[^>]*?>/i, `<meta name="keywords" content="${seo.keywords}" />`);
-  
-  // Replace canonical link
-  htmlStr = htmlStr.replace(/<link[^>]*?rel="canonical"[^>]*?href="[^"]*"[^>]*?>/i, `<link rel="canonical" href="${seo.canonical}" />`);
-  htmlStr = htmlStr.replace(/<link[^>]*?href="[^"]*"[^>]*?rel="canonical"[^>]*?>/i, `<link rel="canonical" href="${seo.canonical}" />`);
-  
-  // Replace og:title
-  htmlStr = htmlStr.replace(/<meta[^>]*?property="og:title"[^>]*?content="[^"]*"[^>]*?>/i, `<meta property="og:title" content="${seo.ogTitle || seo.title}" />`);
-  htmlStr = htmlStr.replace(/<meta[^>]*?content="[^"]*"[^>]*?property="og:title"[^>]*?>/i, `<meta property="og:title" content="${seo.ogTitle || seo.title}" />`);
-  
-  // Replace og:description
-  htmlStr = htmlStr.replace(/<meta[^>]*?property="og:description"[^>]*?content="[^"]*"[^>]*?>/i, `<meta property="og:description" content="${seo.ogDescription || seo.description}" />`);
-  htmlStr = htmlStr.replace(/<meta[^>]*?content="[^"]*"[^>]*?property="og:description"[^>]*?>/i, `<meta property="og:description" content="${seo.ogDescription || seo.description}" />`);
-  
-  // Replace og:image
-  htmlStr = htmlStr.replace(/<meta[^>]*?property="og:image"[^>]*?content="[^"]*"[^>]*?>/i, `<meta property="og:image" content="${seo.ogImage || ''}" />`);
-  htmlStr = htmlStr.replace(/<meta[^>]*?content="[^"]*"[^>]*?property="og:image"[^>]*?>/i, `<meta property="og:image" content="${seo.ogImage || ''}" />`);
-  
-  // Replace twitter:title
-  htmlStr = htmlStr.replace(/<meta[^>]*?(?:name|property)="twitter:title"[^>]*?content="[^"]*"[^>]*?>/i, `<meta property="twitter:title" content="${seo.twitterTitle || seo.title}" />`);
-  htmlStr = htmlStr.replace(/<meta[^>]*?content="[^"]*"[^>]*?(?:name|property)="twitter:title"[^>]*?>/i, `<meta property="twitter:title" content="${seo.twitterTitle || seo.title}" />`);
-  
-  // Replace twitter:description
-  htmlStr = htmlStr.replace(/<meta[^>]*?(?:name|property)="twitter:description"[^>]*?content="[^"]*"[^>]*?>/i, `<meta property="twitter:description" content="${seo.twitterDescription || seo.description}" />`);
-  htmlStr = htmlStr.replace(/<meta[^>]*?content="[^"]*"[^>]*?(?:name|property)="twitter:description"[^>]*?>/i, `<meta property="twitter:description" content="${seo.twitterDescription || seo.description}" />`);
-  
-  // Replace twitter:image
-  htmlStr = htmlStr.replace(/<meta[^>]*?(?:name|property)="twitter:image"[^>]*?content="[^"]*"[^>]*?>/i, `<meta property="twitter:image" content="${seo.twitterImage || ''}" />`);
-  htmlStr = htmlStr.replace(/<meta[^>]*?content="[^"]*"[^>]*?(?:name|property)="twitter:image"[^>]*?>/i, `<meta property="twitter:image" content="${seo.twitterImage || ''}" />`);
-  
-  return htmlStr;
 }
 
 // API Routes for SEO Configuration
@@ -182,19 +136,10 @@ app.post("/api/enquiry", async (req, res) => {
   try {
     const { parentName, mobileNumber, email, message } = req.body;
 
-    // Basic validation
     if (!parentName || !mobileNumber || !email || !message) {
       res.status(400).json({ error: "All fields are required" });
       return;
     }
-
-    console.log("-----------------------------------------");
-    console.log("NEW ENQUIRY RECEIVED:");
-    console.log(`Parent Name:   ${parentName}`);
-    console.log(`Mobile Number: ${mobileNumber}`);
-    console.log(`Email Address: ${email}`);
-    console.log(`Message:       ${message}`);
-    console.log("-----------------------------------------");
 
     // Gather SMTP Configuration from environment
     const smtpHost = process.env.SMTP_HOST;
@@ -234,29 +179,23 @@ app.post("/api/enquiry", async (req, res) => {
       </div>
     `;
 
-    // Check if SMTP is configured
     if (smtpHost && smtpUser && smtpPass) {
       const transporter = nodemailer.createTransport({
         host: smtpHost,
         port: smtpPort,
-        secure: smtpPort === 465, // true for 465, false for other ports
+        secure: smtpPort === 465,
         auth: {
           user: smtpUser,
           pass: smtpPass,
         },
       });
 
-      // AWS SES / Strict SMTP Sender Resolution:
-      // 1. Use SMTP_FROM if explicitly defined
-      // 2. If SMTP_USER contains '@' (like Gmail/Outlook), use it as sender
-      // 3. Fallback to recipientEmail (which is likely the verified identity in the email service)
       const smtpFrom = process.env.SMTP_FROM;
       const senderEmail = smtpFrom || (smtpUser.includes("@") ? smtpUser : recipientEmail);
 
-      // Send the actual email
       await transporter.sendMail({
-        from: `"Rocking Kids Academy" <${senderEmail}>`, // Send from the verified email identity
-        replyTo: email, // Direct replies to the parent's actual email address
+        from: `"Rocking Kids Academy" <${senderEmail}>`,
+        replyTo: email,
         to: recipientEmail,
         cc: "venky1302@gmail.com",
         subject: emailSubject,
@@ -268,75 +207,19 @@ app.post("/api/enquiry", async (req, res) => {
         message: "Your enquiry has been sent successfully to the academy!" 
       });
     } else {
-      // Graceful fallback for local development or unconfigured environment
-      console.warn("SMTP credentials not configured. Skipping live email dispatch.");
       res.status(200).json({ 
         success: true, 
-        warning: "SMTP credentials not configured in environment variables. Your enquiry was processed and printed to the server console.",
+        warning: "SMTP credentials not configured in environment variables. Your enquiry was processed on the server.",
         previewData: { parentName, mobileNumber, email, message }
       });
     }
   } catch (error: any) {
-    console.error("Error processing enquiry:", error);
     res.status(200).json({ 
       success: true,
-      warning: `Enquiry was received by the server, but email delivery failed due to SMTP error: "${error.message || error}". Please configure valid SMTP keys in your environment variables to receive live emails.`,
+      warning: `Enquiry was received by the server, but email delivery failed: "${error.message || error}"`,
       previewData: req.body
     });
   }
 });
 
-// Setup Vite Dev Server / Static Assets handling
-async function startServer() {
-  if (process.env.NODE_ENV !== "production") {
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: "custom",
-    });
-
-    // Handle Vite's middlewares first (resolves all internal hot-reloads, client assets, and modules)
-    app.use(vite.middlewares);
-
-    // Custom router to inject dynamic SEO meta tags in development
-    app.get("*", async (req, res, next) => {
-      // Skip API and files that might have slipped through
-      if (req.path.startsWith("/api/") || req.path.includes(".")) {
-        return next();
-      }
-      try {
-        const rawHtml = fs.readFileSync(path.join(process.cwd(), "index.html"), "utf-8");
-        const injected = injectSeo(rawHtml, loadSeoData());
-        const transformed = await vite.transformIndexHtml(req.url, injected);
-        res.status(200).set({ "Content-Type": "text/html" }).end(transformed);
-      } catch (e) {
-        console.error("Vite index.html inject error:", e);
-        next(e);
-      }
-    });
-  } else {
-    const distPath = path.join(process.cwd(), "dist");
-    
-    // Serve static files (but bypass index.html so we can inject dynamic SEO tags)
-    app.use(express.static(distPath, { index: false }));
-    
-    // For React/Vite SPAs - inject dynamic SEO meta tags in production
-    app.get("*", (req, res) => {
-      try {
-        const rawHtml = fs.readFileSync(path.join(distPath, "index.html"), "utf-8");
-        const injected = injectSeo(rawHtml, loadSeoData());
-        res.status(200).set({ "Content-Type": "text/html" }).end(injected);
-      } catch (e) {
-        console.error("Failed to inject SEO tags in production, sending raw index.html:", e);
-        res.sendFile(path.join(distPath, "index.html"));
-      }
-    });
-  }
-
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Server running on http://localhost:${PORT}`);
-  });
-}
-
-startServer().catch((err) => {
-  console.error("Failed to start server:", err);
-});
+export default app;
