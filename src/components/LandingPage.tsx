@@ -436,23 +436,46 @@ export const LandingPage = () => {
                 <div>
                   <h3 className="text-base font-bold text-navy-900 mb-1">Phone / WhatsApp</h3>
                   <p className="text-navy-500 text-xs font-sans mb-3">Direct assistance for admissions and general inquiries.</p>
-                  <div className="flex flex-col gap-2">
-                    <a 
-                      href="https://wa.me/918754431210" 
-                      target="_blank" 
-                      rel="noreferrer"
-                      className="inline-flex items-center gap-2 text-navy-900 font-black text-[9px] uppercase tracking-widest hover:text-yellow-600 transition-colors"
-                    >
-                      +91 87544 31210 <MessageCircle size={12} className="text-green-500" />
-                    </a>
-                    <a 
-                      href="https://wa.me/918754495607" 
-                      target="_blank" 
-                      rel="noreferrer"
-                      className="inline-flex items-center gap-2 text-navy-900 font-black text-[9px] uppercase tracking-widest hover:text-yellow-600 transition-colors"
-                    >
-                      +91 87544 95607 <MessageCircle size={12} className="text-green-500" />
-                    </a>
+                  <div className="flex flex-col gap-3">
+                    {/* Number 1 */}
+                    <div className="flex flex-wrap items-center gap-2.5">
+                      <a 
+                        href="tel:+918754431210" 
+                        className="inline-flex items-center gap-1.5 text-navy-900 font-black text-[10px] uppercase tracking-widest hover:text-yellow-600 transition-colors border-r border-slate-200 pr-2.5"
+                        title="Click to Call"
+                      >
+                        <Phone size={10} className="text-navy-400" /> +91 87544 31210
+                      </a>
+                      <a 
+                        href="https://wa.me/918754431210" 
+                        target="_blank" 
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1 text-[9px] font-bold text-green-600 hover:text-green-700 uppercase tracking-wider transition-colors"
+                        title="Chat on WhatsApp"
+                      >
+                        <MessageCircle size={12} className="fill-green-500 text-green-500" /> Chat
+                      </a>
+                    </div>
+
+                    {/* Number 2 */}
+                    <div className="flex flex-wrap items-center gap-2.5">
+                      <a 
+                        href="tel:+918754495607" 
+                        className="inline-flex items-center gap-1.5 text-navy-900 font-black text-[10px] uppercase tracking-widest hover:text-yellow-600 transition-colors border-r border-slate-200 pr-2.5"
+                        title="Click to Call"
+                      >
+                        <Phone size={10} className="text-navy-400" /> +91 87544 95607
+                      </a>
+                      <a 
+                        href="https://wa.me/918754495607" 
+                        target="_blank" 
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1 text-[9px] font-bold text-green-600 hover:text-green-700 uppercase tracking-wider transition-colors"
+                        title="Chat on WhatsApp"
+                      >
+                        <MessageCircle size={12} className="fill-green-500 text-green-500" /> Chat
+                      </a>
+                    </div>
                   </div>
                 </div>
               </motion.div>
