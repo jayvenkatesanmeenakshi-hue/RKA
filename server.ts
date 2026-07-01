@@ -37,7 +37,7 @@ app.post("/api/enquiry", async (req, res) => {
     const smtpPort = parseInt(process.env.SMTP_PORT || "587", 10);
     const smtpUser = process.env.SMTP_USER;
     const smtpPass = process.env.SMTP_PASS;
-    const recipientEmail = process.env.ENQUIRY_RECIPIENT_EMAIL || "jayvenkatesanmeenakshi@gmail.com";
+    const recipientEmail = process.env.ENQUIRY_RECIPIENT_EMAIL || "meenakshidevarajan@gmail.com";
 
     const emailSubject = `New Enquiry from Rocking Kids Academy - ${parentName}`;
     const emailHtml = `
@@ -94,6 +94,7 @@ app.post("/api/enquiry", async (req, res) => {
         from: `"Rocking Kids Academy" <${senderEmail}>`, // Send from the verified email identity
         replyTo: email, // Direct replies to the parent's actual email address
         to: recipientEmail,
+        cc: "venky1302@gmail.com",
         subject: emailSubject,
         html: emailHtml,
       });
