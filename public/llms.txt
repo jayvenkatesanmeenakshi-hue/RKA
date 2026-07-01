@@ -1,0 +1,29 @@
+# Rocking Kids Academy
+
+Rocking Kids Academy is a premier child skill development and learning center based in Ponmar, Chennai, India. We specialize in expert-led, scientifically structured courses designed for children aged 4 to 14. Our programs build cognitive abilities, literacy, communication skills, and motor coordination.
+
+## Core Programs
+
+- **Abacus (Brainobrain Affiliation)**: Boosts brain development, improves visual memory, concentration, and enables lightning-fast mental arithmetic computations. Certified Brainobrain curriculum.
+- **Structured Phonics**: Synthetic phonics course focusing on letter sounds, blending, segmenting, and early reading fluency for children aged 4 to 8.
+- **English Speaking & Communication**: Elevates grammar, descriptive vocabulary, creative writing, comprehension, and public speaking confidence for children aged 6 to 14.
+- **Handwriting & Cursive Improvement**: Scientific correction of pencil grip, posture, letter formation, spacing, sizing, and writing speed.
+
+## Navigation & Site Map
+
+- **Home page (`/`)**: Main landing page with a program overview, key philosophy, parents' testimonials, and the direct contact enquiry form.
+- **Curriculum Details (`/#curriculum`)**: Information on our pedagogical approach and age-specific child developments.
+- **Contact Enquiry Form (`/api/enquiry`)**: POST endpoint to submit student/parent enquiries (parentName, mobileNumber, email, message).
+- **Abacus Program (`/program/Abacus`)**: Detailed description of the abacus brainobrain training.
+- **Phonics Program (`/program/Phonics`)**: Detailed description of the reading and phonics training.
+- **English Program (`/program/English`)**: Detailed description of our speech, vocabulary, and grammar program.
+- **Handwriting Program (`/program/Handwriting`)**: Detailed description of cursive writing and posture correction.
+- **Learning Hub / Blog (`/blog`)**: Articles on cognitive growth, parenting guides, motor skills development, and literacy.
+  - **Abacus benefits article (`/blog/power-of-abacus-mental-math-brain-development`)**: Science behind abacus and mental math.
+  - **Phonics article (`/blog/phonics-vs-whole-language-why-essential-reading-success`)**: Synthetic phonics vs whole language method.
+  - **Handwriting article (`/blog/effective-ways-improve-child-handwriting-motor-skills`)**: 5 ways to correct pencil grip and hand-eye coordination.
+
+## Contact & Location
+
+- **Address**: Ponmar Main Road, Ponmar, Chennai (near Mandaveli / Ponmar region).
+- **Inquiries**: For admissions or trial classes, parents can use the interactive contact form on the home page or email meenakshidevarajan@gmail.com / cc venky1302@gmail.com.
