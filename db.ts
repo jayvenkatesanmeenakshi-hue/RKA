@@ -156,6 +156,20 @@ export async function initDb(): Promise<boolean> {
   }
 }
 
+let dbInitPromise: Promise<boolean> | null = null;
+
+export async function ensureDbInitialized(): Promise<boolean> {
+  if (!pool) return false;
+  if (!dbInitPromise) {
+    dbInitPromise = initDb().catch((err) => {
+      console.error('ensureDbInitialized error:', err);
+      dbInitPromise = null;
+      return false;
+    });
+  }
+  return dbInitPromise;
+}
+
 /**
  * Admin Login Verification
  */
@@ -173,6 +187,7 @@ export async function verifyAdminLogin(usernameInput: string, passwordInput: str
   }
 
   try {
+    await ensureDbInitialized();
     const res = await pool.query('SELECT * FROM admin_users WHERE LOWER(username) = LOWER($1)', [cleanUser]);
     if (res.rows.length > 0) {
       const user = res.rows[0];
@@ -197,6 +212,7 @@ export async function getBlogPosts(): Promise<any[]> {
   }
 
   try {
+    await ensureDbInitialized();
     const res = await pool.query('SELECT * FROM blog_posts ORDER BY id DESC');
     return res.rows.map(row => ({
       id: row.id,
@@ -228,6 +244,7 @@ export async function getBlogPostBySlug(slug: string): Promise<any | null> {
   }
 
   try {
+    await ensureDbInitialized();
     const res = await pool.query('SELECT * FROM blog_posts WHERE slug = $1', [slug]);
     if (res.rows.length === 0) return null;
     const row = res.rows[0];
@@ -293,6 +310,7 @@ export async function saveBlogPost(blogData: {
   }
 
   try {
+    await ensureDbInitialized();
     const query = `
       INSERT INTO blog_posts (slug, title, excerpt, content, category, tags, cover_image, read_time, author, date, published, updated_at)
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, true, CURRENT_TIMESTAMP)
@@ -352,6 +370,7 @@ export async function deleteBlogPost(slug: string): Promise<boolean> {
   }
 
   try {
+    await ensureDbInitialized();
     const res = await pool.query('DELETE FROM blog_posts WHERE slug = $1', [slug]);
     return (res.rowCount ?? 0) > 0;
   } catch (err) {
@@ -384,6 +403,7 @@ export async function saveEnquiry(enquiry: {
   }
 
   try {
+    await ensureDbInitialized();
     const res = await pool.query(
       `INSERT INTO enquiries (parent_name, mobile_number, email, message)
        VALUES ($1, $2, $3, $4)
@@ -406,6 +426,7 @@ export async function getEnquiries(): Promise<any[]> {
   }
 
   try {
+    await ensureDbInitialized();
     const res = await pool.query('SELECT * FROM enquiries ORDER BY id DESC');
     return res.rows.map(row => ({
       id: row.id,
@@ -432,6 +453,7 @@ export async function deleteEnquiry(id: number): Promise<boolean> {
   }
 
   try {
+    await ensureDbInitialized();
     const res = await pool.query('DELETE FROM enquiries WHERE id = $1', [id]);
     return (res.rowCount ?? 0) > 0;
   } catch (err) {
@@ -447,6 +469,7 @@ export async function getDbSeoData(): Promise<any | null> {
   if (!pool) return null;
 
   try {
+    await ensureDbInitialized();
     const res = await pool.query("SELECT data FROM seo_settings WHERE setting_key = 'default'");
     if (res.rows.length > 0) {
       return res.rows[0].data;
@@ -465,6 +488,7 @@ export async function saveDbSeoData(seoData: any): Promise<boolean> {
   if (!pool) return false;
 
   try {
+    await ensureDbInitialized();
     await pool.query(
       `INSERT INTO seo_settings (setting_key, data, updated_at)
        VALUES ('default', $1, CURRENT_TIMESTAMP)

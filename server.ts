@@ -27,6 +27,17 @@ const PORT = 3000;
 // Body parsing middleware
 app.use(express.json());
 
+// Normalizer for Vercel Serverless Function Rewrites
+app.use((req, res, next) => {
+  const url = req.url || "";
+  if (process.env.VERCEL) {
+    if (!url.startsWith("/api") && !url.startsWith("/sitemap") && !url.startsWith("/_") && !url.includes(".")) {
+      req.url = "/api" + (url.startsWith("/") ? "" : "/") + url;
+    }
+  }
+  next();
+});
+
 // Robust sitemap detection middleware
 app.use((req, res, next) => {
   const url = req.url || "";
@@ -586,11 +597,15 @@ async function startServer() {
     });
   }
 
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Server running on http://localhost:${PORT}`);
-  });
+  if (!process.env.VERCEL) {
+    app.listen(PORT, "0.0.0.0", () => {
+      console.log(`Server running on http://localhost:${PORT}`);
+    });
+  }
 }
 
 startServer().catch((err) => {
   console.error("Failed to start server:", err);
 });
+
+export default app;
