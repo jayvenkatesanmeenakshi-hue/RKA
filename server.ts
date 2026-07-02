@@ -297,12 +297,15 @@ async function checkAdminAuth(req: express.Request, res: express.Response, next:
   next();
 }
 
+// Create Express API Router to handle endpoints seamlessly with or without /api prefix
+const apiRouter = express.Router();
+
 // --- ADMIN VERIFY & LOGIN API ENDPOINTS ---
-app.get("/api/admin/verify", checkAdminAuth, (req, res) => {
+apiRouter.get("/admin/verify", checkAdminAuth, (req, res) => {
   res.json({ success: true, message: "Admin authenticated" });
 });
 
-app.post("/api/admin/login", async (req, res) => {
+apiRouter.post("/admin/login", async (req, res) => {
   try {
     const { username, password } = req.body || {};
     if (!username || !password) {
@@ -323,7 +326,7 @@ app.post("/api/admin/login", async (req, res) => {
 });
 
 // --- BLOG POSTS API ENDPOINTS (NEON POSTGRES) ---
-app.get("/api/blogs", async (req, res) => {
+apiRouter.get("/blogs", async (req, res) => {
   try {
     const blogs = await getBlogPosts();
     res.json(blogs);
@@ -332,7 +335,7 @@ app.get("/api/blogs", async (req, res) => {
   }
 });
 
-app.get("/api/blogs/:slug", async (req, res) => {
+apiRouter.get("/blogs/:slug", async (req, res) => {
   try {
     const blog = await getBlogPostBySlug(req.params.slug);
     if (!blog) {
@@ -345,7 +348,7 @@ app.get("/api/blogs/:slug", async (req, res) => {
   }
 });
 
-app.post("/api/admin/blogs", checkAdminAuth, async (req, res) => {
+apiRouter.post("/admin/blogs", checkAdminAuth, async (req, res) => {
   try {
     const { slug, title, excerpt, content, category, tags, coverImage, readTime, author, date } = req.body;
     if (!slug || !title || !content) {
@@ -372,7 +375,7 @@ app.post("/api/admin/blogs", checkAdminAuth, async (req, res) => {
   }
 });
 
-app.delete("/api/admin/blogs/:slug", checkAdminAuth, async (req, res) => {
+apiRouter.delete("/admin/blogs/:slug", checkAdminAuth, async (req, res) => {
   try {
     const success = await deleteBlogPost(req.params.slug);
     if (success) {
@@ -386,7 +389,7 @@ app.delete("/api/admin/blogs/:slug", checkAdminAuth, async (req, res) => {
 });
 
 // --- ADMIN ENQUIRIES API ENDPOINTS (NEON POSTGRES) ---
-app.get("/api/admin/enquiries", checkAdminAuth, async (req, res) => {
+apiRouter.get("/admin/enquiries", checkAdminAuth, async (req, res) => {
   try {
     const enquiries = await getEnquiries();
     res.json(enquiries);
@@ -395,7 +398,7 @@ app.get("/api/admin/enquiries", checkAdminAuth, async (req, res) => {
   }
 });
 
-app.delete("/api/admin/enquiries/:id", checkAdminAuth, async (req, res) => {
+apiRouter.delete("/admin/enquiries/:id", checkAdminAuth, async (req, res) => {
   try {
     const id = parseInt(req.params.id, 10);
     const success = await deleteEnquiry(id);
@@ -410,12 +413,12 @@ app.delete("/api/admin/enquiries/:id", checkAdminAuth, async (req, res) => {
 });
 
 // --- SEO CONFIGURATION API ENDPOINTS ---
-app.get("/api/seo", async (req, res) => {
+apiRouter.get("/seo", async (req, res) => {
   const seo = await loadSeoData();
   res.json(seo);
 });
 
-app.post("/api/seo", checkAdminAuth, async (req, res) => {
+apiRouter.post("/seo", checkAdminAuth, async (req, res) => {
   const { title, description, keywords, canonical, ogTitle, ogDescription, ogImage, twitterTitle, twitterDescription, twitterImage, sitemapUrls } = req.body;
   
   if (!title || !description) {
@@ -441,17 +444,8 @@ app.post("/api/seo", checkAdminAuth, async (req, res) => {
   res.json({ success: true, message: "SEO configuration updated successfully in Neon Postgres!", data: newSeo });
 });
 
-// Dynamic public sitemap.xml endpoints
-app.get("/sitemap.xml", (req, res) => {
-  serveSitemap(req, res);
-});
-
-app.get("/api/sitemap.xml", (req, res) => {
-  serveSitemap(req, res);
-});
-
 // --- PUBLIC PARENT ENQUIRY ENDPOINT ---
-app.post("/api/enquiry", async (req, res) => {
+apiRouter.post("/enquiry", async (req, res) => {
   try {
     const { parentName, mobileNumber, email, message } = req.body;
 
@@ -551,53 +545,76 @@ app.post("/api/enquiry", async (req, res) => {
   }
 });
 
+// Mount API router on both /api and / to handle all rewrite variants
+app.use("/api", apiRouter);
+app.use("/", apiRouter);
+
+// Catch-all 404 for unmatched API requests
+app.use("/api/*", (req, res) => {
+  res.status(404).json({ error: `API route not found: ${req.method} ${req.originalUrl}` });
+});
+
+// Global Error Handler middleware to enforce JSON response formatting
+app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  console.error("Server error:", err);
+  if (!res.headersSent) {
+    res.status(500).json({ error: err?.message || "An unexpected server error occurred." });
+  }
+});
+
 // Setup Vite Dev Server / Static Assets handling
 async function startServer() {
-  // Connect and initialize Neon Postgres tables
-  await initDb();
-
-  if (process.env.NODE_ENV !== "production") {
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: "custom",
-    });
-
-    app.use(vite.middlewares);
-
-    app.get("*", async (req, res, next) => {
-      if (req.path.startsWith("/api/") || req.path.includes(".")) {
-        return next();
-      }
-      try {
-        const rawHtml = fs.readFileSync(path.join(process.cwd(), "index.html"), "utf-8");
-        const baseSeo = await loadSeoData();
-        const injected = await injectSeo(rawHtml, baseSeo, req.path);
-        const transformed = await vite.transformIndexHtml(req.url, injected);
-        res.status(200).set({ "Content-Type": "text/html" }).end(transformed);
-      } catch (e) {
-        console.error("Vite index.html inject error:", e);
-        next(e);
-      }
-    });
-  } else {
-    const distPath = path.join(process.cwd(), "dist");
-    
-    app.use(express.static(distPath, { index: false }));
-    
-    app.get("*", async (req, res) => {
-      try {
-        const rawHtml = fs.readFileSync(path.join(distPath, "index.html"), "utf-8");
-        const baseSeo = await loadSeoData();
-        const injected = await injectSeo(rawHtml, baseSeo, req.path);
-        res.status(200).set({ "Content-Type": "text/html" }).end(injected);
-      } catch (e) {
-        console.error("Failed to inject SEO tags in production, sending raw index.html:", e);
-        res.sendFile(path.join(distPath, "index.html"));
-      }
-    });
-  }
+  // Connect and initialize Neon Postgres tables in background
+  initDb().catch((err) => {
+    console.error("Background DB init error:", err);
+  });
 
   if (!process.env.VERCEL) {
+    if (process.env.NODE_ENV !== "production") {
+      const vite = await createViteServer({
+        server: { middlewareMode: true },
+        appType: "custom",
+      });
+
+      app.use(vite.middlewares);
+
+      app.get("*", async (req, res, next) => {
+        if (req.path.startsWith("/api/") || req.path.includes(".")) {
+          return next();
+        }
+        try {
+          const rawHtml = fs.readFileSync(path.join(process.cwd(), "index.html"), "utf-8");
+          const baseSeo = await loadSeoData();
+          const injected = await injectSeo(rawHtml, baseSeo, req.path);
+          const transformed = await vite.transformIndexHtml(req.url, injected);
+          res.status(200).set({ "Content-Type": "text/html" }).end(transformed);
+        } catch (e) {
+          console.error("Vite index.html inject error:", e);
+          next(e);
+        }
+      });
+    } else {
+      const distPath = path.join(process.cwd(), "dist");
+      
+      app.use(express.static(distPath, { index: false }));
+      
+      app.get("*", async (req, res) => {
+        try {
+          const rawHtml = fs.readFileSync(path.join(distPath, "index.html"), "utf-8");
+          const baseSeo = await loadSeoData();
+          const injected = await injectSeo(rawHtml, baseSeo, req.path);
+          res.status(200).set({ "Content-Type": "text/html" }).end(injected);
+        } catch (e) {
+          console.error("Failed to inject SEO tags in production, sending raw index.html:", e);
+          if (fs.existsSync(path.join(distPath, "index.html"))) {
+            res.sendFile(path.join(distPath, "index.html"));
+          } else {
+            res.status(404).json({ error: "Page not found" });
+          }
+        }
+      });
+    }
+
     app.listen(PORT, "0.0.0.0", () => {
       console.log(`Server running on http://localhost:${PORT}`);
     });
