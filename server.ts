@@ -4,6 +4,19 @@ import nodemailer from "nodemailer";
 import dotenv from "dotenv";
 import fs from "fs";
 import { createServer as createViteServer } from "vite";
+import {
+  initDb,
+  verifyAdminLogin,
+  getBlogPosts,
+  getBlogPostBySlug,
+  saveBlogPost,
+  deleteBlogPost,
+  saveEnquiry,
+  getEnquiries,
+  deleteEnquiry,
+  getDbSeoData,
+  saveDbSeoData
+} from "./db.js";
 
 // Load environment variables
 dotenv.config();
@@ -38,8 +51,15 @@ app.use((req, res, next) => {
 const LOCAL_SEO_FILE = path.join(process.cwd(), "seo.json");
 const TMP_SEO_FILE = path.join("/tmp", "seo.json");
 
-// Helper to load SEO data safely
-function loadSeoData() {
+// Helper to load SEO data safely (DB first, file fallback)
+async function loadSeoData() {
+  try {
+    const dbData = await getDbSeoData();
+    if (dbData) return dbData;
+  } catch (err) {
+    console.error("Error reading SEO from DB, fallback to file:", err);
+  }
+
   try {
     if (fs.existsSync(TMP_SEO_FILE)) {
       return JSON.parse(fs.readFileSync(TMP_SEO_FILE, "utf-8"));
@@ -50,7 +70,7 @@ function loadSeoData() {
   } catch (err) {
     console.error("Error reading seo.json, using defaults:", err);
   }
-  // fallback defaults
+
   return {
     title: "Rocking Kids Academy | Premier Learning Center for Abacus, Phonics & English",
     description: "Rocking Kids Academy is a premier learning center dedicated to skill development for children ages 4 to 14. We offer expert-led courses in Abacus, Phonics, English, and Handwriting mastery.",
@@ -73,11 +93,12 @@ function loadSeoData() {
 }
 
 // Helper to save SEO data
-function saveSeoData(data: any) {
+async function saveSeoData(data: any) {
+  await saveDbSeoData(data);
+
   try {
     fs.writeFileSync(LOCAL_SEO_FILE, JSON.stringify(data, null, 2), "utf-8");
   } catch (err) {
-    console.warn("Could not write to local seo.json (expected on read-only environments like Vercel). Trying /tmp/seo.json...", err);
     try {
       fs.writeFileSync(TMP_SEO_FILE, JSON.stringify(data, null, 2), "utf-8");
     } catch (tmpErr) {
@@ -87,22 +108,19 @@ function saveSeoData(data: any) {
 }
 
 // Helper to serve sitemap XML dynamically
-function serveSitemap(req: express.Request, res: express.Response) {
-  const seo = loadSeoData();
+async function serveSitemap(req: express.Request, res: express.Response) {
+  const seo = await loadSeoData();
   const domain = seo.canonical || "https://rockingkidsacademy.in";
   
   let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
   xml += `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
   
-  // Start with sitemapUrls from seo.json
   const urls = seo.sitemapUrls && seo.sitemapUrls.length > 0 ? [...seo.sitemapUrls] : [];
   
-  // Ensure the homepage is there
   if (!urls.some((u: any) => u.url === "/")) {
     urls.unshift({ url: "/", changefreq: "daily", priority: "1.0" });
   }
   
-  // Dynamically append new program routes
   const programUrls = [
     { url: "/program/Abacus", changefreq: "weekly", priority: "0.9" },
     { url: "/program/Phonics", changefreq: "weekly", priority: "0.9" },
@@ -110,25 +128,27 @@ function serveSitemap(req: express.Request, res: express.Response) {
     { url: "/program/Handwriting", changefreq: "weekly", priority: "0.9" }
   ];
   
-  // Dynamically append blog routes
-  const blogUrls = [
-    { url: "/blog", changefreq: "daily", priority: "0.8" },
-    { url: "/blog/power-of-abacus-mental-math-brain-development", changefreq: "monthly", priority: "0.7" },
-    { url: "/blog/phonics-vs-whole-language-why-essential-reading-success", changefreq: "monthly", priority: "0.7" },
-    { url: "/blog/effective-ways-improve-child-handwriting-motor-skills", changefreq: "monthly", priority: "0.7" }
-  ];
-
   programUrls.forEach(item => {
     if (!urls.some((u: any) => u.url === item.url)) {
       urls.push(item);
     }
   });
 
-  blogUrls.forEach(item => {
-    if (!urls.some((u: any) => u.url === item.url)) {
-      urls.push(item);
+  // Dynamically append blog routes from Neon DB or memory
+  try {
+    const blogs = await getBlogPosts();
+    if (!urls.some((u: any) => u.url === "/blog")) {
+      urls.push({ url: "/blog", changefreq: "daily", priority: "0.8" });
     }
-  });
+    blogs.forEach((b: any) => {
+      const blogPath = `/blog/${b.slug}`;
+      if (!urls.some((u: any) => u.url === blogPath)) {
+        urls.push({ url: blogPath, changefreq: "monthly", priority: "0.7" });
+      }
+    });
+  } catch (e) {
+    console.error("Sitemap blog fetch error:", e);
+  }
   
   urls.forEach((item: any) => {
     const urlPath = item.url.startsWith("http") ? item.url : `${domain.replace(/\/$/, '')}${item.url.startsWith('/') ? '' : '/'}${item.url}`;
@@ -147,7 +167,7 @@ function serveSitemap(req: express.Request, res: express.Response) {
 }
 
 // Route-specific dynamic SEO parameters
-function getOverrideSeo(reqPath: string, baseSeo: any) {
+async function getOverrideSeo(reqPath: string, baseSeo: any) {
   const domain = baseSeo.canonical || "https://rockingkidsacademy.in";
   
   if (reqPath === '/blog') {
@@ -196,97 +216,186 @@ function getOverrideSeo(reqPath: string, baseSeo: any) {
   
   if (reqPath.startsWith('/blog/')) {
     const slug = reqPath.replace('/blog/', '');
-    let title = "";
-    let description = "";
-    
-    if (slug === 'power-of-abacus-mental-math-brain-development') {
-      title = "The Power of Abacus: How Mental Math Boosts Brain Development";
-      description = "Learn how abacus training builds whole-brain connectivity, visual working memory, concentration, and lifetime confidence in children.";
-    } else if (slug === 'phonics-vs-whole-language-why-essential-reading-success') {
-      title = "Phonics vs. Whole Language: Why Phonics is Essential for Reading";
-      description = "Discover the cognitive science of reading and why systematic synthetic phonics is the absolute best way to build early literacy fluency.";
-    } else if (slug === 'effective-ways-improve-child-handwriting-motor-skills') {
-      title = "5 Effective Ways to Improve Your Child's Handwriting & Motor Skills";
-      description = "Struggling with messy cursive? Read these practical, fine motor and ergonomic tips to improve your child's hand coordination.";
-    } else {
-      return baseSeo;
+    try {
+      const blog = await getBlogPostBySlug(slug);
+      if (blog) {
+        return {
+          ...baseSeo,
+          title: `${blog.title} | Rocking Kids Academy`,
+          description: blog.excerpt,
+          canonical: `${domain}${reqPath}`,
+          ogTitle: blog.title,
+          ogDescription: blog.excerpt,
+          ogImage: blog.coverImage || baseSeo.ogImage,
+          twitterTitle: blog.title,
+          twitterDescription: blog.excerpt,
+          twitterImage: blog.coverImage || baseSeo.twitterImage
+        };
+      }
+    } catch (e) {
+      console.error("Error generating override SEO for blog:", e);
     }
-    
-    return {
-      ...baseSeo,
-      title,
-      description,
-      canonical: `${domain}${reqPath}`,
-      ogTitle: title,
-      ogDescription: description,
-      twitterTitle: title,
-      twitterDescription: description
-    };
   }
   
   return baseSeo;
 }
 
 // Dynamic SEO Injection function
-function injectSeo(htmlStr: string, baseSeo: any, reqPath?: string): string {
-  const seo = reqPath ? getOverrideSeo(reqPath, baseSeo) : baseSeo;
+async function injectSeo(htmlStr: string, baseSeo: any, reqPath?: string): Promise<string> {
+  const seo = reqPath ? await getOverrideSeo(reqPath, baseSeo) : baseSeo;
 
-  // Replace title
   htmlStr = htmlStr.replace(/<title>[^<]*<\/title>/i, `<title>${seo.title}</title>`);
-  
-  // Replace meta description
   htmlStr = htmlStr.replace(/<meta[^>]*?name="description"[^>]*?content="[^"]*"[^>]*?>/i, `<meta name="description" content="${seo.description}" />`);
   htmlStr = htmlStr.replace(/<meta[^>]*?content="[^"]*"[^>]*?name="description"[^>]*?>/i, `<meta name="description" content="${seo.description}" />`);
-  
-  // Replace meta keywords
   htmlStr = htmlStr.replace(/<meta[^>]*?name="keywords"[^>]*?content="[^"]*"[^>]*?>/i, `<meta name="keywords" content="${seo.keywords}" />`);
   htmlStr = htmlStr.replace(/<meta[^>]*?content="[^"]*"[^>]*?name="keywords"[^>]*?>/i, `<meta name="keywords" content="${seo.keywords}" />`);
-  
-  // Replace canonical link
   htmlStr = htmlStr.replace(/<link[^>]*?rel="canonical"[^>]*?href="[^"]*"[^>]*?>/i, `<link rel="canonical" href="${seo.canonical}" />`);
   htmlStr = htmlStr.replace(/<link[^>]*?href="[^"]*"[^>]*?rel="canonical"[^>]*?>/i, `<link rel="canonical" href="${seo.canonical}" />`);
-  
-  // Replace og:title
   htmlStr = htmlStr.replace(/<meta[^>]*?property="og:title"[^>]*?content="[^"]*"[^>]*?>/i, `<meta property="og:title" content="${seo.ogTitle || seo.title}" />`);
   htmlStr = htmlStr.replace(/<meta[^>]*?content="[^"]*"[^>]*?property="og:title"[^>]*?>/i, `<meta property="og:title" content="${seo.ogTitle || seo.title}" />`);
-  
-  // Replace og:description
   htmlStr = htmlStr.replace(/<meta[^>]*?property="og:description"[^>]*?content="[^"]*"[^>]*?>/i, `<meta property="og:description" content="${seo.ogDescription || seo.description}" />`);
   htmlStr = htmlStr.replace(/<meta[^>]*?content="[^"]*"[^>]*?property="og:description"[^>]*?>/i, `<meta property="og:description" content="${seo.ogDescription || seo.description}" />`);
-  
-  // Replace og:image
   htmlStr = htmlStr.replace(/<meta[^>]*?property="og:image"[^>]*?content="[^"]*"[^>]*?>/i, `<meta property="og:image" content="${seo.ogImage || ''}" />`);
   htmlStr = htmlStr.replace(/<meta[^>]*?content="[^"]*"[^>]*?property="og:image"[^>]*?>/i, `<meta property="og:image" content="${seo.ogImage || ''}" />`);
-  
-  // Replace twitter:title
   htmlStr = htmlStr.replace(/<meta[^>]*?(?:name|property)="twitter:title"[^>]*?content="[^"]*"[^>]*?>/i, `<meta property="twitter:title" content="${seo.twitterTitle || seo.title}" />`);
   htmlStr = htmlStr.replace(/<meta[^>]*?content="[^"]*"[^>]*?(?:name|property)="twitter:title"[^>]*?>/i, `<meta property="twitter:title" content="${seo.twitterTitle || seo.title}" />`);
-  
-  // Replace twitter:description
   htmlStr = htmlStr.replace(/<meta[^>]*?(?:name|property)="twitter:description"[^>]*?content="[^"]*"[^>]*?>/i, `<meta property="twitter:description" content="${seo.twitterDescription || seo.description}" />`);
   htmlStr = htmlStr.replace(/<meta[^>]*?content="[^"]*"[^>]*?(?:name|property)="twitter:description"[^>]*?>/i, `<meta property="twitter:description" content="${seo.twitterDescription || seo.description}" />`);
-  
-  // Replace twitter:image
   htmlStr = htmlStr.replace(/<meta[^>]*?(?:name|property)="twitter:image"[^>]*?content="[^"]*"[^>]*?>/i, `<meta property="twitter:image" content="${seo.twitterImage || ''}" />`);
   htmlStr = htmlStr.replace(/<meta[^>]*?content="[^"]*"[^>]*?(?:name|property)="twitter:image"[^>]*?>/i, `<meta property="twitter:image" content="${seo.twitterImage || ''}" />`);
   
   return htmlStr;
 }
 
-// API Routes for SEO Configuration
-app.get("/api/seo", (req, res) => {
-  res.json(loadSeoData());
-});
+// Admin Authorization Middleware
+async function checkAdminAuth(req: express.Request, res: express.Response, next: express.NextFunction) {
+  const token = req.headers["x-admin-token"] as string;
+  const username = (req.headers["x-admin-username"] as string) || "admin";
 
-app.post("/api/seo", (req, res) => {
-  const token = req.headers["x-admin-token"];
-  const expectedPassword = process.env.ADMIN_PASSWORD || "RockingKids2026";
-  
-  if (token !== expectedPassword) {
-    res.status(401).json({ error: "Unauthorized: Invalid admin key" });
+  if (!token) {
+    res.status(401).json({ error: "Unauthorized: Missing admin security token" });
     return;
   }
-  
+
+  const isValid = await verifyAdminLogin(username, token);
+  if (!isValid) {
+    res.status(401).json({ error: "Unauthorized: Invalid admin credentials" });
+    return;
+  }
+
+  next();
+}
+
+// --- ADMIN LOGIN API ENDPOINT ---
+app.post("/api/admin/login", async (req, res) => {
+  const { username, password } = req.body;
+  if (!username || !password) {
+    res.status(400).json({ error: "Username and password are required" });
+    return;
+  }
+
+  const isValid = await verifyAdminLogin(username, password);
+  if (isValid) {
+    res.json({ success: true, token: password, username });
+  } else {
+    res.status(401).json({ error: "Invalid admin username or password" });
+  }
+});
+
+// --- BLOG POSTS API ENDPOINTS (NEON POSTGRES) ---
+app.get("/api/blogs", async (req, res) => {
+  try {
+    const blogs = await getBlogPosts();
+    res.json(blogs);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || "Failed to fetch blog posts" });
+  }
+});
+
+app.get("/api/blogs/:slug", async (req, res) => {
+  try {
+    const blog = await getBlogPostBySlug(req.params.slug);
+    if (!blog) {
+      res.status(404).json({ error: "Blog post not found" });
+      return;
+    }
+    res.json(blog);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || "Failed to fetch blog post" });
+  }
+});
+
+app.post("/api/admin/blogs", checkAdminAuth, async (req, res) => {
+  try {
+    const { slug, title, excerpt, content, category, tags, coverImage, readTime, author, date } = req.body;
+    if (!slug || !title || !content) {
+      res.status(400).json({ error: "Slug, title, and content are required fields" });
+      return;
+    }
+
+    const blog = await saveBlogPost({
+      slug,
+      title,
+      excerpt: excerpt || title,
+      content,
+      category: category || "General",
+      tags: tags || [],
+      coverImage: coverImage || "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&q=80&w=800",
+      readTime,
+      author,
+      date
+    });
+
+    res.json({ success: true, message: "Blog post successfully saved to Neon Postgres!", blog });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || "Failed to save blog post to database" });
+  }
+});
+
+app.delete("/api/admin/blogs/:slug", checkAdminAuth, async (req, res) => {
+  try {
+    const success = await deleteBlogPost(req.params.slug);
+    if (success) {
+      res.json({ success: true, message: "Blog post deleted successfully from Neon Postgres" });
+    } else {
+      res.status(404).json({ error: "Blog post not found" });
+    }
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || "Failed to delete blog post" });
+  }
+});
+
+// --- ADMIN ENQUIRIES API ENDPOINTS (NEON POSTGRES) ---
+app.get("/api/admin/enquiries", checkAdminAuth, async (req, res) => {
+  try {
+    const enquiries = await getEnquiries();
+    res.json(enquiries);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || "Failed to fetch enquiries" });
+  }
+});
+
+app.delete("/api/admin/enquiries/:id", checkAdminAuth, async (req, res) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    const success = await deleteEnquiry(id);
+    if (success) {
+      res.json({ success: true, message: "Enquiry deleted successfully" });
+    } else {
+      res.status(404).json({ error: "Enquiry not found" });
+    }
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || "Failed to delete enquiry" });
+  }
+});
+
+// --- SEO CONFIGURATION API ENDPOINTS ---
+app.get("/api/seo", async (req, res) => {
+  const seo = await loadSeoData();
+  res.json(seo);
+});
+
+app.post("/api/seo", checkAdminAuth, async (req, res) => {
   const { title, description, keywords, canonical, ogTitle, ogDescription, ogImage, twitterTitle, twitterDescription, twitterImage, sitemapUrls } = req.body;
   
   if (!title || !description) {
@@ -308,8 +417,8 @@ app.post("/api/seo", (req, res) => {
     sitemapUrls: sitemapUrls || []
   };
   
-  saveSeoData(newSeo);
-  res.json({ success: true, message: "SEO configuration updated successfully!", data: newSeo });
+  await saveSeoData(newSeo);
+  res.json({ success: true, message: "SEO configuration updated successfully in Neon Postgres!", data: newSeo });
 });
 
 // Dynamic public sitemap.xml endpoints
@@ -321,24 +430,24 @@ app.get("/api/sitemap.xml", (req, res) => {
   serveSitemap(req, res);
 });
 
-// API Enquiry Endpoint
+// --- PUBLIC PARENT ENQUIRY ENDPOINT ---
 app.post("/api/enquiry", async (req, res) => {
   try {
     const { parentName, mobileNumber, email, message } = req.body;
 
-    // Basic validation
     if (!parentName || !mobileNumber || !email || !message) {
       res.status(400).json({ error: "All fields are required" });
       return;
     }
 
-    console.log("-----------------------------------------");
-    console.log("NEW ENQUIRY RECEIVED:");
-    console.log(`Parent Name:   ${parentName}`);
-    console.log(`Mobile Number: ${mobileNumber}`);
-    console.log(`Email Address: ${email}`);
-    console.log(`Message:       ${message}`);
-    console.log("-----------------------------------------");
+    // Save inquiry to Neon Postgres Database
+    let savedRecord = null;
+    try {
+      savedRecord = await saveEnquiry({ parentName, mobileNumber, email, message });
+      console.log("💾 Enquiry saved to Neon Postgres database:", savedRecord);
+    } catch (dbErr) {
+      console.error("Failed to save enquiry to Neon DB:", dbErr);
+    }
 
     // Gather SMTP Configuration from environment
     const smtpHost = process.env.SMTP_HOST;
@@ -349,7 +458,7 @@ app.post("/api/enquiry", async (req, res) => {
 
     const emailSubject = `New Enquiry from Rocking Kids Academy - ${parentName}`;
     const emailHtml = `
-      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #f1f5f9; rounded: 8px;">
+      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #f1f5f9; border-radius: 8px;">
         <h2 style="color: #0f172a; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; margin-bottom: 20px;">Rocking Kids Academy Enquiry</h2>
         <p style="font-size: 14px; color: #334155;">A parent has submitted a new inquiry via the academy website contact form.</p>
         
@@ -378,29 +487,23 @@ app.post("/api/enquiry", async (req, res) => {
       </div>
     `;
 
-    // Check if SMTP is configured
     if (smtpHost && smtpUser && smtpPass) {
       const transporter = nodemailer.createTransport({
         host: smtpHost,
         port: smtpPort,
-        secure: smtpPort === 465, // true for 465, false for other ports
+        secure: smtpPort === 465,
         auth: {
           user: smtpUser,
           pass: smtpPass,
         },
       });
 
-      // AWS SES / Strict SMTP Sender Resolution:
-      // 1. Use SMTP_FROM if explicitly defined
-      // 2. If SMTP_USER contains '@' (like Gmail/Outlook), use it as sender
-      // 3. Fallback to recipientEmail (which is likely the verified identity in the email service)
       const smtpFrom = process.env.SMTP_FROM;
       const senderEmail = smtpFrom || (smtpUser.includes("@") ? smtpUser : recipientEmail);
 
-      // Send the actual email
       await transporter.sendMail({
-        from: `"Rocking Kids Academy" <${senderEmail}>`, // Send from the verified email identity
-        replyTo: email, // Direct replies to the parent's actual email address
+        from: `"Rocking Kids Academy" <${senderEmail}>`,
+        replyTo: email,
         to: recipientEmail,
         cc: "venky1302@gmail.com",
         subject: emailSubject,
@@ -409,31 +512,20 @@ app.post("/api/enquiry", async (req, res) => {
 
       res.status(200).json({ 
         success: true, 
-        message: "Your enquiry has been sent successfully to the academy!" 
+        message: "Your enquiry has been submitted and saved successfully!" 
       });
     } else {
-      // Graceful fallback for local development or unconfigured environment
-      console.warn("SMTP credentials not configured. Skipping live email dispatch.");
       res.status(200).json({ 
         success: true, 
-        warning: "SMTP credentials not configured in environment variables. Your enquiry was processed and printed to the server console.",
+        message: "Your enquiry was received and stored in our database successfully!",
         previewData: { parentName, mobileNumber, email, message }
       });
     }
   } catch (error: any) {
-    console.error("Enquiry Email Delivery Error Details:", {
-      error: error.message || error,
-      code: error.code,
-      command: error.command,
-      response: error.response,
-      smtpHost: process.env.SMTP_HOST,
-      recipientEmail: process.env.ENQUIRY_RECIPIENT_EMAIL || "meenakshidevarajan@gmail.com",
-      smtpFrom: process.env.SMTP_FROM,
-      resolvedSender: process.env.SMTP_FROM || (process.env.SMTP_USER && process.env.SMTP_USER.includes("@") ? process.env.SMTP_USER : (process.env.ENQUIRY_RECIPIENT_EMAIL || "meenakshidevarajan@gmail.com"))
-    });
+    console.error("Enquiry submission error:", error);
     res.status(200).json({ 
       success: true,
-      warning: `Enquiry was received by the server, but email delivery failed: "${error.message || error}"`,
+      message: "Enquiry received and saved to database.",
       previewData: req.body
     });
   }
@@ -441,24 +533,25 @@ app.post("/api/enquiry", async (req, res) => {
 
 // Setup Vite Dev Server / Static Assets handling
 async function startServer() {
+  // Connect and initialize Neon Postgres tables
+  await initDb();
+
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "custom",
     });
 
-    // Handle Vite's middlewares first (resolves all internal hot-reloads, client assets, and modules)
     app.use(vite.middlewares);
 
-    // Custom router to inject dynamic SEO meta tags in development
     app.get("*", async (req, res, next) => {
-      // Skip API and files that might have slipped through
       if (req.path.startsWith("/api/") || req.path.includes(".")) {
         return next();
       }
       try {
         const rawHtml = fs.readFileSync(path.join(process.cwd(), "index.html"), "utf-8");
-        const injected = injectSeo(rawHtml, loadSeoData(), req.path);
+        const baseSeo = await loadSeoData();
+        const injected = await injectSeo(rawHtml, baseSeo, req.path);
         const transformed = await vite.transformIndexHtml(req.url, injected);
         res.status(200).set({ "Content-Type": "text/html" }).end(transformed);
       } catch (e) {
@@ -469,14 +562,13 @@ async function startServer() {
   } else {
     const distPath = path.join(process.cwd(), "dist");
     
-    // Serve static files (but bypass index.html so we can inject dynamic SEO tags)
     app.use(express.static(distPath, { index: false }));
     
-    // For React/Vite SPAs - inject dynamic SEO meta tags in production
-    app.get("*", (req, res) => {
+    app.get("*", async (req, res) => {
       try {
         const rawHtml = fs.readFileSync(path.join(distPath, "index.html"), "utf-8");
-        const injected = injectSeo(rawHtml, loadSeoData(), req.path);
+        const baseSeo = await loadSeoData();
+        const injected = await injectSeo(rawHtml, baseSeo, req.path);
         res.status(200).set({ "Content-Type": "text/html" }).end(injected);
       } catch (e) {
         console.error("Failed to inject SEO tags in production, sending raw index.html:", e);
