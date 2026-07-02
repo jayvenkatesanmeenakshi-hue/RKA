@@ -7,7 +7,8 @@ dotenv.config();
 const { Pool } = pg;
 
 // Connection URL from environment variables (Neon Postgres on Vercel)
-const dbUrl = process.env.DATABASE_URL || process.env.POSTGRES_URL;
+const rawDbUrl = process.env.DATABASE_URL || process.env.POSTGRES_URL;
+const dbUrl = rawDbUrl ? rawDbUrl.trim().replace(/^["']|["']$/g, '') : undefined;
 
 let pool: pg.Pool | null = null;
 
