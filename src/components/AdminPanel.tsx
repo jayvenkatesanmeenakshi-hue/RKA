@@ -141,19 +141,23 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigateTo }) => {
   const testToken = async (userToTest: string, tokenToTest: string) => {
     setIsLoading(true);
     try {
-      const response = await fetch('/api/seo', {
+      const response = await fetch('/api/admin/verify', {
         headers: {
           'x-admin-token': tokenToTest,
           'x-admin-username': userToTest
         }
       });
       if (response.ok) {
-        const data = await response.json();
-        setSeoData(data);
         setIsAuthenticated(true);
         localStorage.setItem('admin_token', tokenToTest);
         localStorage.setItem('admin_username', userToTest);
-        // Load initial tabs
+        
+        const seoRes = await fetch('/api/seo');
+        if (seoRes.ok) {
+          const sData = await seoRes.json();
+          setSeoData(sData);
+        }
+        
         loadBlogs();
         loadEnquiries(tokenToTest, userToTest);
       } else {
@@ -171,27 +175,39 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigateTo }) => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!password) {
+    const cleanUser = username.trim();
+    const cleanPass = password.trim();
+
+    if (!cleanPass) {
       setLoginError('Password is required');
       return;
     }
     setIsLoggingIn(true);
     setLoginError('');
+
     try {
       const response = await fetch('/api/admin/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ username, password })
+        body: JSON.stringify({ username: cleanUser, password: cleanPass })
       });
 
-      const resData = await response.json();
+      let resData: any = {};
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        resData = await response.json();
+      } else {
+        const textResp = await response.text();
+        console.error('Non-JSON login response:', textResp);
+        resData = { error: `Server response error (${response.status}): ${response.statusText || 'Unexpected format'}` };
+      }
 
       if (response.ok && resData.success) {
         setIsAuthenticated(true);
-        localStorage.setItem('admin_token', password);
-        localStorage.setItem('admin_username', username);
+        localStorage.setItem('admin_token', cleanPass);
+        localStorage.setItem('admin_username', cleanUser);
         
         // Fetch SEO data
         const seoRes = await fetch('/api/seo');
@@ -202,12 +218,13 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigateTo }) => {
         
         // Load blogs and enquiries
         loadBlogs();
-        loadEnquiries(password, username);
+        loadEnquiries(cleanPass, cleanUser);
       } else {
         setLoginError(resData.error || 'Invalid Administrator Username or Password.');
       }
-    } catch (err) {
-      setLoginError('Connection failed. Please verify that your server is running.');
+    } catch (err: any) {
+      console.error('Login error:', err);
+      setLoginError(err?.message ? `Connection error: ${err.message}` : 'Connection failed. Please verify that your server is running.');
     } finally {
       setIsLoggingIn(false);
     }

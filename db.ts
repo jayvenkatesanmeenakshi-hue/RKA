@@ -16,6 +16,12 @@ if (dbUrl) {
     pool = new Pool({
       connectionString: dbUrl,
       ssl: dbUrl.includes('localhost') ? false : { rejectUnauthorized: false },
+      connectionTimeoutMillis: 5000,
+      idleTimeoutMillis: 10000,
+      max: 10
+    });
+    pool.on('error', (err) => {
+      console.error('Unexpected error on idle Neon Postgres client:', err);
     });
     console.log('🔗 Neon Postgres client initialized with URL');
   } catch (err) {
@@ -154,25 +160,31 @@ export async function initDb(): Promise<boolean> {
  * Admin Login Verification
  */
 export async function verifyAdminLogin(usernameInput: string, passwordInput: string): Promise<boolean> {
-  const expectedPass = process.env.ADMIN_PASSWORD || 'RockingKids2026';
-  const expectedUser = process.env.ADMIN_USERNAME || 'admin';
+  const expectedPass = (process.env.ADMIN_PASSWORD || 'RockingKids2026').trim();
+  const expectedUser = (process.env.ADMIN_USERNAME || 'admin').trim();
+
+  const cleanUser = (usernameInput || '').trim();
+  const cleanPass = (passwordInput || '').trim();
+
+  const isDefaultMatch = (cleanUser.toLowerCase() === expectedUser.toLowerCase() || cleanUser.toLowerCase() === 'admin') && cleanPass === expectedPass;
 
   if (!pool) {
-    // Fallback login check
-    return (usernameInput === expectedUser || usernameInput === 'admin') && passwordInput === expectedPass;
+    return isDefaultMatch;
   }
 
   try {
-    const res = await pool.query('SELECT * FROM admin_users WHERE username = $1', [usernameInput]);
+    const res = await pool.query('SELECT * FROM admin_users WHERE LOWER(username) = LOWER($1)', [cleanUser]);
     if (res.rows.length > 0) {
       const user = res.rows[0];
-      return user.password === passwordInput;
+      if (user.password === cleanPass) {
+        return true;
+      }
     }
-    // Fallback to env password if not found in db
-    return (usernameInput === expectedUser || usernameInput === 'admin') && passwordInput === expectedPass;
+    // Fallback to env password if not matched in DB or user not in DB
+    return isDefaultMatch;
   } catch (err) {
-    console.error('DB Login verification error:', err);
-    return (usernameInput === expectedUser || usernameInput === 'admin') && passwordInput === expectedPass;
+    console.error('DB Login verification error (falling back to default env credentials):', err);
+    return isDefaultMatch;
   }
 }
 

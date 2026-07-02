@@ -286,19 +286,28 @@ async function checkAdminAuth(req: express.Request, res: express.Response, next:
   next();
 }
 
-// --- ADMIN LOGIN API ENDPOINT ---
-app.post("/api/admin/login", async (req, res) => {
-  const { username, password } = req.body;
-  if (!username || !password) {
-    res.status(400).json({ error: "Username and password are required" });
-    return;
-  }
+// --- ADMIN VERIFY & LOGIN API ENDPOINTS ---
+app.get("/api/admin/verify", checkAdminAuth, (req, res) => {
+  res.json({ success: true, message: "Admin authenticated" });
+});
 
-  const isValid = await verifyAdminLogin(username, password);
-  if (isValid) {
-    res.json({ success: true, token: password, username });
-  } else {
-    res.status(401).json({ error: "Invalid admin username or password" });
+app.post("/api/admin/login", async (req, res) => {
+  try {
+    const { username, password } = req.body || {};
+    if (!username || !password) {
+      res.status(400).json({ error: "Username and password are required" });
+      return;
+    }
+
+    const isValid = await verifyAdminLogin(username, password);
+    if (isValid) {
+      res.json({ success: true, token: password.trim(), username: username.trim() });
+    } else {
+      res.status(401).json({ error: "Invalid Administrator Username or Password." });
+    }
+  } catch (err: any) {
+    console.error("Login endpoint error:", err);
+    res.status(500).json({ error: err?.message || "An unexpected error occurred during login." });
   }
 });
 
