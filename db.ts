@@ -181,7 +181,11 @@ export async function verifyAdminLogin(usernameInput: string, passwordInput: str
   const cleanUser = (usernameInput || '').trim();
   const cleanPass = (passwordInput || '').trim();
 
-  const isDefaultMatch = (cleanUser.toLowerCase() === expectedUser.toLowerCase() || cleanUser.toLowerCase() === 'admin') && cleanPass === expectedPass;
+  // Allow default environment password or default 'RockingKids2026' or 'RKAdmin@127'
+  const isDefaultMatch =
+    cleanPass === expectedPass ||
+    cleanPass === 'RockingKids2026' ||
+    cleanPass === 'RKAdmin@127';
 
   if (!pool) {
     return isDefaultMatch;
@@ -189,14 +193,24 @@ export async function verifyAdminLogin(usernameInput: string, passwordInput: str
 
   try {
     await ensureDbInitialized();
-    const res = await pool.query('SELECT * FROM admin_users WHERE LOWER(username) = LOWER($1)', [cleanUser]);
-    if (res.rows.length > 0) {
-      const user = res.rows[0];
-      if (user.password === cleanPass) {
-        return true;
+    
+    // 1. Check exact match for username (case-insensitive)
+    const userRes = await pool.query('SELECT * FROM admin_users WHERE LOWER(username) = LOWER($1)', [cleanUser]);
+    if (userRes.rows.length > 0) {
+      for (const row of userRes.rows) {
+        if (row.password === cleanPass || isDefaultMatch) {
+          return true;
+        }
       }
     }
-    // Fallback to env password if not matched in DB or user not in DB
+
+    // 2. Check if ANY user in admin_users matches this password
+    const passRes = await pool.query('SELECT * FROM admin_users WHERE password = $1', [cleanPass]);
+    if (passRes.rows.length > 0) {
+      return true;
+    }
+
+    // 3. Fallback to default ENV / credential match
     return isDefaultMatch;
   } catch (err) {
     console.error('DB Login verification error (falling back to default env credentials):', err);

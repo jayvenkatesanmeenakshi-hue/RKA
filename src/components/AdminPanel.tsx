@@ -201,7 +201,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigateTo }) => {
       } else {
         const textResp = await response.text();
         console.error('Non-JSON login response:', textResp);
-        resData = { error: `Server response error (${response.status}): ${response.statusText || 'Unexpected format'}` };
+        try {
+          resData = JSON.parse(textResp);
+        } catch (e) {
+          resData = { error: `Server error (${response.status}): Unable to parse response from server.` };
+        }
       }
 
       if (response.ok && resData.success) {
