@@ -154,10 +154,22 @@ export const LandingPage = ({ navigateTo }: { navigateTo: (path: string) => void
               Dedicated to skill development for children ages 4 to 14. We provide a nurturing environment for Abacus, Phonics, English, and Handwriting mastery.
             </motion.p>
             <motion.div variants={textRevealVariants} className="flex flex-wrap gap-4 pt-4">
-              <button className="bg-navy-900 text-white px-8 py-4 rounded-sm font-black text-[10px] uppercase tracking-widest hover:bg-yellow-500 hover:text-navy-900 transition-all shadow-2xl shadow-navy-900/20 cursor-pointer">
+              <button 
+                onClick={() => {
+                  const el = document.getElementById('contact');
+                  if (el) el.scrollIntoView({ behavior: 'smooth' });
+                }}
+                className="bg-navy-900 text-white px-8 py-4 rounded-sm font-black text-[10px] uppercase tracking-widest hover:bg-yellow-500 hover:text-navy-900 transition-all shadow-2xl shadow-navy-900/20 cursor-pointer"
+              >
                 Enroll Today
               </button>
-              <button className="text-navy-900 border-b-2 border-navy-100 hover:border-yellow-500 px-4 py-4 font-bold text-[10px] uppercase tracking-widest transition-all cursor-pointer">
+              <button 
+                onClick={() => {
+                  const el = document.getElementById('curriculum');
+                  if (el) el.scrollIntoView({ behavior: 'smooth' });
+                }}
+                className="text-navy-900 border-b-2 border-navy-100 hover:border-yellow-500 px-4 py-4 font-bold text-[10px] uppercase tracking-widest transition-all cursor-pointer"
+              >
                 Our Programs
               </button>
             </motion.div>
@@ -346,7 +358,13 @@ export const LandingPage = ({ navigateTo }: { navigateTo: (path: string) => void
                     </div>
                  </div>
 
-                 <button className="w-full bg-navy-900 text-white py-4 rounded-sm font-black text-[10px] uppercase tracking-widest hover:bg-yellow-500 hover:text-navy-900 transition-all cursor-pointer">
+                 <button 
+                   onClick={() => {
+                     const el = document.getElementById('contact');
+                     if (el) el.scrollIntoView({ behavior: 'smooth' });
+                   }}
+                   className="w-full bg-navy-900 text-white py-4 rounded-sm font-black text-[10px] uppercase tracking-widest hover:bg-yellow-500 hover:text-navy-900 transition-all cursor-pointer"
+                 >
                     Contact Admissions
                  </button>
              </div>
