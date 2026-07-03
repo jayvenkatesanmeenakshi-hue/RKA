@@ -101,6 +101,13 @@ export const Navigation = ({ path = '/', navigateTo = () => {} }: NavigationProp
             Location
           </a>
           <a 
+            href="#reviews" 
+            onClick={(e) => handleHashClick(e, '#reviews')} 
+            className="hover:text-yellow-600 transition-all hover:translate-y-[-1px]"
+          >
+            Reviews
+          </a>
+          <a 
             href="/blog" 
             onClick={(e) => { e.preventDefault(); navigateTo('/blog'); }} 
             className={`transition-all hover:translate-y-[-1px] ${path.startsWith('/blog') ? 'text-yellow-600 font-bold' : 'hover:text-yellow-600'}`}
@@ -168,6 +175,13 @@ export const Navigation = ({ path = '/', navigateTo = () => {} }: NavigationProp
               className="py-2 px-3 hover:bg-slate-50 rounded-sm hover:text-yellow-600 transition-all"
             >
               Location
+            </a>
+            <a 
+              href="#reviews" 
+              onClick={(e) => handleHashClick(e, '#reviews')}
+              className="py-2 px-3 hover:bg-slate-50 rounded-sm hover:text-yellow-600 transition-all"
+            >
+              Reviews
             </a>
             <a 
               href="/blog" 

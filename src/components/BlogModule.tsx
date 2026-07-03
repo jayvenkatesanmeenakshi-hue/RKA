@@ -484,7 +484,6 @@ export const BlogModule = ({ currentSlug, navigateTo }: BlogModuleProps) => {
                     <h2 className="text-xs font-black uppercase tracking-[0.2em] text-navy-900 font-sans flex items-center gap-2">
                       <Sparkles size={14} className="text-yellow-500 fill-yellow-500" /> Featured Reading
                     </h2>
-                    <span className="text-[10px] font-mono text-navy-400">Side Column</span>
                   </div>
 
                   <div className="bg-white border border-slate-100 rounded-xl p-5 shadow-sm divide-y divide-slate-100">

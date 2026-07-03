@@ -8,6 +8,7 @@ import { motion } from 'motion/react';
 import { useAcademy } from '../context/AcademyContext';
 import { MapPin, Clock, Phone, Mail, Award, Zap, MessageCircle, PenTool, Instagram, Facebook, Send, Loader2 } from 'lucide-react';
 import { AcademyMap } from './AcademyMap';
+import { GoogleReviews } from './GoogleReviews';
 import logoIcon from '../assets/images/logo-icon.png';
 
 const cardVariants = {
@@ -420,6 +421,9 @@ export const LandingPage = ({ navigateTo }: { navigateTo: (path: string) => void
           </motion.div>
         </div>
       </section>
+
+      {/* Google Reviews & Testimonials Section */}
+      <GoogleReviews />
 
       {/* Contact Section */}
       <section id="contact" className="py-24 px-8 bg-slate-50">
