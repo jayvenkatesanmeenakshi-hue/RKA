@@ -130,6 +130,8 @@ export const GoogleReviews = () => {
 
       if (data.reviews && data.reviews.length > 0) {
         setReviewsList(data.reviews);
+      } else {
+        setReviewsList(fallbackReviewsData);
       }
     } catch (err) {
       console.error('Error fetching Google reviews:', err);

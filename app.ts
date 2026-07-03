@@ -461,6 +461,8 @@ apiRouter.get("/google-reviews", async (req, res) => {
     return;
   }
 
+  const errorsLogged: any[] = [];
+
   try {
     // Attempt 1: Try Places API (New) endpoint
     const newApiUrl = `https://places.googleapis.com/v1/places/${placeId.trim()}`;
@@ -473,9 +475,16 @@ apiRouter.get("/google-reviews", async (req, res) => {
       }
     });
 
+    const newResText = await newApiRes.text();
+    let newResBody: any;
+    try {
+      newResBody = JSON.parse(newResText);
+    } catch {
+      newResBody = newResText;
+    }
+
     if (newApiRes.ok) {
-      const data = await newApiRes.json();
-      const formattedReviews = (data.reviews || []).map((rev: any, index: number) => ({
+      const formattedReviews = (newResBody.reviews || []).map((rev: any, index: number) => ({
         id: rev.name || `rev-new-${index}`,
         authorName: rev.authorAttribution?.displayName || "Google User",
         authorPhoto: rev.authorAttribution?.photoUri || "",
@@ -491,62 +500,90 @@ apiRouter.get("/google-reviews", async (req, res) => {
 
       res.json({
         configured: true,
-        rating: data.rating || 4.9,
-        userRatingCount: data.userRatingCount || 183,
-        displayName: data.displayName?.text || "Rocking Kids Academy (Phonics and Abacus)",
+        rating: newResBody.rating || 4.9,
+        userRatingCount: newResBody.userRatingCount || 183,
+        displayName: newResBody.displayName?.text || "Rocking Kids Academy (Phonics and Abacus)",
         reviews: formattedReviews,
         source: "google_places_api_v1"
       });
       return;
     }
 
+    // Capture error details from Attempt 1
+    const newApiErrorDetails = {
+      endpoint: "Places API (New) v1",
+      status: newApiRes.status,
+      statusText: newApiRes.statusText,
+      headers: Object.fromEntries(newApiRes.headers.entries()),
+      body: newResBody
+    };
+    errorsLogged.push(newApiErrorDetails);
+    console.error("Google Places API (New) Error:", JSON.stringify(newApiErrorDetails, null, 2));
+
     // Attempt 2: Fallback to Places API (Legacy Details) endpoint if Places API (New) isn't enabled
     const legacyUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${encodeURIComponent(placeId.trim())}&fields=name,rating,reviews,user_ratings_total&key=${encodeURIComponent(apiKey.trim())}`;
     const legacyRes = await fetch(legacyUrl);
     
-    if (legacyRes.ok) {
-      const legacyData = await legacyRes.json();
-      if (legacyData.status === "OK" && legacyData.result) {
-        const result = legacyData.result;
-        const formattedReviews = (result.reviews || []).map((rev: any, index: number) => ({
-          id: `rev-legacy-${index}`,
-          authorName: rev.author_name || "Google User",
-          authorPhoto: rev.profile_photo_url || "",
-          authorLocation: "Verified Google Reviewer",
-          rating: rev.rating || 5,
-          date: rev.relative_time_description || "Recently",
-          category: "Google Business Page",
-          text: rev.text || "Great experience at Rocking Kids Academy!",
-          avatarColor: "bg-emerald-600",
-          verified: true,
-          likes: Math.floor(Math.random() * 10) + 5
-        }));
-
-        res.json({
-          configured: true,
-          rating: result.rating || 4.9,
-          userRatingCount: result.user_ratings_total || 183,
-          displayName: result.name || "Rocking Kids Academy (Phonics and Abacus)",
-          reviews: formattedReviews,
-          source: "google_places_api_legacy"
-        });
-        return;
-      }
+    const legacyResText = await legacyRes.text();
+    let legacyResBody: any;
+    try {
+      legacyResBody = JSON.parse(legacyResText);
+    } catch {
+      legacyResBody = legacyResText;
     }
 
-    // If both return error status, return graceful fallback with warning message
+    if (legacyRes.ok && legacyResBody?.status === "OK" && legacyResBody?.result) {
+      const result = legacyResBody.result;
+      const formattedReviews = (result.reviews || []).map((rev: any, index: number) => ({
+        id: `rev-legacy-${index}`,
+        authorName: rev.author_name || "Google User",
+        authorPhoto: rev.profile_photo_url || "",
+        authorLocation: "Verified Google Reviewer",
+        rating: rev.rating || 5,
+        date: rev.relative_time_description || "Recently",
+        category: "Google Business Page",
+        text: rev.text || "Great experience at Rocking Kids Academy!",
+        avatarColor: "bg-emerald-600",
+        verified: true,
+        likes: Math.floor(Math.random() * 10) + 5
+      }));
+
+      res.json({
+        configured: true,
+        rating: result.rating || 4.9,
+        userRatingCount: result.user_ratings_total || 183,
+        displayName: result.name || "Rocking Kids Academy (Phonics and Abacus)",
+        reviews: formattedReviews,
+        source: "google_places_api_legacy"
+      });
+      return;
+    }
+
+    // Capture error details from Attempt 2
+    const legacyApiErrorDetails = {
+      endpoint: "Places API (Legacy) Details",
+      status: legacyRes.status,
+      statusText: legacyRes.statusText,
+      headers: Object.fromEntries(legacyRes.headers.entries()),
+      body: legacyResBody
+    };
+    errorsLogged.push(legacyApiErrorDetails);
+    console.error("Google Places API (Legacy) Error:", JSON.stringify(legacyApiErrorDetails, null, 2));
+
+    // If both return error status, return graceful fallback with real Google API error details
     res.json({
       configured: true,
       rating: 4.9,
       userRatingCount: 183,
       displayName: "Rocking Kids Academy (Phonics and Abacus)",
       reviews: [],
-      error: "Google Places API returned error response. Please check API key permissions (Places API New or Place Details).",
+      error: "Google Places API error encountered. See googleApiErrors for real status & body.",
+      googleApiErrors: errorsLogged,
       source: "fallback"
     });
 
   } catch (err: any) {
-    console.error("Error fetching Google Places reviews:", err);
+    console.error("Error executing Google Places API request:", err);
     res.json({
       configured: true,
       rating: 4.9,
@@ -554,6 +591,7 @@ apiRouter.get("/google-reviews", async (req, res) => {
       displayName: "Rocking Kids Academy (Phonics and Abacus)",
       reviews: [],
       error: err?.message || "Network error calling Google Places API.",
+      googleApiErrors: errorsLogged,
       source: "fallback"
     });
   }
