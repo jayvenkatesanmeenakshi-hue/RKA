@@ -25,7 +25,8 @@ import {
   CheckCircle2,
   Calendar,
   User,
-  Tag
+  Tag,
+  Key
 } from 'lucide-react';
 import { useAcademy } from '../context/AcademyContext';
 import { BlogPost } from '../types';
@@ -74,8 +75,14 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigateTo }) => {
   const [loginError, setLoginError] = useState<string>('');
   const [isLoggingIn, setIsLoggingIn] = useState<boolean>(false);
 
-  // Active Tab: 'blogs' | 'enquiries' | 'basic' | 'social' | 'sitemap'
-  const [activeTab, setActiveTab] = useState<'blogs' | 'enquiries' | 'basic' | 'social' | 'sitemap'>('blogs');
+  // Active Tab: 'blogs' | 'enquiries' | 'basic' | 'social' | 'sitemap' | 'google-reviews'
+  const [activeTab, setActiveTab] = useState<'blogs' | 'enquiries' | 'basic' | 'social' | 'sitemap' | 'google-reviews'>('blogs');
+  
+  // Google Places API State
+  const [googleApiKey, setGoogleApiKey] = useState(() => localStorage.getItem('google_places_api_key') || '');
+  const [googlePlaceId, setGooglePlaceId] = useState(() => localStorage.getItem('google_place_id') || '');
+  const [googleTestStatus, setGoogleTestStatus] = useState<{ type: 'success' | 'error' | null; message: string }>({ type: null, message: '' });
+  const [isTestingGoogle, setIsTestingGoogle] = useState(false);
   
   // SEO States
   const [seoData, setSeoData] = useState<SeoData>({
@@ -766,6 +773,22 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigateTo }) => {
               <Map className="w-4 h-4" />
               <span>Sitemap Generator</span>
             </button>
+
+            <div className="pt-2 pb-1 px-4 text-[10px] uppercase tracking-wider text-slate-500 font-bold">
+              Integrations & APIs
+            </div>
+
+            <button
+              onClick={() => setActiveTab('google-reviews')}
+              className={`w-full text-left px-4 py-2.5 rounded-xl text-xs font-semibold flex items-center gap-2.5 transition-all ${
+                activeTab === 'google-reviews' 
+                  ? 'bg-yellow-500 text-slate-950 shadow-md shadow-yellow-500/10' 
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+              }`}
+            >
+              <Key className="w-4 h-4 text-yellow-500" />
+              <span>Google Reviews Sync</span>
+            </button>
           </div>
 
           <div className="mt-4 p-4 bg-slate-900/60 border border-slate-800/80 rounded-2xl text-xs text-slate-400 space-y-2">
@@ -1432,6 +1455,115 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigateTo }) => {
                   <span>Save Sitemap Rules</span>
                 </button>
               </div>
+            </div>
+          )}
+
+          {/* TAB 6: GOOGLE REVIEWS API */}
+          {activeTab === 'google-reviews' && (
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-6">
+              <div className="border-b border-slate-800 pb-4">
+                <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                  <Key className="w-5 h-5 text-yellow-500" />
+                  <span>Google Places API Live Sync</span>
+                </h2>
+                <p className="text-xs text-slate-400 mt-1">
+                  Configure your Google Cloud API Key and Google Place ID to automatically pull live reviews onto the website.
+                </p>
+              </div>
+
+              {googleTestStatus.message && (
+                <div className={`p-4 rounded-xl text-xs font-medium border ${
+                  googleTestStatus.type === 'success' 
+                    ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' 
+                    : 'bg-red-500/10 border-red-500/20 text-red-400'
+                }`}>
+                  {googleTestStatus.message}
+                </div>
+              )}
+
+              <form 
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  localStorage.setItem('google_places_api_key', googleApiKey.trim());
+                  localStorage.setItem('google_place_id', googlePlaceId.trim());
+
+                  setIsTestingGoogle(true);
+                  setGoogleTestStatus({ type: null, message: '' });
+
+                  try {
+                    const res = await fetch(`/api/google-reviews?apiKey=${encodeURIComponent(googleApiKey.trim())}&placeId=${encodeURIComponent(googlePlaceId.trim())}`);
+                    const data = await res.json();
+
+                    if (data.reviews && data.reviews.length > 0) {
+                      setGoogleTestStatus({
+                        type: 'success',
+                        message: `Successfully connected! Synced ${data.reviews.length} live reviews for "${data.displayName || 'Rocking Kids Academy'}" (Rating: ${data.rating} / 5.0).`
+                      });
+                    } else if (data.error) {
+                      setGoogleTestStatus({
+                        type: 'error',
+                        message: `Saved configuration, but API returned note: ${data.error}`
+                      });
+                    } else {
+                      setGoogleTestStatus({
+                        type: 'success',
+                        message: 'Saved configuration successfully.'
+                      });
+                    }
+                  } catch (err: any) {
+                    setGoogleTestStatus({
+                      type: 'error',
+                      message: `Error testing connection: ${err?.message || 'Network error'}`
+                    });
+                  } finally {
+                    setIsTestingGoogle(false);
+                  }
+                }} 
+                className="space-y-4"
+              >
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
+                    Google Places API Key
+                  </label>
+                  <input 
+                    type="password"
+                    value={googleApiKey}
+                    onChange={(e) => setGoogleApiKey(e.target.value)}
+                    placeholder="AIzaSy..."
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-white text-xs font-mono focus:outline-none focus:border-yellow-500"
+                  />
+                  <p className="text-[11px] text-slate-500 mt-1">
+                    Obtained from Google Cloud Console with "Places API" or "Places API (New)" enabled.
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
+                    Google Place ID
+                  </label>
+                  <input 
+                    type="text"
+                    value={googlePlaceId}
+                    onChange={(e) => setGooglePlaceId(e.target.value)}
+                    placeholder="e.g. ChIJ..."
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-white text-xs font-mono focus:outline-none focus:border-yellow-500"
+                  />
+                  <p className="text-[11px] text-slate-500 mt-1">
+                    The Place ID for Rocking Kids Academy on Google Maps.
+                  </p>
+                </div>
+
+                <div className="pt-4 border-t border-slate-800 flex justify-end">
+                  <button
+                    type="submit"
+                    disabled={isTestingGoogle}
+                    className="px-6 py-3 bg-yellow-500 text-slate-950 font-bold rounded-xl text-xs hover:bg-yellow-400 transition-all flex items-center gap-2 shadow-lg shadow-yellow-500/20 cursor-pointer"
+                  >
+                    {isTestingGoogle ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                    <span>Save & Sync Live Reviews</span>
+                  </button>
+                </div>
+              </form>
             </div>
           )}
         </main>
