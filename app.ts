@@ -14,7 +14,10 @@ import {
   getEnquiries,
   deleteEnquiry,
   getDbSeoData,
-  saveDbSeoData
+  saveDbSeoData,
+  getHiddenReviewIds,
+  hideReviewId,
+  unhideReviewId
 } from "./db.js";
 
 // Load environment variables
@@ -444,10 +447,62 @@ apiRouter.post("/seo", checkAdminAuth, async (req, res) => {
   res.json({ success: true, message: "SEO configuration updated successfully in Neon Postgres!", data: newSeo });
 });
 
+// --- HIDDEN GOOGLE REVIEWS ENDPOINTS ---
+apiRouter.get("/hidden-reviews", async (req, res) => {
+  try {
+    const hiddenIds = await getHiddenReviewIds();
+    res.json({ success: true, hiddenIds });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+apiRouter.post("/hidden-reviews", async (req, res) => {
+  try {
+    const { reviewId } = req.body;
+    if (!reviewId) {
+      res.status(400).json({ success: false, error: "reviewId is required" });
+      return;
+    }
+    await hideReviewId(reviewId);
+    reviewsCache = null; // Invalidate cache so hidden review disappears immediately
+    const hiddenIds = await getHiddenReviewIds();
+    res.json({ success: true, message: "Review hidden successfully", hiddenIds });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+apiRouter.post("/hidden-reviews/unhide", async (req, res) => {
+  try {
+    const { reviewId } = req.body;
+    if (!reviewId) {
+      res.status(400).json({ success: false, error: "reviewId is required" });
+      return;
+    }
+    await unhideReviewId(reviewId);
+    reviewsCache = null; // Invalidate cache so unhidden review appears
+    const hiddenIds = await getHiddenReviewIds();
+    res.json({ success: true, message: "Review restored successfully", hiddenIds });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // --- GOOGLE PLACES API LIVE REVIEWS ENDPOINT ---
+interface GoogleReviewsCache {
+  payload: any;
+  timestamp: number;
+  cacheKey: string;
+}
+
+let reviewsCache: GoogleReviewsCache | null = null;
+const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000; // 7 days cache TTL
+
 apiRouter.get("/google-reviews", async (req, res) => {
   const apiKey = (req.query.apiKey as string) || process.env.GOOGLE_PLACES_API_KEY || "";
   const placeId = (req.query.placeId as string) || process.env.GOOGLE_PLACE_ID || "";
+  const forceRefresh = req.query.refresh === "true" || req.query.force === "true";
 
   if (!apiKey || !placeId) {
     res.json({
@@ -459,6 +514,26 @@ apiRouter.get("/google-reviews", async (req, res) => {
       message: "API Key or Place ID not provided in environment or query params."
     });
     return;
+  }
+
+  const hiddenIds = await getHiddenReviewIds();
+  const currentCacheKey = `${apiKey.trim()}_${placeId.trim()}`;
+
+  // Check 1-Week Cache if forceRefresh is false
+  if (!forceRefresh && reviewsCache && reviewsCache.cacheKey === currentCacheKey) {
+    const age = Date.now() - reviewsCache.timestamp;
+    if (age < ONE_WEEK_MS) {
+      const daysRemaining = Math.max(0, Math.round((ONE_WEEK_MS - age) / (1000 * 60 * 60 * 24)));
+      const visibleReviews = (reviewsCache.payload.reviews || []).filter((rev: any) => !hiddenIds.includes(rev.id));
+      res.json({
+        ...reviewsCache.payload,
+        reviews: visibleReviews,
+        cached: true,
+        cachedAt: new Date(reviewsCache.timestamp).toISOString(),
+        cacheExpiresInDays: daysRemaining
+      });
+      return;
+    }
   }
 
   const errorsLogged: any[] = [];
@@ -484,7 +559,7 @@ apiRouter.get("/google-reviews", async (req, res) => {
     }
 
     if (newApiRes.ok) {
-      const formattedReviews = (newResBody.reviews || []).map((rev: any, index: number) => ({
+      const allReviews = (newResBody.reviews || []).map((rev: any, index: number) => ({
         id: rev.name || `rev-new-${index}`,
         authorName: rev.authorAttribution?.displayName || "Google User",
         authorPhoto: rev.authorAttribution?.photoUri || "",
@@ -498,13 +573,31 @@ apiRouter.get("/google-reviews", async (req, res) => {
         likes: Math.floor(Math.random() * 10) + 5
       }));
 
-      res.json({
+      // Filter to only include reviews with rating >= 4
+      const highRatingReviews = allReviews.filter((rev: any) => rev.rating >= 4);
+
+      const responsePayload = {
         configured: true,
         rating: newResBody.rating || 4.9,
         userRatingCount: newResBody.userRatingCount || 183,
         displayName: newResBody.displayName?.text || "Rocking Kids Academy (Phonics and Abacus)",
-        reviews: formattedReviews,
+        reviews: highRatingReviews,
         source: "google_places_api_v1"
+      };
+
+      // Store in 1-week memory cache
+      reviewsCache = {
+        payload: responsePayload,
+        timestamp: Date.now(),
+        cacheKey: currentCacheKey
+      };
+
+      const visibleReviews = highRatingReviews.filter((rev: any) => !hiddenIds.includes(rev.id));
+
+      res.json({
+        ...responsePayload,
+        reviews: visibleReviews,
+        cached: false
       });
       return;
     }
@@ -534,7 +627,7 @@ apiRouter.get("/google-reviews", async (req, res) => {
 
     if (legacyRes.ok && legacyResBody?.status === "OK" && legacyResBody?.result) {
       const result = legacyResBody.result;
-      const formattedReviews = (result.reviews || []).map((rev: any, index: number) => ({
+      const allReviews = (result.reviews || []).map((rev: any, index: number) => ({
         id: `rev-legacy-${index}`,
         authorName: rev.author_name || "Google User",
         authorPhoto: rev.profile_photo_url || "",
@@ -548,13 +641,31 @@ apiRouter.get("/google-reviews", async (req, res) => {
         likes: Math.floor(Math.random() * 10) + 5
       }));
 
-      res.json({
+      // Filter to only include reviews with rating >= 4
+      const highRatingReviews = allReviews.filter((rev: any) => rev.rating >= 4);
+
+      const responsePayload = {
         configured: true,
         rating: result.rating || 4.9,
         userRatingCount: result.user_ratings_total || 183,
         displayName: result.name || "Rocking Kids Academy (Phonics and Abacus)",
-        reviews: formattedReviews,
+        reviews: highRatingReviews,
         source: "google_places_api_legacy"
+      };
+
+      // Store in 1-week memory cache
+      reviewsCache = {
+        payload: responsePayload,
+        timestamp: Date.now(),
+        cacheKey: currentCacheKey
+      };
+
+      const visibleReviews = highRatingReviews.filter((rev: any) => !hiddenIds.includes(rev.id));
+
+      res.json({
+        ...responsePayload,
+        reviews: visibleReviews,
+        cached: false
       });
       return;
     }

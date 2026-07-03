@@ -43,6 +43,7 @@ let memoryEnquiries: Array<{
   status: string;
   created_at: string;
 }> = [];
+let memoryHiddenReviews: string[] = [];
 
 /**
  * Initialize Neon Postgres Database Tables & Seed Defaults
@@ -153,6 +154,14 @@ export async function initDb(): Promise<boolean> {
           setting_key VARCHAR(50) UNIQUE NOT NULL DEFAULT 'default',
           data JSONB NOT NULL,
           updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+      `);
+
+      // 5. Hidden Google Reviews table
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS hidden_reviews (
+          review_id TEXT PRIMARY KEY,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
       `);
 
@@ -553,3 +562,71 @@ export async function saveDbSeoData(seoData: any): Promise<boolean> {
     return false;
   }
 }
+
+/**
+ * Get Hidden Google Review IDs
+ */
+export async function getHiddenReviewIds(): Promise<string[]> {
+  if (!pool) {
+    return memoryHiddenReviews;
+  }
+
+  try {
+    await ensureDbInitialized();
+    const res = await pool.query('SELECT review_id FROM hidden_reviews');
+    return res.rows.map(row => row.review_id);
+  } catch (err) {
+    console.error('Error fetching hidden reviews from Neon DB:', err);
+    return memoryHiddenReviews;
+  }
+}
+
+/**
+ * Hide Google Review ID
+ */
+export async function hideReviewId(reviewId: string): Promise<boolean> {
+  const cleanId = (reviewId || '').trim();
+  if (!cleanId) return false;
+
+  if (!pool) {
+    if (!memoryHiddenReviews.includes(cleanId)) {
+      memoryHiddenReviews.push(cleanId);
+    }
+    return true;
+  }
+
+  try {
+    await ensureDbInitialized();
+    await pool.query(
+      `INSERT INTO hidden_reviews (review_id) VALUES ($1) ON CONFLICT (review_id) DO NOTHING`,
+      [cleanId]
+    );
+    return true;
+  } catch (err) {
+    console.error('Error hiding review ID in Neon DB:', err);
+    throw err;
+  }
+}
+
+/**
+ * Unhide Google Review ID
+ */
+export async function unhideReviewId(reviewId: string): Promise<boolean> {
+  const cleanId = (reviewId || '').trim();
+  if (!cleanId) return false;
+
+  if (!pool) {
+    memoryHiddenReviews = memoryHiddenReviews.filter(id => id !== cleanId);
+    return true;
+  }
+
+  try {
+    await ensureDbInitialized();
+    await pool.query('DELETE FROM hidden_reviews WHERE review_id = $1', [cleanId]);
+    return true;
+  } catch (err) {
+    console.error('Error unhiding review ID in Neon DB:', err);
+    throw err;
+  }
+}
+

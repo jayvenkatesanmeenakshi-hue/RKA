@@ -106,7 +106,7 @@ export const GoogleReviews = () => {
   const googleMapsUrl = "https://share.google/v4RsF6b9XjAwE9uFs";
 
   // Fetch live reviews from server
-  const fetchReviews = async () => {
+  const fetchReviews = async (forceRefresh = false) => {
     setIsLoading(true);
 
     try {
@@ -117,6 +117,7 @@ export const GoogleReviews = () => {
       const params = new URLSearchParams();
       if (apiKey) params.append('apiKey', apiKey.trim());
       if (placeId) params.append('placeId', placeId.trim());
+      if (forceRefresh) params.append('refresh', 'true');
 
       if (params.toString()) {
         url += `?${params.toString()}`;
@@ -213,9 +214,9 @@ export const GoogleReviews = () => {
                 </a>
 
                 <button
-                  onClick={() => fetchReviews()}
+                  onClick={() => fetchReviews(true)}
                   disabled={isLoading}
-                  title="Refresh Reviews"
+                  title="Force Refresh Google Reviews"
                   className="p-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded text-navy-600 transition-colors cursor-pointer"
                 >
                   <RefreshCw size={12} className={isLoading ? 'animate-spin text-yellow-600' : ''} />

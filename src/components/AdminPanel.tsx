@@ -84,6 +84,12 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigateTo }) => {
   const [googleTestStatus, setGoogleTestStatus] = useState<{ type: 'success' | 'error' | null; message: string }>({ type: null, message: '' });
   const [isTestingGoogle, setIsTestingGoogle] = useState(false);
   
+  // Hidden Google Reviews State
+  const [hiddenReviewIds, setHiddenReviewIds] = useState<string[]>([]);
+  const [customHideId, setCustomHideId] = useState<string>('');
+  const [syncedReviews, setSyncedReviews] = useState<any[]>([]);
+  const [isLoadingReviews, setIsLoadingReviews] = useState<boolean>(false);
+  
   // SEO States
   const [seoData, setSeoData] = useState<SeoData>({
     title: '',
@@ -538,6 +544,93 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigateTo }) => {
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
+
+  // --- GOOGLE REVIEWS HIDDEN LIST MANAGEMENT ---
+  const fetchHiddenReviews = async () => {
+    try {
+      const res = await fetch('/api/hidden-reviews');
+      const data = await res.json();
+      if (data.hiddenIds) {
+        setHiddenReviewIds(data.hiddenIds);
+      }
+    } catch (err) {
+      console.error('Error fetching hidden reviews:', err);
+    }
+  };
+
+  const handleHideReview = async (reviewIdToHide: string) => {
+    const cleanId = reviewIdToHide.trim();
+    if (!cleanId) return;
+
+    try {
+      const res = await fetch('/api/hidden-reviews', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reviewId: cleanId })
+      });
+      const data = await res.json();
+      if (data.success && data.hiddenIds) {
+        setHiddenReviewIds(data.hiddenIds);
+        setCustomHideId('');
+        setGoogleTestStatus({
+          type: 'success',
+          message: `Successfully hid review ID "${cleanId.slice(0, 30)}...". Saved to Neon Postgres database.`
+        });
+        loadLiveGoogleReviews();
+      }
+    } catch (err: any) {
+      console.error('Error hiding review:', err);
+    }
+  };
+
+  const handleUnhideReview = async (reviewIdToUnhide: string) => {
+    try {
+      const res = await fetch('/api/hidden-reviews/unhide', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reviewId: reviewIdToUnhide })
+      });
+      const data = await res.json();
+      if (data.success && data.hiddenIds) {
+        setHiddenReviewIds(data.hiddenIds);
+        setGoogleTestStatus({
+          type: 'success',
+          message: 'Review unhidden and restored to public website!'
+        });
+        loadLiveGoogleReviews();
+      }
+    } catch (err: any) {
+      console.error('Error unhiding review:', err);
+    }
+  };
+
+  const loadLiveGoogleReviews = async () => {
+    setIsLoadingReviews(true);
+    try {
+      const apiKey = localStorage.getItem('google_places_api_key') || googleApiKey;
+      const placeId = localStorage.getItem('google_place_id') || googlePlaceId;
+      let url = '/api/google-reviews?refresh=true';
+      if (apiKey && placeId) {
+        url += `&apiKey=${encodeURIComponent(apiKey.trim())}&placeId=${encodeURIComponent(placeId.trim())}`;
+      }
+      const res = await fetch(url);
+      const data = await res.json();
+      if (data.reviews) {
+        setSyncedReviews(data.reviews);
+      }
+    } catch (err) {
+      console.error('Error loading live reviews:', err);
+    } finally {
+      setIsLoadingReviews(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'google-reviews') {
+      fetchHiddenReviews();
+      loadLiveGoogleReviews();
+    }
+  }, [activeTab]);
 
   const filteredEnquiries = enquiries.filter(e => 
     e.parentName.toLowerCase().includes(enquirySearch.toLowerCase()) ||
@@ -1458,112 +1551,293 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigateTo }) => {
             </div>
           )}
 
-          {/* TAB 6: GOOGLE REVIEWS API */}
+          {/* TAB 6: GOOGLE REVIEWS API & MODERATION */}
           {activeTab === 'google-reviews' && (
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-6">
-              <div className="border-b border-slate-800 pb-4">
-                <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                  <Key className="w-5 h-5 text-yellow-500" />
-                  <span>Google Places API Live Sync</span>
-                </h2>
-                <p className="text-xs text-slate-400 mt-1">
-                  Configure your Google Cloud API Key and Google Place ID to automatically pull live reviews onto the website.
-                </p>
-              </div>
-
-              {googleTestStatus.message && (
-                <div className={`p-4 rounded-xl text-xs font-medium border ${
-                  googleTestStatus.type === 'success' 
-                    ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' 
-                    : 'bg-red-500/10 border-red-500/20 text-red-400'
-                }`}>
-                  {googleTestStatus.message}
+            <div className="space-y-6">
+              {/* API Credentials Card */}
+              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-6">
+                <div className="border-b border-slate-800 pb-4">
+                  <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                    <Key className="w-5 h-5 text-yellow-500" />
+                    <span>Google Places API Live Sync</span>
+                  </h2>
+                  <p className="text-xs text-slate-400 mt-1">
+                    Configure your Google Cloud API Key and Google Place ID to automatically pull live reviews onto the website.
+                  </p>
                 </div>
-              )}
 
-              <form 
-                onSubmit={async (e) => {
-                  e.preventDefault();
-                  localStorage.setItem('google_places_api_key', googleApiKey.trim());
-                  localStorage.setItem('google_place_id', googlePlaceId.trim());
+                {googleTestStatus.message && (
+                  <div className={`p-4 rounded-xl text-xs font-medium border ${
+                    googleTestStatus.type === 'success' 
+                      ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' 
+                      : 'bg-red-500/10 border-red-500/20 text-red-400'
+                  }`}>
+                    {googleTestStatus.message}
+                  </div>
+                )}
 
-                  setIsTestingGoogle(true);
-                  setGoogleTestStatus({ type: null, message: '' });
+                <form 
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    localStorage.setItem('google_places_api_key', googleApiKey.trim());
+                    localStorage.setItem('google_place_id', googlePlaceId.trim());
 
-                  try {
-                    const res = await fetch(`/api/google-reviews?apiKey=${encodeURIComponent(googleApiKey.trim())}&placeId=${encodeURIComponent(googlePlaceId.trim())}`);
-                    const data = await res.json();
+                    setIsTestingGoogle(true);
+                    setGoogleTestStatus({ type: null, message: '' });
 
-                    if (data.reviews && data.reviews.length > 0) {
-                      setGoogleTestStatus({
-                        type: 'success',
-                        message: `Successfully connected! Synced ${data.reviews.length} live reviews for "${data.displayName || 'Rocking Kids Academy'}" (Rating: ${data.rating} / 5.0).`
-                      });
-                    } else if (data.error) {
+                    try {
+                      const res = await fetch(`/api/google-reviews?apiKey=${encodeURIComponent(googleApiKey.trim())}&placeId=${encodeURIComponent(googlePlaceId.trim())}`);
+                      const data = await res.json();
+
+                      if (data.reviews && data.reviews.length > 0) {
+                        setGoogleTestStatus({
+                          type: 'success',
+                          message: `Successfully connected! Synced ${data.reviews.length} live reviews for "${data.displayName || 'Rocking Kids Academy'}" (Rating: ${data.rating} / 5.0).`
+                        });
+                        setSyncedReviews(data.reviews);
+                      } else if (data.error) {
+                        setGoogleTestStatus({
+                          type: 'error',
+                          message: `Saved configuration, but API returned note: ${data.error}`
+                        });
+                      } else {
+                        setGoogleTestStatus({
+                          type: 'success',
+                          message: 'Saved configuration successfully.'
+                        });
+                      }
+                    } catch (err: any) {
                       setGoogleTestStatus({
                         type: 'error',
-                        message: `Saved configuration, but API returned note: ${data.error}`
+                        message: `Error testing connection: ${err?.message || 'Network error'}`
                       });
-                    } else {
-                      setGoogleTestStatus({
-                        type: 'success',
-                        message: 'Saved configuration successfully.'
-                      });
+                    } finally {
+                      setIsTestingGoogle(false);
                     }
-                  } catch (err: any) {
-                    setGoogleTestStatus({
-                      type: 'error',
-                      message: `Error testing connection: ${err?.message || 'Network error'}`
-                    });
-                  } finally {
-                    setIsTestingGoogle(false);
-                  }
-                }} 
-                className="space-y-4"
-              >
-                <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
-                    Google Places API Key
-                  </label>
-                  <input 
-                    type="password"
-                    value={googleApiKey}
-                    onChange={(e) => setGoogleApiKey(e.target.value)}
-                    placeholder="AIzaSy..."
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-white text-xs font-mono focus:outline-none focus:border-yellow-500"
-                  />
-                  <p className="text-[11px] text-slate-500 mt-1">
-                    Obtained from Google Cloud Console with "Places API" or "Places API (New)" enabled.
-                  </p>
+                  }} 
+                  className="space-y-4"
+                >
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
+                        Google Places API Key
+                      </label>
+                      <input 
+                        type="password"
+                        value={googleApiKey}
+                        onChange={(e) => setGoogleApiKey(e.target.value)}
+                        placeholder="AIzaSy..."
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-white text-xs font-mono focus:outline-none focus:border-yellow-500"
+                      />
+                      <p className="text-[11px] text-slate-500 mt-1">
+                        Obtained from Google Cloud Console with "Places API" enabled.
+                      </p>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
+                        Google Place ID
+                      </label>
+                      <input 
+                        type="text"
+                        value={googlePlaceId}
+                        onChange={(e) => setGooglePlaceId(e.target.value)}
+                        placeholder="e.g. ChIJ..."
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-white text-xs font-mono focus:outline-none focus:border-yellow-500"
+                      />
+                      <p className="text-[11px] text-slate-500 mt-1">
+                        The Place ID for Rocking Kids Academy on Google Maps.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="pt-2 flex justify-end">
+                    <button
+                      type="submit"
+                      disabled={isTestingGoogle}
+                      className="px-6 py-2.5 bg-yellow-500 text-slate-950 font-bold rounded-xl text-xs hover:bg-yellow-400 transition-all flex items-center gap-2 shadow-lg shadow-yellow-500/20 cursor-pointer"
+                    >
+                      {isTestingGoogle ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                      <span>Save & Sync Live Reviews</span>
+                    </button>
+                  </div>
+                </form>
+              </div>
+
+              {/* Hide Specific Review by ID Section */}
+              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
+                <div className="border-b border-slate-800 pb-3 flex items-center justify-between">
+                  <div>
+                    <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                      <EyeOff className="w-4 h-4 text-red-400" />
+                      <span>Hide Review by Google ID</span>
+                    </h3>
+                    <p className="text-xs text-slate-400 mt-0.5">
+                      Enter a Google Review ID to prevent it from displaying on the public website. Hidden review IDs are stored permanently in the Neon Postgres database.
+                    </p>
+                  </div>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
-                    Google Place ID
-                  </label>
+                <form 
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    if (customHideId.trim()) {
+                      handleHideReview(customHideId.trim());
+                    }
+                  }}
+                  className="flex flex-col sm:flex-row gap-3"
+                >
                   <input 
                     type="text"
-                    value={googlePlaceId}
-                    onChange={(e) => setGooglePlaceId(e.target.value)}
-                    placeholder="e.g. ChIJ..."
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-white text-xs font-mono focus:outline-none focus:border-yellow-500"
+                    value={customHideId}
+                    onChange={(e) => setCustomHideId(e.target.value)}
+                    placeholder="Enter Google Review ID (e.g. places/.../reviews/... or rev-legacy-0)"
+                    className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-white text-xs font-mono focus:outline-none focus:border-red-500"
                   />
-                  <p className="text-[11px] text-slate-500 mt-1">
-                    The Place ID for Rocking Kids Academy on Google Maps.
-                  </p>
-                </div>
-
-                <div className="pt-4 border-t border-slate-800 flex justify-end">
                   <button
                     type="submit"
-                    disabled={isTestingGoogle}
-                    className="px-6 py-3 bg-yellow-500 text-slate-950 font-bold rounded-xl text-xs hover:bg-yellow-400 transition-all flex items-center gap-2 shadow-lg shadow-yellow-500/20 cursor-pointer"
+                    disabled={!customHideId.trim()}
+                    className="px-5 py-2.5 bg-red-600 hover:bg-red-500 disabled:opacity-50 text-white font-bold rounded-xl text-xs transition-all flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-red-600/20"
                   >
-                    {isTestingGoogle ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                    <span>Save & Sync Live Reviews</span>
+                    <EyeOff className="w-4 h-4" />
+                    <span>Hide Review ID</span>
+                  </button>
+                </form>
+
+                {/* Database Stored Hidden Review IDs */}
+                <div className="pt-2">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                      <Database className="w-3.5 h-3.5 text-yellow-500" />
+                      <span>Hidden Reviews in Database ({hiddenReviewIds.length})</span>
+                    </span>
+                  </div>
+
+                  {hiddenReviewIds.length === 0 ? (
+                    <div className="p-4 bg-slate-950/60 border border-slate-800/80 rounded-xl text-center text-xs text-slate-500 italic">
+                      No Google reviews are currently hidden in the database.
+                    </div>
+                  ) : (
+                    <div className="border border-slate-800 rounded-xl overflow-hidden divide-y divide-slate-800/80 bg-slate-950">
+                      {hiddenReviewIds.map((id) => (
+                        <div key={id} className="p-3 flex items-center justify-between gap-3 text-xs hover:bg-slate-900/50 transition-colors">
+                          <div className="flex items-center gap-2 overflow-hidden">
+                            <span className="px-2 py-0.5 rounded bg-red-500/10 text-red-400 border border-red-500/20 text-[10px] font-bold uppercase tracking-wide">
+                              Hidden
+                            </span>
+                            <span className="font-mono text-slate-300 truncate text-xs">{id}</span>
+                          </div>
+                          <button
+                            onClick={() => handleUnhideReview(id)}
+                            className="px-3 py-1 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer"
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                            <span>Unhide / Restore</span>
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Synced Live Reviews Preview & Interactive Moderation */}
+              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
+                <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                  <div>
+                    <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                      <Sparkles className="w-4 h-4 text-yellow-500" />
+                      <span>Live Synced Google Reviews</span>
+                    </h3>
+                    <p className="text-xs text-slate-400 mt-0.5">
+                      Click "Hide" on any review below to instantly store its ID in the database and remove it from the website.
+                    </p>
+                  </div>
+                  <button
+                    onClick={loadLiveGoogleReviews}
+                    disabled={isLoadingReviews}
+                    className="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs transition-all flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${isLoadingReviews ? 'animate-spin' : ''}`} />
+                    <span className="hidden sm:inline">Refresh List</span>
                   </button>
                 </div>
-              </form>
+
+                {isLoadingReviews ? (
+                  <div className="p-8 text-center text-xs text-slate-400 flex items-center justify-center gap-2">
+                    <RefreshCw className="w-4 h-4 animate-spin text-yellow-500" />
+                    <span>Loading Google Reviews...</span>
+                  </div>
+                ) : syncedReviews.length === 0 ? (
+                  <div className="p-8 border border-slate-800 rounded-xl text-center text-xs text-slate-400">
+                    No active reviews fetched yet. Click "Save & Sync Live Reviews" above to verify connection.
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {syncedReviews.map((rev) => {
+                      const isHidden = hiddenReviewIds.includes(rev.id);
+                      return (
+                        <div 
+                          key={rev.id} 
+                          className={`p-4 rounded-xl border transition-all ${
+                            isHidden 
+                              ? 'bg-red-950/20 border-red-500/30 opacity-75' 
+                              : 'bg-slate-950 border-slate-800 hover:border-slate-700'
+                          }`}
+                        >
+                          <div className="flex items-start justify-between gap-3 mb-2">
+                            <div className="flex items-center gap-2.5">
+                              {rev.authorPhoto ? (
+                                <img src={rev.authorPhoto} alt={rev.authorName} className="w-8 h-8 rounded-full object-cover" />
+                              ) : (
+                                <div className="w-8 h-8 rounded-full bg-yellow-500/20 text-yellow-400 flex items-center justify-center font-bold text-xs">
+                                  {rev.authorName?.[0] || 'G'}
+                                </div>
+                              )}
+                              <div>
+                                <h4 className="text-xs font-bold text-white leading-tight">{rev.authorName}</h4>
+                                <span className="text-[10px] text-slate-400">{rev.date}</span>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-1 bg-yellow-500/10 px-2 py-0.5 rounded text-yellow-400 text-xs font-bold">
+                              ★ {rev.rating}
+                            </div>
+                          </div>
+
+                          <p className="text-xs text-slate-300 line-clamp-3 mb-3 italic">
+                            "{rev.text}"
+                          </p>
+
+                          <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between gap-2 text-[11px]">
+                            <div className="flex items-center gap-1 text-slate-500 font-mono text-[10px] truncate max-w-[200px]" title={rev.id}>
+                              <span>ID:</span>
+                              <span className="truncate">{rev.id}</span>
+                            </div>
+
+                            {isHidden ? (
+                              <button
+                                onClick={() => handleUnhideReview(rev.id)}
+                                className="px-2.5 py-1 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 rounded-lg text-[11px] font-medium transition-all flex items-center gap-1 cursor-pointer"
+                              >
+                                <Eye className="w-3 h-3" />
+                                <span>Unhide</span>
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => handleHideReview(rev.id)}
+                                className="px-2.5 py-1 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 rounded-lg text-[11px] font-medium transition-all flex items-center gap-1 cursor-pointer"
+                              >
+                                <EyeOff className="w-3 h-3" />
+                                <span>Hide Review</span>
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </main>
