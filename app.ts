@@ -348,7 +348,7 @@ apiRouter.get("/blogs/:slug", async (req, res) => {
 
 apiRouter.post("/admin/blogs", checkAdminAuth, async (req, res) => {
   try {
-    const { slug, title, excerpt, content, category, tags, coverImage, readTime, author, date } = req.body;
+    const { slug, title, excerpt, content, category, tags, coverImage, readTime, author, date, isFeatured, isFocus } = req.body;
     if (!slug || !title || !content) {
       res.status(400).json({ error: "Slug, title, and content are required fields" });
       return;
@@ -364,7 +364,9 @@ apiRouter.post("/admin/blogs", checkAdminAuth, async (req, res) => {
       coverImage: coverImage || "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&q=80&w=800",
       readTime,
       author,
-      date
+      date,
+      isFeatured: !!isFeatured,
+      isFocus: !!isFocus
     });
 
     res.json({ success: true, message: "Blog post successfully saved to Neon Postgres!", blog });

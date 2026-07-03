@@ -114,7 +114,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigateTo }) => {
     coverImage: 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&q=80&w=800',
     readTime: '5 Min Read',
     author: 'Admin',
-    tags: 'Abacus, Child Development, Education'
+    tags: 'Abacus, Child Development, Education',
+    isFeatured: false,
+    isFocus: false
   });
 
   // Parent Enquiries States
@@ -269,7 +271,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigateTo }) => {
       coverImage: 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&q=80&w=800',
       readTime: '5 Min Read',
       author: 'Admin',
-      tags: 'Abacus, Education, Brain Development'
+      tags: 'Abacus, Education, Brain Development',
+      isFeatured: false,
+      isFocus: false
     });
   };
 
@@ -285,7 +289,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigateTo }) => {
       coverImage: blog.coverImage,
       readTime: blog.readTime || '5 Min Read',
       author: blog.author || 'Admin',
-      tags: blog.tags ? blog.tags.join(', ') : ''
+      tags: blog.tags ? blog.tags.join(', ') : '',
+      isFeatured: !!blog.isFeatured,
+      isFocus: !!blog.isFocus
     });
   };
 
@@ -331,7 +337,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigateTo }) => {
         coverImage: blogForm.coverImage,
         readTime: blogForm.readTime,
         author: blogForm.author,
-        tags: tagsArray
+        tags: tagsArray,
+        isFeatured: blogForm.isFeatured,
+        isFocus: blogForm.isFocus
       };
 
       const res = await fetch('/api/admin/blogs', {
@@ -914,6 +922,35 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigateTo }) => {
                     </div>
                   </div>
 
+                  {/* Feature & Focus Flag Selection */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-slate-950 border border-slate-800 rounded-xl">
+                    <label className="flex items-center gap-3 cursor-pointer text-xs text-white font-medium select-none">
+                      <input 
+                        type="checkbox" 
+                        checked={blogForm.isFocus} 
+                        onChange={(e) => setBlogForm(prev => ({ ...prev, isFocus: e.target.checked }))}
+                        className="w-4 h-4 accent-yellow-500 rounded cursor-pointer"
+                      />
+                      <div>
+                        <span className="font-bold text-yellow-400">Focus Post</span> (Main Blog on Left)
+                        <p className="text-[10px] text-slate-400">Pins this article as the primary featured article on the left column.</p>
+                      </div>
+                    </label>
+
+                    <label className="flex items-center gap-3 cursor-pointer text-xs text-white font-medium select-none">
+                      <input 
+                        type="checkbox" 
+                        checked={blogForm.isFeatured} 
+                        onChange={(e) => setBlogForm(prev => ({ ...prev, isFeatured: e.target.checked }))}
+                        className="w-4 h-4 accent-yellow-500 rounded cursor-pointer"
+                      />
+                      <div>
+                        <span className="font-bold text-amber-400">Featured Post</span> (Right Side Content)
+                        <p className="text-[10px] text-slate-400">Includes this article in the featured sidebar list on the right column.</p>
+                      </div>
+                    </label>
+                  </div>
+
                   <div>
                     <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
                       Short Excerpt
@@ -1005,10 +1042,20 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigateTo }) => {
                               className="w-20 h-20 object-cover rounded-xl border border-slate-800 flex-shrink-0" 
                             />
                             <div className="min-w-0">
-                              <div className="flex items-center gap-2 mb-1">
+                              <div className="flex flex-wrap items-center gap-2 mb-1">
                                 <span className="px-2 py-0.5 bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 rounded-md text-[10px] font-bold">
                                   {blog.category}
                                 </span>
+                                {blog.isFocus && (
+                                  <span className="px-2 py-0.5 bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded-md text-[9px] font-black uppercase tracking-wider">
+                                    ★ Focus Post
+                                  </span>
+                                )}
+                                {blog.isFeatured && (
+                                  <span className="px-2 py-0.5 bg-blue-500/20 text-blue-300 border border-blue-500/30 rounded-md text-[9px] font-black uppercase tracking-wider">
+                                    Featured
+                                  </span>
+                                )}
                                 <span className="text-[10px] text-slate-500 flex items-center gap-1">
                                   <Calendar className="w-3 h-3" />
                                   {blog.date}

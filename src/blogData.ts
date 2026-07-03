@@ -16,6 +16,8 @@ export const BLOG_POSTS: BlogPost[] = [
     category: 'Cognitive Skills',
     tags: ['Abacus', 'Mental Math', 'Brain Development', 'Child Education'],
     coverImage: 'https://images.unsplash.com/photo-1543269865-cbf427effbad?auto=format&fit=crop&q=80&w=800',
+    isFocus: true,
+    isFeatured: true,
     content: `
 In an era dominated by smartphones, smartwatches, and digital calculators, you might wonder: **Why should a child learn to use a 2,000-year-old tool like the Abacus?**
 
@@ -90,6 +92,7 @@ If you want to give your child a cognitive advantage that extends far beyond mat
     category: 'Reading & Literacy',
     tags: ['Phonics', 'Early Literacy', 'Reading Science', 'Child Education'],
     coverImage: 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&q=80&w=800',
+    isFeatured: true,
     content: `
 Reading is a modern human invention. Unlike speech, which the human brain develops naturally through immersion, our brains are not pre-wired to read written characters. Every child must be taught how to translate visual squiggles on a page into meaningful language.
 
@@ -147,6 +150,7 @@ By investing in systematic phonics training between the ages of 4 and 8, you giv
     category: 'Motor & Writing Skills',
     tags: ['Handwriting', 'Fine Motor Skills', 'Cursive', 'Parenting Tips'],
     coverImage: 'https://images.unsplash.com/photo-1516979187457-637abb4f9353?auto=format&fit=crop&q=80&w=800',
+    isFeatured: true,
     content: `
 With schools assigning more typing tasks and homework being turned in online, some might think handwriting is a dying skill. 
 

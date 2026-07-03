@@ -92,9 +92,17 @@ export async function initDb(): Promise<boolean> {
           author VARCHAR(100) DEFAULT 'Admin',
           date VARCHAR(100) NOT NULL,
           published BOOLEAN DEFAULT true,
+          is_featured BOOLEAN DEFAULT false,
+          is_focus BOOLEAN DEFAULT false,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
+      `);
+
+      // Migrations for existing tables
+      await client.query(`
+        ALTER TABLE blog_posts ADD COLUMN IF NOT EXISTS is_featured BOOLEAN DEFAULT false;
+        ALTER TABLE blog_posts ADD COLUMN IF NOT EXISTS is_focus BOOLEAN DEFAULT false;
       `);
 
       // Seed initial blogs if table is empty
@@ -102,8 +110,8 @@ export async function initDb(): Promise<boolean> {
       if (parseInt(blogRes.rows[0].count, 10) === 0) {
         for (const blog of BLOG_POSTS) {
           await client.query(
-            `INSERT INTO blog_posts (slug, title, excerpt, content, category, tags, cover_image, read_time, author, date, published)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+            `INSERT INTO blog_posts (slug, title, excerpt, content, category, tags, cover_image, read_time, author, date, published, is_featured, is_focus)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
              ON CONFLICT (slug) DO NOTHING`,
             [
               blog.slug,
@@ -116,7 +124,9 @@ export async function initDb(): Promise<boolean> {
               blog.readTime || '5 Min Read',
               blog.author || 'Admin',
               blog.date || new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
-              true
+              true,
+              blog.isFeatured || false,
+              blog.isFocus || false
             ]
           );
         }
@@ -242,6 +252,8 @@ export async function getBlogPosts(): Promise<any[]> {
       author: row.author,
       date: row.date,
       published: row.published,
+      isFeatured: row.is_featured ?? false,
+      isFocus: row.is_focus ?? false,
       createdAt: row.created_at
     }));
   } catch (err) {
@@ -276,6 +288,8 @@ export async function getBlogPostBySlug(slug: string): Promise<any | null> {
       author: row.author,
       date: row.date,
       published: row.published,
+      isFeatured: row.is_featured ?? false,
+      isFocus: row.is_focus ?? false,
       createdAt: row.created_at
     };
   } catch (err) {
@@ -298,11 +312,18 @@ export async function saveBlogPost(blogData: {
   readTime?: string;
   author?: string;
   date?: string;
+  isFeatured?: boolean;
+  isFocus?: boolean;
 }): Promise<any> {
   const dateStr = blogData.date || new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
   const tagsArr = blogData.tags || [];
+  const isFeatured = blogData.isFeatured ?? false;
+  const isFocus = blogData.isFocus ?? false;
 
   if (!pool) {
+    if (isFocus) {
+      memoryBlogs.forEach(b => { b.isFocus = false; });
+    }
     const existingIdx = memoryBlogs.findIndex(b => b.slug === blogData.slug);
     const newBlog = {
       slug: blogData.slug,
@@ -314,7 +335,9 @@ export async function saveBlogPost(blogData: {
       coverImage: blogData.coverImage,
       readTime: blogData.readTime || '5 Min Read',
       author: blogData.author || 'Admin',
-      date: dateStr
+      date: dateStr,
+      isFeatured: isFeatured,
+      isFocus: isFocus
     };
     if (existingIdx >= 0) {
       memoryBlogs[existingIdx] = newBlog;
@@ -326,9 +349,15 @@ export async function saveBlogPost(blogData: {
 
   try {
     await ensureDbInitialized();
+
+    // If setting as focus, optionally un-set focus on other posts so only one post is focus
+    if (isFocus) {
+      await pool.query('UPDATE blog_posts SET is_focus = false WHERE slug != $1', [blogData.slug]);
+    }
+
     const query = `
-      INSERT INTO blog_posts (slug, title, excerpt, content, category, tags, cover_image, read_time, author, date, published, updated_at)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, true, CURRENT_TIMESTAMP)
+      INSERT INTO blog_posts (slug, title, excerpt, content, category, tags, cover_image, read_time, author, date, published, is_featured, is_focus, updated_at)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, true, $11, $12, CURRENT_TIMESTAMP)
       ON CONFLICT (slug) DO UPDATE SET
         title = EXCLUDED.title,
         excerpt = EXCLUDED.excerpt,
@@ -339,6 +368,8 @@ export async function saveBlogPost(blogData: {
         read_time = EXCLUDED.read_time,
         author = EXCLUDED.author,
         date = EXCLUDED.date,
+        is_featured = EXCLUDED.is_featured,
+        is_focus = EXCLUDED.is_focus,
         updated_at = CURRENT_TIMESTAMP
       RETURNING *;
     `;
@@ -352,7 +383,9 @@ export async function saveBlogPost(blogData: {
       blogData.coverImage,
       blogData.readTime || '5 Min Read',
       blogData.author || 'Admin',
-      dateStr
+      dateStr,
+      isFeatured,
+      isFocus
     ];
     const res = await pool.query(query, values);
     const row = res.rows[0];
@@ -367,7 +400,9 @@ export async function saveBlogPost(blogData: {
       coverImage: row.cover_image,
       readTime: row.read_time,
       author: row.author,
-      date: row.date
+      date: row.date,
+      isFeatured: row.is_featured ?? false,
+      isFocus: row.is_focus ?? false
     };
   } catch (err) {
     console.error('Error saving blog post to Neon DB:', err);

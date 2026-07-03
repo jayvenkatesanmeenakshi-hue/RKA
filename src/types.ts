@@ -48,4 +48,6 @@ export interface BlogPost {
   readTime: string;
   category: string;
   tags: string[];
+  isFeatured?: boolean;
+  isFocus?: boolean;
 }

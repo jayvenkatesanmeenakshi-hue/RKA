@@ -17,7 +17,9 @@ import {
   Share2, 
   Check, 
   BookOpen, 
-  ChevronRight 
+  ChevronRight,
+  Sparkles,
+  Star
 } from 'lucide-react';
 
 // A super clean and fast custom Markdown parser to avoid peer dependency issues with React 19.
@@ -322,8 +324,20 @@ export const BlogModule = ({ currentSlug, navigateTo }: BlogModuleProps) => {
     return matchesCategory && matchesSearch;
   });
 
-  const featuredPost = filteredPosts[0];
-  const secondaryPosts = filteredPosts.slice(1);
+  // Main post on left: check if any filtered post has isFocus === true, otherwise fallback to latest post
+  const focusPost = filteredPosts.find(p => p.isFocus);
+  const mainPost = focusPost || filteredPosts[0];
+
+  // Featured side content on right: posts marked with isFeatured (excluding the main post)
+  let featuredPosts = filteredPosts.filter(p => p.isFeatured && p.slug !== mainPost?.slug);
+  
+  // If no posts are explicitly flagged as featured, fallback to up to 3 remaining posts
+  if (featuredPosts.length === 0 && mainPost) {
+    featuredPosts = filteredPosts.filter(p => p.slug !== mainPost.slug).slice(0, 3);
+  }
+
+  // All other posts to show in the grid below
+  const gridPosts = filteredPosts.filter(p => p.slug !== mainPost?.slug);
 
   return (
     <div className="bg-slate-50/50 min-h-screen pb-24">
@@ -386,89 +400,186 @@ export const BlogModule = ({ currentSlug, navigateTo }: BlogModuleProps) => {
             <p className="text-xs text-navy-400 font-sans mt-1">Try adjusting your category filter or search keywords.</p>
           </div>
         ) : (
-          <div className="space-y-12">
+          <div className="space-y-16">
             
-            {/* Featured Post Card (only shown when search/filter returns results) */}
-            {featuredPost && (
-              <div 
-                onClick={() => navigateTo(`/blog/${featuredPost.slug}`)}
-                className="bg-white border border-slate-100 hover:border-yellow-400 rounded-lg overflow-hidden shadow-sm hover:shadow-xl flex flex-col lg:flex-row cursor-pointer group transition-all duration-300"
-              >
-                {/* Image */}
-                <div className="lg:w-7/12 aspect-video lg:aspect-auto overflow-hidden bg-slate-100">
-                  <img 
-                    src={featuredPost.coverImage} 
-                    alt={featuredPost.title} 
-                    className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500"
-                    referrerPolicy="no-referrer"
-                    fetchPriority="high"
-                  />
-                </div>
-                {/* Text Context */}
-                <div className="lg:w-5/12 p-8 md:p-12 flex flex-col justify-between">
-                  <div className="space-y-4">
-                    <div className="inline-flex items-center gap-1.5 bg-yellow-50 text-yellow-700 text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-sm">
-                      <Tag size={10} /> Featured / {featuredPost.category}
+            {/* HERO LAYOUT: LEFT MAIN COLUMN + RIGHT FEATURED SIDEBAR */}
+            {mainPost && (
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                
+                {/* LEFT MAIN COLUMN (8 cols on lg) */}
+                <div className="lg:col-span-8 space-y-4">
+                  <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2.5 h-2.5 rounded-full bg-yellow-500 animate-pulse"></span>
+                      <h2 className="text-xs font-black uppercase tracking-[0.2em] text-navy-900 font-sans">
+                        {mainPost.isFocus ? 'Main Focus Article' : 'Latest Article'}
+                      </h2>
                     </div>
-                    <h2 className="text-2xl md:text-3xl font-bold text-navy-900 tracking-tight leading-snug group-hover:text-yellow-600 transition-colors">
-                      {featuredPost.title}
-                    </h2>
-                    <p className="text-xs text-navy-400 leading-relaxed font-sans line-clamp-3">
-                      {featuredPost.excerpt}
-                    </p>
+                    {mainPost.isFocus && (
+                      <span className="text-[10px] font-mono font-bold text-yellow-800 bg-yellow-100 border border-yellow-300 px-2.5 py-0.5 rounded-sm flex items-center gap-1">
+                        <Star size={10} className="fill-yellow-600 text-yellow-600" /> Focus Fixed
+                      </span>
+                    )}
                   </div>
 
-                  <div className="pt-6 border-t border-slate-50 mt-8 flex items-center justify-between">
-                    <div className="flex items-center gap-4 text-[10px] font-mono text-navy-300">
-                      <span>{featuredPost.date}</span>
-                      <span>•</span>
-                      <span>{featuredPost.readTime}</span>
+                  {/* Main Article Hero Card */}
+                  <div 
+                    onClick={() => navigateTo(`/blog/${mainPost.slug}`)}
+                    className="bg-white border border-slate-100 hover:border-yellow-400 rounded-xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 cursor-pointer group flex flex-col"
+                  >
+                    <div className="aspect-[16/9] w-full overflow-hidden bg-slate-100 relative">
+                      <img 
+                        src={mainPost.coverImage} 
+                        alt={mainPost.title} 
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                        referrerPolicy="no-referrer"
+                        fetchPriority="high"
+                      />
+                      <div className="absolute top-4 left-4 flex gap-2">
+                        <span className="bg-navy-900/90 backdrop-blur-md text-white text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-sm shadow-md">
+                          {mainPost.category}
+                        </span>
+                      </div>
                     </div>
-                    <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-navy-900 group-hover:text-yellow-600 transition-colors">
-                      Read Post <ChevronRight size={12} />
-                    </span>
+
+                    <div className="p-6 sm:p-8 md:p-10 space-y-4 flex-grow flex flex-col justify-between">
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-3 text-xs text-navy-400 font-sans">
+                          <span className="flex items-center gap-1.5"><User size={13} className="text-yellow-600" /> {mainPost.author}</span>
+                          <span>•</span>
+                          <span className="flex items-center gap-1.5"><Calendar size={13} className="text-yellow-600" /> {mainPost.date}</span>
+                          <span>•</span>
+                          <span className="flex items-center gap-1.5"><Clock size={13} className="text-yellow-600" /> {mainPost.readTime}</span>
+                        </div>
+
+                        <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-navy-900 tracking-tight leading-tight group-hover:text-yellow-600 transition-colors">
+                          {mainPost.title}
+                        </h2>
+
+                        <p className="text-xs sm:text-sm text-navy-600 font-sans leading-relaxed line-clamp-3">
+                          {mainPost.excerpt}
+                        </p>
+                      </div>
+
+                      <div className="pt-6 border-t border-slate-100 flex items-center justify-between mt-6">
+                        <div className="flex flex-wrap gap-1.5">
+                          {mainPost.tags.slice(0, 3).map(tag => (
+                            <span key={tag} className="text-[9px] font-bold text-navy-400 bg-slate-100 px-2.5 py-0.5 rounded-sm">
+                              #{tag}
+                            </span>
+                          ))}
+                        </div>
+
+                        <span className="inline-flex items-center gap-1.5 text-xs font-black uppercase tracking-widest text-navy-900 group-hover:text-yellow-600 transition-colors">
+                          Read Full Article <ChevronRight size={14} />
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 </div>
+
+                {/* RIGHT SIDE COLUMN (4 cols on lg - FEATURED BLOGS SIDE CONTENT) */}
+                <div className="lg:col-span-4 space-y-4">
+                  <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+                    <h2 className="text-xs font-black uppercase tracking-[0.2em] text-navy-900 font-sans flex items-center gap-2">
+                      <Sparkles size={14} className="text-yellow-500 fill-yellow-500" /> Featured Reading
+                    </h2>
+                    <span className="text-[10px] font-mono text-navy-400">Side Column</span>
+                  </div>
+
+                  <div className="bg-white border border-slate-100 rounded-xl p-5 shadow-sm divide-y divide-slate-100">
+                    {featuredPosts.length === 0 ? (
+                      <p className="text-xs text-navy-400 py-6 font-sans text-center">No other featured articles available.</p>
+                    ) : (
+                      featuredPosts.map(post => (
+                        <div 
+                          key={post.slug}
+                          onClick={() => navigateTo(`/blog/${post.slug}`)}
+                          className="py-4 first:pt-0 last:pb-0 flex gap-4 items-start group cursor-pointer transition-all"
+                        >
+                          <div className="w-20 h-20 shrink-0 rounded-lg overflow-hidden bg-slate-100 border border-slate-100">
+                            <img 
+                              src={post.coverImage} 
+                              alt={post.title} 
+                              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                              referrerPolicy="no-referrer"
+                              loading="lazy"
+                            />
+                          </div>
+                          <div className="min-w-0 flex-1 space-y-1.5">
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="text-[8px] font-black uppercase tracking-wider text-yellow-700 bg-yellow-50 border border-yellow-200/60 px-2 py-0.5 rounded-sm">
+                                {post.category}
+                              </span>
+                              <span className="text-[9px] font-mono text-navy-300 shrink-0">{post.readTime}</span>
+                            </div>
+                            <h3 className="text-xs font-bold text-navy-900 leading-snug line-clamp-2 group-hover:text-yellow-600 transition-colors">
+                              {post.title}
+                            </h3>
+                            <p className="text-[10px] font-sans text-navy-400 line-clamp-1">{post.date}</p>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+
               </div>
             )}
 
-            {/* Secondary Posts Grid */}
-            {secondaryPosts.length > 0 && (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {secondaryPosts.map(post => (
-                  <div 
-                    key={post.slug}
-                    onClick={() => navigateTo(`/blog/${post.slug}`)}
-                    className="bg-white border border-slate-100 hover:border-yellow-400 hover:shadow-lg rounded-lg overflow-hidden flex flex-col cursor-pointer transition-all group"
-                  >
-                    <div className="aspect-[16/10] overflow-hidden bg-slate-100">
-                      <img 
-                        src={post.coverImage} 
-                        alt={post.title} 
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                        referrerPolicy="no-referrer"
-                        loading="lazy"
-                      />
-                    </div>
-                    <div className="p-8 flex-grow flex flex-col justify-between">
-                      <div className="space-y-4">
-                        <span className="text-[9px] font-black uppercase tracking-widest text-yellow-600 bg-yellow-50 px-2 py-1 rounded-sm">
-                          {post.category}
-                        </span>
-                        <h3 className="text-lg font-bold text-navy-900 line-clamp-2 leading-snug group-hover:text-yellow-600 transition-colors">
-                          {post.title}
-                        </h3>
-                        <p className="text-xs text-navy-400 leading-relaxed font-sans line-clamp-2">
-                          {post.excerpt}
-                        </p>
+            {/* ALL ARTICLES / MORE READS GRID BELOW */}
+            {gridPosts.length > 0 && (
+              <div className="space-y-6 pt-6 border-t border-slate-200">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-bold text-navy-900 tracking-tight">
+                    Explore All Articles
+                  </h3>
+                  <span className="text-xs text-navy-400 font-sans">
+                    Showing {gridPosts.length} article{gridPosts.length > 1 ? 's' : ''}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                  {gridPosts.map(post => (
+                    <div 
+                      key={post.slug}
+                      onClick={() => navigateTo(`/blog/${post.slug}`)}
+                      className="bg-white border border-slate-100 hover:border-yellow-400 hover:shadow-lg rounded-xl overflow-hidden flex flex-col cursor-pointer transition-all group"
+                    >
+                      <div className="aspect-[16/10] overflow-hidden bg-slate-100 relative">
+                        <img 
+                          src={post.coverImage} 
+                          alt={post.title} 
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          referrerPolicy="no-referrer"
+                          loading="lazy"
+                        />
+                        {post.isFeatured && (
+                          <span className="absolute top-3 left-3 bg-navy-900/90 backdrop-blur-md text-white text-[8px] font-black uppercase tracking-widest px-2.5 py-1 rounded-sm shadow">
+                            Featured
+                          </span>
+                        )}
                       </div>
-                      <div className="pt-6 border-t border-slate-50 mt-6 flex items-center justify-between text-[10px] font-mono text-navy-300">
-                        <span>{post.date}</span>
-                        <span>{post.readTime}</span>
+                      <div className="p-6 flex-grow flex flex-col justify-between">
+                        <div className="space-y-3">
+                          <span className="text-[9px] font-black uppercase tracking-widest text-yellow-600 bg-yellow-50 px-2 py-1 rounded-sm">
+                            {post.category}
+                          </span>
+                          <h3 className="text-base font-bold text-navy-900 line-clamp-2 leading-snug group-hover:text-yellow-600 transition-colors">
+                            {post.title}
+                          </h3>
+                          <p className="text-xs text-navy-400 leading-relaxed font-sans line-clamp-2">
+                            {post.excerpt}
+                          </p>
+                        </div>
+                        <div className="pt-4 border-t border-slate-50 mt-6 flex items-center justify-between text-[10px] font-mono text-navy-300">
+                          <span>{post.date}</span>
+                          <span>{post.readTime}</span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             )}
 
