@@ -19,18 +19,6 @@ interface Review {
 const fallbackReviewsData: Review[] = [
   {
     id: '1',
-    authorName: 'A. R. Parent',
-    authorLocation: 'Mambakkam, Chennai',
-    rating: 5,
-    date: '1 week ago',
-    category: 'Phonics & Reading',
-    text: 'Definitely a great place for the kids to learn reading English and Tamil.. The teachers are very patient and structured in their teaching methodology.',
-    avatarColor: 'bg-blue-600',
-    verified: true,
-    likes: 18
-  },
-  {
-    id: '2',
     authorName: 'S. Lakshmi',
     authorLocation: 'Ponmar Rd, Chennai',
     rating: 5,
@@ -42,7 +30,7 @@ const fallbackReviewsData: Review[] = [
     likes: 24
   },
   {
-    id: '3',
+    id: '2',
     authorName: 'Karthik Swaminathan',
     authorLocation: 'Ponmar, Chennai',
     rating: 5,
@@ -54,7 +42,7 @@ const fallbackReviewsData: Review[] = [
     likes: 12
   },
   {
-    id: '4',
+    id: '3',
     authorName: 'Priya Ramachandran',
     authorLocation: 'Near SBIOA School',
     rating: 5,
@@ -66,7 +54,7 @@ const fallbackReviewsData: Review[] = [
     likes: 15
   },
   {
-    id: '5',
+    id: '4',
     authorName: 'Anitha Venkatesh',
     authorLocation: 'Medavakkam / Ponmar',
     rating: 5,
@@ -78,7 +66,7 @@ const fallbackReviewsData: Review[] = [
     likes: 19
   },
   {
-    id: '6',
+    id: '5',
     authorName: 'Rajesh Kumar M.',
     authorLocation: 'Ponmar Main Road',
     rating: 5,
@@ -88,10 +76,23 @@ const fallbackReviewsData: Review[] = [
     avatarColor: 'bg-indigo-600',
     verified: true,
     likes: 11
-  }
+  },
+  {
+    id: '6',
+    authorName: 'A. R. Parent',
+    authorLocation: 'Mambakkam, Chennai',
+    rating: 5,
+    date: '1 week ago',
+    category: 'Phonics & Reading',
+    text: 'Definitely a great place for the kids to learn reading English and Tamil.. The teachers are very patient and structured in their teaching methodology.',
+    avatarColor: 'bg-blue-600',
+    verified: true,
+    likes: 18
+  },
+
 ];
 
-const categories = ['All Reviews', 'Abacus Math', 'Phonics & Reading', 'Handwriting', 'English & Grammar'];
+const categories = [];
 
 export const GoogleReviews = () => {
   const [selectedCategory, setSelectedCategory] = useState('All Reviews');

@@ -1,0 +1,27 @@
+# Robots.txt for Rocking Kids Academy
+# https://rockingkidsacademy.in/robots.txt
+
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /api/
+
+# Explicitly Allow Major AI Search & Agent Crawlers
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+# XML Sitemap & AI LLMs Knowledge Base
+Sitemap: https://rockingkidsacademy.in/sitemap.xml
+# LLMs Text File: https://rockingkidsacademy.in/llms.txt

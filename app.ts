@@ -39,7 +39,206 @@ app.use((req, res, next) => {
   next();
 });
 
-// Robust sitemap detection middleware
+// Helper to build default JSON-LD Schema.org graph
+export function getDefaultJsonLd(seo: any) {
+  const domain = (seo?.canonical || "https://rockingkidsacademy.in").replace(/\/$/, "");
+  return {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": ["EducationalOrganization", "LocalBusiness", "ChildCare"],
+        "@id": `${domain}/#organization`,
+        "name": "Rocking Kids Academy",
+        "alternateName": "Rocking Kids Academy Phonics and Abacus Center",
+        "description": seo?.description || "Premier child skill development and learning center in Ponmar, Chennai, specializing in Abacus, Phonics, English, and Handwriting mastery.",
+        "url": domain,
+        "logo": `${domain}/assets/images/logo-icon.png`,
+        "image": `${domain}/assets/images/logo-icon.png`,
+        "telephone": "+91-9840000000",
+        "email": "meenakshidevarajan@gmail.com",
+        "address": {
+          "@type": "PostalAddress",
+          "streetAddress": "Ponmar Main Road",
+          "addressLocality": "Ponmar, Chennai",
+          "addressRegion": "Tamil Nadu",
+          "postalCode": "600130",
+          "addressCountry": "IN"
+        },
+        "geo": {
+          "@type": "GeoCoordinates",
+          "latitude": 12.8450,
+          "longitude": 80.1700
+        },
+        "openingHoursSpecification": [
+          {
+            "@type": "OpeningHoursSpecification",
+            "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+            "opens": "09:00",
+            "closes": "19:00"
+          }
+        ],
+        "aggregateRating": {
+          "@type": "AggregateRating",
+          "ratingValue": "4.9",
+          "reviewCount": "183",
+          "bestRating": "5",
+          "worstRating": "1"
+        },
+        "priceRange": "₹₹",
+        "sameAs": [
+          "https://share.google/v4RsF6b9XjAwE9uFs"
+        ]
+      },
+      {
+        "@type": "WebSite",
+        "@id": `${domain}/#website`,
+        "url": domain,
+        "name": "Rocking Kids Academy",
+        "description": seo?.description || "Premier Learning Center for Abacus, Phonics, English & Handwriting",
+        "publisher": {
+          "@id": `${domain}/#organization`
+        }
+      },
+      {
+        "@type": "Course",
+        "@id": `${domain}/program/Abacus#course`,
+        "name": "Abacus & Mental Math Computation (Brainobrain Certified)",
+        "description": "Boosts brain development, visual memory, concentration, and lightning-fast mental math computations. Certified Brainobrain curriculum.",
+        "provider": {
+          "@id": `${domain}/#organization`
+        },
+        "educationalCredentialAwarded": "Brainobrain Certified Abacus Level Certificate"
+      },
+      {
+        "@type": "Course",
+        "@id": `${domain}/program/Phonics#course`,
+        "name": "Structured Synthetic Phonics & Early Reading Fluency",
+        "description": "Synthetic phonics training focusing on letter sounds, blending, segmenting, and early reading fluency for children aged 4 to 8.",
+        "provider": {
+          "@id": `${domain}/#organization`
+        }
+      },
+      {
+        "@type": "Course",
+        "@id": `${domain}/program/English#course`,
+        "name": "English Speaking, Creative Writing & Public Speaking",
+        "description": "Elevates grammar, descriptive vocabulary, creative writing, reading comprehension, and public speaking confidence for children aged 6 to 14.",
+        "provider": {
+          "@id": `${domain}/#organization`
+        }
+      },
+      {
+        "@type": "Course",
+        "@id": `${domain}/program/Handwriting#course`,
+        "name": "Scientific Cursive & Print Handwriting Improvement",
+        "description": "Scientific correction of pencil grip, posture, letter formation, spacing, sizing, and writing speed.",
+        "provider": {
+          "@id": `${domain}/#organization`
+        }
+      },
+      {
+        "@type": "FAQPage",
+        "@id": `${domain}/#faq`,
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "What age group is suitable for programs at Rocking Kids Academy?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "We offer structured courses in Abacus, Phonics, English, and Handwriting for children aged 4 to 14 years."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "What is the Abacus affiliation at Rocking Kids Academy?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Our Abacus program is affiliated with Brainobrain, offering certified multi-level mental arithmetic and neuro-linguistic training."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Where is Rocking Kids Academy located?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Rocking Kids Academy is located on Ponmar Main Road, Ponmar, Chennai, Tamil Nadu (serving Ponmar, Mambakkam, and Medavakkam regions)."
+            }
+          }
+        ]
+      }
+    ]
+  };
+}
+
+// Helper to build default llms.txt content
+export function getDefaultLlmsTxt(seo: any) {
+  const domain = (seo?.canonical || "https://rockingkidsacademy.in").replace(/\/$/, "");
+  return `# Rocking Kids Academy
+
+Rocking Kids Academy is a premier child skill development and learning center based in Ponmar, Chennai, India. We specialize in expert-led, scientifically structured courses designed for children aged 4 to 14. Our programs build cognitive abilities, literacy, communication skills, and motor coordination.
+
+## Core Programs
+
+- **Abacus (Brainobrain Affiliation)**: Boosts brain development, improves visual memory, concentration, and enables lightning-fast mental arithmetic computations. Certified Brainobrain curriculum.
+- **Structured Phonics**: Synthetic phonics course focusing on letter sounds, blending, segmenting, and early reading fluency for children aged 4 to 8.
+- **English Speaking & Communication**: Elevates grammar, descriptive vocabulary, creative writing, comprehension, and public speaking confidence for children aged 6 to 14.
+- **Handwriting & Cursive Improvement**: Scientific correction of pencil grip, posture, letter formation, spacing, sizing, and writing speed.
+
+## Navigation & Site Map
+
+- **Home page (\`/\`)**: Main landing page with a program overview, key philosophy, parents' testimonials, and the direct contact enquiry form.
+- **Curriculum Details (\`/#curriculum\`)**: Information on our pedagogical approach and age-specific child developments.
+- **Contact Enquiry Form (\`/api/enquiry\`)**: POST endpoint to submit student/parent enquiries (parentName, mobileNumber, email, message).
+- **Abacus Program (\`/program/Abacus\`)**: Detailed description of the abacus brainobrain training.
+- **Phonics Program (\`/program/Phonics\`)**: Detailed description of the reading and phonics training.
+- **English Program (\`/program/English\`)**: Detailed description of our speech, vocabulary, and grammar program.
+- **Handwriting Program (\`/program/Handwriting\`)**: Detailed description of cursive writing and posture correction.
+- **Learning Hub / Blog (\`/blog\`)**: Articles on cognitive growth, parenting guides, motor skills development, and literacy.
+  - **Abacus benefits article (\`/blog/power-of-abacus-mental-math-brain-development\`)**: Science behind abacus and mental math.
+  - **Phonics article (\`/blog/phonics-vs-whole-language-why-essential-reading-success\`)**: Synthetic phonics vs whole language method.
+  - **Handwriting article (\`/blog/effective-ways-improve-child-handwriting-motor-skills\`)**: 5 ways to correct pencil grip and hand-eye coordination.
+
+## Contact & Location
+
+- **Address**: Ponmar Main Road, Ponmar, Chennai (near Mandaveli / Ponmar region).
+- **Inquiries**: For admissions or trial classes, parents can use the interactive contact form on the home page or email meenakshidevarajan@gmail.com / cc venky1302@gmail.com.
+`;
+}
+
+// Helper to build default robots.txt content
+export function getDefaultRobotsTxt(seo: any) {
+  const domain = (seo?.canonical || "https://rockingkidsacademy.in").replace(/\/$/, "");
+  return `# Robots.txt for Rocking Kids Academy
+# https://rockingkidsacademy.in/robots.txt
+
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /api/
+
+# Explicitly Allow Major AI Search & Agent Crawlers
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+# XML Sitemap & AI LLMs Knowledge Base
+Sitemap: ${domain}/sitemap.xml
+# LLM Overview: ${domain}/llms.txt
+`;
+}
+
+// Middleware for sitemap, llms.txt, json-ld.json, and robots.txt
 app.use((req, res, next) => {
   const url = req.url || "";
   const originalUrl = req.originalUrl || "";
@@ -56,6 +255,34 @@ app.use((req, res, next) => {
   ) {
     return serveSitemap(req, res);
   }
+
+  if (
+    url.includes("robots.txt") ||
+    originalUrl.includes("robots.txt") ||
+    forwardedUrl.includes("robots.txt") ||
+    matchedPath.includes("robots.txt")
+  ) {
+    return serveRobotsTxt(req, res);
+  }
+
+  if (
+    url.includes("llms.txt") ||
+    originalUrl.includes("llms.txt") ||
+    forwardedUrl.includes("llms.txt") ||
+    matchedPath.includes("llms.txt")
+  ) {
+    return serveLlmsTxt(req, res);
+  }
+
+  if (
+    url.includes("json-ld.json") ||
+    originalUrl.includes("json-ld.json") ||
+    forwardedUrl.includes("json-ld.json") ||
+    matchedPath.includes("json-ld.json")
+  ) {
+    return serveJsonLd(req, res);
+  }
+
   next();
 });
 
@@ -65,43 +292,86 @@ const TMP_SEO_FILE = path.join("/tmp", "seo.json");
 
 // Helper to load SEO data safely (DB first, file fallback)
 export async function loadSeoData() {
+  let seoData: any = null;
+
   try {
     const dbData = await getDbSeoData();
-    if (dbData) return dbData;
+    if (dbData) seoData = dbData;
   } catch (err) {
     console.error("Error reading SEO from DB, fallback to file:", err);
   }
 
-  try {
-    if (fs.existsSync(TMP_SEO_FILE)) {
-      return JSON.parse(fs.readFileSync(TMP_SEO_FILE, "utf-8"));
+  if (!seoData) {
+    try {
+      if (fs.existsSync(TMP_SEO_FILE)) {
+        seoData = JSON.parse(fs.readFileSync(TMP_SEO_FILE, "utf-8"));
+      } else if (fs.existsSync(LOCAL_SEO_FILE)) {
+        seoData = JSON.parse(fs.readFileSync(LOCAL_SEO_FILE, "utf-8"));
+      }
+    } catch (err) {
+      console.error("Error reading seo.json, using defaults:", err);
     }
-    if (fs.existsSync(LOCAL_SEO_FILE)) {
-      return JSON.parse(fs.readFileSync(LOCAL_SEO_FILE, "utf-8"));
-    }
-  } catch (err) {
-    console.error("Error reading seo.json, using defaults:", err);
   }
 
-  return {
-    title: "Rocking Kids Academy | Premier Learning Center for Abacus, Phonics & English",
-    description: "Rocking Kids Academy is a premier learning center dedicated to skill development for children ages 4 to 14. We offer expert-led courses in Abacus, Phonics, English, and Handwriting mastery.",
-    keywords: "Rocking Kids Academy, Abacus for kids, Phonics training, English speaking kids, Handwriting mastery, Child development academy, Skill development classes",
-    canonical: "https://rockingkidsacademy.in",
-    ogTitle: "Rocking Kids Academy | Premier Learning Center for Abacus, Phonics & English",
-    ogDescription: "Dedicated to skill development for children ages 4 to 14. Discover our nurturing environment for Abacus, Phonics, English, and Handwriting mastery.",
-    ogImage: "https://rockingkidsacademy.in/assets/images/logo-icon.png",
-    twitterTitle: "Rocking Kids Academy | Premier Learning Center for Abacus, Phonics & English",
-    twitterDescription: "Dedicated to skill development for children ages 4 to 14. Discover our nurturing environment for Abacus, Phonics, English, and Handwriting mastery.",
-    twitterImage: "https://rockingkidsacademy.in/assets/images/logo-icon.png",
-    sitemapUrls: [
-      { url: "/", changefreq: "daily", priority: "1.0" },
-      { url: "/#prospectus", changefreq: "weekly", priority: "0.8" },
-      { url: "/#curriculum", changefreq: "weekly", priority: "0.8" },
-      { url: "/#faculty", changefreq: "weekly", priority: "0.7" },
-      { url: "/#location", changefreq: "weekly", priority: "0.7" }
-    ]
-  };
+  if (!seoData) {
+    seoData = {
+      title: "Rocking Kids Academy | Premier Learning Center for Abacus, Phonics & English",
+      description: "Rocking Kids Academy is a premier learning center dedicated to skill development for children ages 4 to 14. We offer expert-led courses in Abacus, Phonics, English, and Handwriting mastery.",
+      keywords: "Rocking Kids Academy, Abacus for kids, Phonics training, English speaking kids, Handwriting mastery, Child development academy, Skill development classes",
+      canonical: "https://rockingkidsacademy.in",
+      ogTitle: "Rocking Kids Academy | Premier Learning Center for Abacus, Phonics & English",
+      ogDescription: "Dedicated to skill development for children ages 4 to 14. Discover our nurturing environment for Abacus, Phonics, English, and Handwriting mastery.",
+      ogImage: "https://rockingkidsacademy.in/assets/images/logo-icon.png",
+      twitterTitle: "Rocking Kids Academy | Premier Learning Center for Abacus, Phonics & English",
+      twitterDescription: "Dedicated to skill development for children ages 4 to 14. Discover our nurturing environment for Abacus, Phonics, English, and Handwriting mastery.",
+      twitterImage: "https://rockingkidsacademy.in/assets/images/logo-icon.png",
+      sitemapUrls: [
+        { url: "/", changefreq: "daily", priority: "1.0" },
+        { url: "/#prospectus", changefreq: "weekly", priority: "0.8" },
+        { url: "/#curriculum", changefreq: "weekly", priority: "0.8" },
+        { url: "/#faculty", changefreq: "weekly", priority: "0.7" },
+        { url: "/#location", changefreq: "weekly", priority: "0.7" }
+      ]
+    };
+  }
+
+  if (!seoData.jsonLd) {
+    seoData.jsonLd = getDefaultJsonLd(seoData);
+  }
+
+  if (!seoData.llmsTxt) {
+    seoData.llmsTxt = getDefaultLlmsTxt(seoData);
+  }
+
+  if (!seoData.robotsTxt) {
+    seoData.robotsTxt = getDefaultRobotsTxt(seoData);
+  }
+
+  return seoData;
+}
+
+// Helper to serve robots.txt dynamically
+export async function serveRobotsTxt(req: express.Request, res: express.Response) {
+  const seo = await loadSeoData();
+  const content = seo.robotsTxt || getDefaultRobotsTxt(seo);
+  res.header("Content-Type", "text/plain; charset=utf-8");
+  res.status(200).send(content);
+}
+
+// Helper to serve llms.txt dynamically
+export async function serveLlmsTxt(req: express.Request, res: express.Response) {
+  const seo = await loadSeoData();
+  const content = seo.llmsTxt || getDefaultLlmsTxt(seo);
+  res.header("Content-Type", "text/plain; charset=utf-8");
+  res.status(200).send(content);
+}
+
+// Helper to serve json-ld.json dynamically
+export async function serveJsonLd(req: express.Request, res: express.Response) {
+  const seo = await loadSeoData();
+  const jsonLd = seo.jsonLd || getDefaultJsonLd(seo);
+  res.header("Content-Type", "application/ld+json; charset=utf-8");
+  res.status(200).send(JSON.stringify(jsonLd, null, 2));
 }
 
 // Helper to save SEO data
@@ -180,7 +450,7 @@ export async function serveSitemap(req: express.Request, res: express.Response) 
 
 // Route-specific dynamic SEO parameters
 export async function getOverrideSeo(reqPath: string, baseSeo: any) {
-  const domain = baseSeo.canonical || "https://rockingkidsacademy.in";
+  const domain = (baseSeo.canonical || "https://rockingkidsacademy.in").replace(/\/$/, "");
   
   if (reqPath === '/blog') {
     return {
@@ -211,7 +481,10 @@ export async function getOverrideSeo(reqPath: string, baseSeo: any) {
       title = "Handwriting & Cursive Improvement Course | Rocking Kids Academy";
       description = "Scientific handwriting improvement class correcting physical pencil grip, posture, letter sizing, and writing speed. Chennai Ponmar Main Road center.";
     } else {
-      return baseSeo;
+      return {
+        ...baseSeo,
+        canonical: `${domain}${reqPath}`
+      };
     }
     
     return {
@@ -248,21 +521,34 @@ export async function getOverrideSeo(reqPath: string, baseSeo: any) {
       console.error("Error generating override SEO for blog:", e);
     }
   }
-  
-  return baseSeo;
+
+  const cleanPath = reqPath === '/' ? '' : reqPath;
+  return {
+    ...baseSeo,
+    canonical: `${domain}${cleanPath}`
+  };
 }
 
 // Dynamic SEO Injection function
 export async function injectSeo(htmlStr: string, baseSeo: any, reqPath?: string): Promise<string> {
   const seo = reqPath ? await getOverrideSeo(reqPath, baseSeo) : baseSeo;
 
+  const canonicalUrl = seo.canonical || "https://rockingkidsacademy.in";
+  const canonicalTag = `<link rel="canonical" href="${canonicalUrl}" />`;
+
   htmlStr = htmlStr.replace(/<title>[^<]*<\/title>/i, `<title>${seo.title}</title>`);
   htmlStr = htmlStr.replace(/<meta[^>]*?name="description"[^>]*?content="[^"]*"[^>]*?>/i, `<meta name="description" content="${seo.description}" />`);
   htmlStr = htmlStr.replace(/<meta[^>]*?content="[^"]*"[^>]*?name="description"[^>]*?>/i, `<meta name="description" content="${seo.description}" />`);
   htmlStr = htmlStr.replace(/<meta[^>]*?name="keywords"[^>]*?content="[^"]*"[^>]*?>/i, `<meta name="keywords" content="${seo.keywords}" />`);
   htmlStr = htmlStr.replace(/<meta[^>]*?content="[^"]*"[^>]*?name="keywords"[^>]*?>/i, `<meta name="keywords" content="${seo.keywords}" />`);
-  htmlStr = htmlStr.replace(/<link[^>]*?rel="canonical"[^>]*?href="[^"]*"[^>]*?>/i, `<link rel="canonical" href="${seo.canonical}" />`);
-  htmlStr = htmlStr.replace(/<link[^>]*?href="[^"]*"[^>]*?rel="canonical"[^>]*?>/i, `<link rel="canonical" href="${seo.canonical}" />`);
+  
+  if (htmlStr.includes('rel="canonical"') || htmlStr.includes("rel='canonical'")) {
+    htmlStr = htmlStr.replace(/<link[^>]*?rel=["']canonical["'][^>]*?>/i, canonicalTag);
+    htmlStr = htmlStr.replace(/<link[^>]*?href="[^"]*"[^>]*?rel=["']canonical["'][^>]*?>/i, canonicalTag);
+  } else {
+    htmlStr = htmlStr.replace(/<\/head>/i, `  ${canonicalTag}\n</head>`);
+  }
+
   htmlStr = htmlStr.replace(/<meta[^>]*?property="og:title"[^>]*?content="[^"]*"[^>]*?>/i, `<meta property="og:title" content="${seo.ogTitle || seo.title}" />`);
   htmlStr = htmlStr.replace(/<meta[^>]*?content="[^"]*"[^>]*?property="og:title"[^>]*?>/i, `<meta property="og:title" content="${seo.ogTitle || seo.title}" />`);
   htmlStr = htmlStr.replace(/<meta[^>]*?property="og:description"[^>]*?content="[^"]*"[^>]*?>/i, `<meta property="og:description" content="${seo.ogDescription || seo.description}" />`);
@@ -276,6 +562,16 @@ export async function injectSeo(htmlStr: string, baseSeo: any, reqPath?: string)
   htmlStr = htmlStr.replace(/<meta[^>]*?(?:name|property)="twitter:image"[^>]*?content="[^"]*"[^>]*?>/i, `<meta property="twitter:image" content="${seo.twitterImage || ''}" />`);
   htmlStr = htmlStr.replace(/<meta[^>]*?content="[^"]*"[^>]*?(?:name|property)="twitter:image"[^>]*?>/i, `<meta property="twitter:image" content="${seo.twitterImage || ''}" />`);
   
+  // Inject JSON-LD Schema.org script into <head>
+  const jsonLdObj = seo.jsonLd || getDefaultJsonLd(seo);
+  const jsonLdScript = `<script type="application/ld+json" id="json-ld-schema">\n${JSON.stringify(jsonLdObj, null, 2)}\n</script>`;
+
+  if (htmlStr.includes('id="json-ld-schema"') || htmlStr.includes('type="application/ld+json"')) {
+    htmlStr = htmlStr.replace(/<script[^>]*?type="application\/ld\+json"[^>]*?>[\s\S]*?<\/script>/i, jsonLdScript);
+  } else {
+    htmlStr = htmlStr.replace(/<\/head>/i, `${jsonLdScript}\n</head>`);
+  }
+
   return htmlStr;
 }
 
@@ -422,12 +718,29 @@ apiRouter.get("/seo", async (req, res) => {
 });
 
 apiRouter.post("/seo", checkAdminAuth, async (req, res) => {
-  const { title, description, keywords, canonical, ogTitle, ogDescription, ogImage, twitterTitle, twitterDescription, twitterImage, sitemapUrls } = req.body;
+  const { 
+    title, 
+    description, 
+    keywords, 
+    canonical, 
+    ogTitle, 
+    ogDescription, 
+    ogImage, 
+    twitterTitle, 
+    twitterDescription, 
+    twitterImage, 
+    sitemapUrls,
+    jsonLd,
+    llmsTxt,
+    robotsTxt 
+  } = req.body;
   
   if (!title || !description) {
     res.status(400).json({ error: "Title and description are required fields" });
     return;
   }
+
+  const existingSeo = await loadSeoData();
   
   const newSeo = {
     title,
@@ -440,11 +753,67 @@ apiRouter.post("/seo", checkAdminAuth, async (req, res) => {
     twitterTitle: twitterTitle || title,
     twitterDescription: twitterDescription || description,
     twitterImage: twitterImage || "",
-    sitemapUrls: sitemapUrls || []
+    sitemapUrls: sitemapUrls || existingSeo.sitemapUrls || [],
+    jsonLd: jsonLd || existingSeo.jsonLd || getDefaultJsonLd(existingSeo),
+    llmsTxt: llmsTxt || existingSeo.llmsTxt || getDefaultLlmsTxt(existingSeo),
+    robotsTxt: robotsTxt || existingSeo.robotsTxt || getDefaultRobotsTxt(existingSeo)
   };
   
   await saveSeoData(newSeo);
-  res.json({ success: true, message: "SEO configuration updated successfully in Neon Postgres!", data: newSeo });
+  res.json({ success: true, message: "SEO, JSON-LD, llms.txt & robots.txt configuration updated successfully in Neon Postgres!", data: newSeo });
+});
+
+// --- ADMIN AUTO-GENERATE JSON-LD, LLMS.TXT & ROBOTS.TXT ENDPOINTS ---
+apiRouter.post("/admin/seo/generate-jsonld", checkAdminAuth, async (req, res) => {
+  try {
+    const seo = await loadSeoData();
+    const freshJsonLd = getDefaultJsonLd(seo);
+    
+    seo.jsonLd = freshJsonLd;
+    await saveSeoData(seo);
+    res.json({ success: true, message: "Successfully re-generated JSON-LD Schema from database!", jsonLd: freshJsonLd });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || "Failed to generate JSON-LD" });
+  }
+});
+
+apiRouter.post("/admin/seo/generate-robotstxt", checkAdminAuth, async (req, res) => {
+  try {
+    const seo = await loadSeoData();
+    const freshRobotsTxt = getDefaultRobotsTxt(seo);
+    
+    seo.robotsTxt = freshRobotsTxt;
+    await saveSeoData(seo);
+    res.json({ success: true, message: "Successfully re-generated robots.txt from database!", robotsTxt: freshRobotsTxt });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || "Failed to generate robots.txt" });
+  }
+});
+
+apiRouter.post("/admin/seo/generate-llmstxt", checkAdminAuth, async (req, res) => {
+  try {
+    const seo = await loadSeoData();
+    let freshLlmsTxt = getDefaultLlmsTxt(seo);
+    
+    try {
+      const blogs = await getBlogPosts();
+      if (blogs && blogs.length > 0) {
+        let blogLines = "\n## Published Blog Articles & Parent Resources\n\n";
+        blogs.forEach((b: any) => {
+          blogLines += `- **${b.title}** (\`/blog/${b.slug}\`): ${b.excerpt}\n`;
+        });
+        freshLlmsTxt += blogLines;
+      }
+    } catch (e) {
+      console.error("Error fetching blogs for llms.txt generator:", e);
+    }
+
+    seo.llmsTxt = freshLlmsTxt;
+    await saveSeoData(seo);
+    res.json({ success: true, message: "Successfully re-generated llms.txt from database!", llmsTxt: freshLlmsTxt });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || "Failed to generate llms.txt" });
+  }
 });
 
 // --- HIDDEN GOOGLE REVIEWS ENDPOINTS ---

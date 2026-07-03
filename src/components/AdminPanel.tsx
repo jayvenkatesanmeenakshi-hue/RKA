@@ -26,7 +26,13 @@ import {
   Calendar,
   User,
   Tag,
-  Key
+  Key,
+  Code,
+  Bot,
+  FileCode,
+  AlertCircle,
+  Layers,
+  Cpu
 } from 'lucide-react';
 import { useAcademy } from '../context/AcademyContext';
 import { BlogPost } from '../types';
@@ -49,6 +55,9 @@ interface SeoData {
   twitterDescription: string;
   twitterImage: string;
   sitemapUrls: SitemapUrl[];
+  jsonLd?: any;
+  llmsTxt?: string;
+  robotsTxt?: string;
 }
 
 interface Enquiry {
@@ -75,8 +84,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigateTo }) => {
   const [loginError, setLoginError] = useState<string>('');
   const [isLoggingIn, setIsLoggingIn] = useState<boolean>(false);
 
-  // Active Tab: 'blogs' | 'enquiries' | 'basic' | 'social' | 'sitemap' | 'google-reviews'
-  const [activeTab, setActiveTab] = useState<'blogs' | 'enquiries' | 'basic' | 'social' | 'sitemap' | 'google-reviews'>('blogs');
+  // Active Tab: 'blogs' | 'enquiries' | 'basic' | 'social' | 'json-ld' | 'llms-txt' | 'robots-txt' | 'sitemap' | 'google-reviews'
+  const [activeTab, setActiveTab] = useState<'blogs' | 'enquiries' | 'basic' | 'social' | 'json-ld' | 'llms-txt' | 'robots-txt' | 'sitemap' | 'google-reviews'>('blogs');
   
   // Google Places API State
   const [googleApiKey, setGoogleApiKey] = useState(() => localStorage.getItem('google_places_api_key') || '');
@@ -89,6 +98,20 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigateTo }) => {
   const [customHideId, setCustomHideId] = useState<string>('');
   const [syncedReviews, setSyncedReviews] = useState<any[]>([]);
   const [isLoadingReviews, setIsLoadingReviews] = useState<boolean>(false);
+
+  // JSON-LD, llms.txt & robots.txt Editor States
+  const [jsonLdCode, setJsonLdCode] = useState<string>('');
+  const [jsonLdError, setJsonLdError] = useState<string | null>(null);
+  const [isGeneratingJsonLd, setIsGeneratingJsonLd] = useState<boolean>(false);
+  const [jsonLdCopied, setJsonLdCopied] = useState<boolean>(false);
+
+  const [llmsTxtCode, setLlmsTxtCode] = useState<string>('');
+  const [isGeneratingLlmsTxt, setIsGeneratingLlmsTxt] = useState<boolean>(false);
+  const [llmsTxtCopied, setLlmsTxtCopied] = useState<boolean>(false);
+
+  const [robotsTxtCode, setRobotsTxtCode] = useState<string>('');
+  const [isGeneratingRobotsTxt, setIsGeneratingRobotsTxt] = useState<boolean>(false);
+  const [robotsTxtCopied, setRobotsTxtCopied] = useState<boolean>(false);
   
   // SEO States
   const [seoData, setSeoData] = useState<SeoData>({
@@ -153,6 +176,132 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigateTo }) => {
     }
   }, []);
 
+  const applySeoData = (sData: any) => {
+    setSeoData(sData);
+    if (sData.jsonLd) {
+      try {
+        setJsonLdCode(typeof sData.jsonLd === 'string' ? sData.jsonLd : JSON.stringify(sData.jsonLd, null, 2));
+        setJsonLdError(null);
+      } catch (e) {
+        setJsonLdCode(String(sData.jsonLd));
+      }
+    }
+    if (sData.llmsTxt) {
+      setLlmsTxtCode(sData.llmsTxt);
+    }
+    if (sData.robotsTxt) {
+      setRobotsTxtCode(sData.robotsTxt);
+    }
+  };
+
+  const handleJsonLdTextChange = (val: string) => {
+    setJsonLdCode(val);
+    try {
+      const parsed = JSON.parse(val);
+      setJsonLdError(null);
+      setSeoData(prev => ({ ...prev, jsonLd: parsed }));
+    } catch (err: any) {
+      setJsonLdError(`JSON Syntax Error: ${err.message}`);
+    }
+  };
+
+  const handleGenerateJsonLd = async () => {
+    setIsGeneratingJsonLd(true);
+    const token = localStorage.getItem('admin_token') || '';
+    const user = localStorage.getItem('admin_username') || 'admin';
+    try {
+      const res = await fetch('/api/admin/seo/generate-jsonld', {
+        method: 'POST',
+        headers: {
+          'x-admin-token': token,
+          'x-admin-username': user
+        }
+      });
+      const data = await res.json();
+      if (res.ok && data.jsonLd) {
+        setJsonLdCode(JSON.stringify(data.jsonLd, null, 2));
+        setJsonLdError(null);
+        setSeoData(prev => ({ ...prev, jsonLd: data.jsonLd }));
+        setSaveStatus({ type: 'success', message: 'Generated fresh JSON-LD Schema.org graph from database state!' });
+        setTimeout(() => setSaveStatus({ type: null, message: '' }), 4000);
+      }
+    } catch (err) {
+      console.error('Error generating JSON-LD:', err);
+    } finally {
+      setIsGeneratingJsonLd(false);
+    }
+  };
+
+  const handleGenerateLlmsTxt = async () => {
+    setIsGeneratingLlmsTxt(true);
+    const token = localStorage.getItem('admin_token') || '';
+    const user = localStorage.getItem('admin_username') || 'admin';
+    try {
+      const res = await fetch('/api/admin/seo/generate-llmstxt', {
+        method: 'POST',
+        headers: {
+          'x-admin-token': token,
+          'x-admin-username': user
+        }
+      });
+      const data = await res.json();
+      if (res.ok && data.llmsTxt) {
+        setLlmsTxtCode(data.llmsTxt);
+        setSeoData(prev => ({ ...prev, llmsTxt: data.llmsTxt }));
+        setSaveStatus({ type: 'success', message: 'Generated fresh llms.txt markdown document from database state!' });
+        setTimeout(() => setSaveStatus({ type: null, message: '' }), 4000);
+      }
+    } catch (err) {
+      console.error('Error generating llms.txt:', err);
+    } finally {
+      setIsGeneratingLlmsTxt(false);
+    }
+  };
+
+  const handleGenerateRobotsTxt = async () => {
+    setIsGeneratingRobotsTxt(true);
+    const token = localStorage.getItem('admin_token') || '';
+    const user = localStorage.getItem('admin_username') || 'admin';
+    try {
+      const res = await fetch('/api/admin/seo/generate-robotstxt', {
+        method: 'POST',
+        headers: {
+          'x-admin-token': token,
+          'x-admin-username': user
+        }
+      });
+      const data = await res.json();
+      if (res.ok && data.robotsTxt) {
+        setRobotsTxtCode(data.robotsTxt);
+        setSeoData(prev => ({ ...prev, robotsTxt: data.robotsTxt }));
+        setSaveStatus({ type: 'success', message: 'Generated fresh robots.txt document from database state!' });
+        setTimeout(() => setSaveStatus({ type: null, message: '' }), 4000);
+      }
+    } catch (err) {
+      console.error('Error generating robots.txt:', err);
+    } finally {
+      setIsGeneratingRobotsTxt(false);
+    }
+  };
+
+  const copyJsonLd = () => {
+    navigator.clipboard.writeText(jsonLdCode);
+    setJsonLdCopied(true);
+    setTimeout(() => setJsonLdCopied(false), 2000);
+  };
+
+  const copyLlmsTxt = () => {
+    navigator.clipboard.writeText(llmsTxtCode);
+    setLlmsTxtCopied(true);
+    setTimeout(() => setLlmsTxtCopied(false), 2000);
+  };
+
+  const copyRobotsTxt = () => {
+    navigator.clipboard.writeText(robotsTxtCode);
+    setRobotsTxtCopied(true);
+    setTimeout(() => setRobotsTxtCopied(false), 2000);
+  };
+
   const testToken = async (userToTest: string, tokenToTest: string) => {
     setIsLoading(true);
     try {
@@ -170,7 +319,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigateTo }) => {
         const seoRes = await fetch('/api/seo');
         if (seoRes.ok) {
           const sData = await seoRes.json();
-          setSeoData(sData);
+          applySeoData(sData);
         }
         
         loadBlogs();
@@ -232,7 +381,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigateTo }) => {
         const seoRes = await fetch('/api/seo');
         if (seoRes.ok) {
           const sData = await seoRes.json();
-          setSeoData(sData);
+          applySeoData(sData);
         }
         
         // Load blogs and enquiries
@@ -471,6 +620,24 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigateTo }) => {
     const token = localStorage.getItem('admin_token') || '';
     const user = localStorage.getItem('admin_username') || 'admin';
 
+    let parsedJsonLd = seoData.jsonLd;
+    if (jsonLdCode) {
+      try {
+        parsedJsonLd = JSON.parse(jsonLdCode);
+      } catch (err: any) {
+        setSaveStatus({ type: 'error', message: `Cannot save: Invalid JSON-LD syntax (${err.message}).` });
+        setIsSaving(false);
+        return;
+      }
+    }
+
+    const payload = {
+      ...seoData,
+      jsonLd: parsedJsonLd,
+      llmsTxt: llmsTxtCode,
+      robotsTxt: robotsTxtCode
+    };
+
     try {
       const response = await fetch('/api/seo', {
         method: 'POST',
@@ -479,14 +646,14 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigateTo }) => {
           'x-admin-token': token,
           'x-admin-username': user
         },
-        body: JSON.stringify(seoData)
+        body: JSON.stringify(payload)
       });
 
       const resData = await response.json();
 
       if (response.ok) {
-        setSeoData(resData.data);
-        setSaveStatus({ type: 'success', message: 'SEO Configuration saved to Neon Postgres successfully and sitemap XML generated!' });
+        applySeoData(resData.data);
+        setSaveStatus({ type: 'success', message: 'SEO, JSON-LD Schema, llms.txt, and robots.txt saved to Neon Postgres successfully!' });
         setTimeout(() => setSaveStatus({ type: null, message: '' }), 5000);
       } else {
         setSaveStatus({ type: 'error', message: resData.error || 'Failed to save SEO config.' });
@@ -853,6 +1020,42 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigateTo }) => {
             >
               <Share2 className="w-4 h-4" />
               <span>OpenGraph & Cards</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('json-ld')}
+              className={`w-full text-left px-4 py-2.5 rounded-xl text-xs font-semibold flex items-center gap-2.5 transition-all ${
+                activeTab === 'json-ld' 
+                  ? 'bg-yellow-500 text-slate-950 shadow-md shadow-yellow-500/10' 
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+              }`}
+            >
+              <Code className="w-4 h-4 text-emerald-400" />
+              <span>JSON-LD Schema.org</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('llms-txt')}
+              className={`w-full text-left px-4 py-2.5 rounded-xl text-xs font-semibold flex items-center gap-2.5 transition-all ${
+                activeTab === 'llms-txt' 
+                  ? 'bg-yellow-500 text-slate-950 shadow-md shadow-yellow-500/10' 
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+              }`}
+            >
+              <Bot className="w-4 h-4 text-sky-400" />
+              <span>llms.txt AI File</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('robots-txt')}
+              className={`w-full text-left px-4 py-2.5 rounded-xl text-xs font-semibold flex items-center gap-2.5 transition-all ${
+                activeTab === 'robots-txt' 
+                  ? 'bg-yellow-500 text-slate-950 shadow-md shadow-yellow-500/10' 
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+              }`}
+            >
+              <FileCode className="w-4 h-4 text-purple-400" />
+              <span>Robots.txt Crawlers</span>
             </button>
 
             <button
@@ -1546,6 +1749,305 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigateTo }) => {
                 >
                   {isSaving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                   <span>Save Sitemap Rules</span>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* TAB: JSON-LD SCHEMA MANAGEMENT */}
+          {activeTab === 'json-ld' && (
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-6">
+              <div className="border-b border-slate-800 pb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                    <Code className="w-5 h-5 text-emerald-400" />
+                    <span>JSON-LD Schema.org Structured Data</span>
+                  </h2>
+                  <p className="text-xs text-slate-400 mt-1">
+                    Structured machine-readable markup injected into the HTML &lt;head&gt; for Google, Bing, schema crawlers, and AI search engines.
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    onClick={copyJsonLd}
+                    className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold rounded-lg text-xs flex items-center gap-1.5 transition-colors border border-slate-700"
+                  >
+                    {jsonLdCopied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                    <span>{jsonLdCopied ? 'Copied' : 'Copy JSON'}</span>
+                  </button>
+                  <a
+                    href="/json-ld.json"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold rounded-lg text-xs flex items-center gap-1.5 transition-colors border border-slate-700"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                    <span>View /json-ld.json</span>
+                  </a>
+                  <a
+                    href="https://search.google.com/test/rich-results"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 font-semibold rounded-lg text-xs flex items-center gap-1.5 transition-colors border border-emerald-500/20"
+                  >
+                    <Globe className="w-3.5 h-3.5" />
+                    <span>Google Rich Results Test</span>
+                  </a>
+                </div>
+              </div>
+
+              {/* Entity Badges */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="p-3 bg-slate-950 border border-slate-800 rounded-xl">
+                  <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Primary Entity</div>
+                  <div className="text-xs font-semibold text-emerald-400 mt-0.5 truncate">EducationalOrganization</div>
+                </div>
+                <div className="p-3 bg-slate-950 border border-slate-800 rounded-xl">
+                  <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Courses Schema</div>
+                  <div className="text-xs font-semibold text-sky-400 mt-0.5">4 Academy Programs</div>
+                </div>
+                <div className="p-3 bg-slate-950 border border-slate-800 rounded-xl">
+                  <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Google Rating</div>
+                  <div className="text-xs font-semibold text-yellow-400 mt-0.5">4.9 ★ (183 Reviews)</div>
+                </div>
+                <div className="p-3 bg-slate-950 border border-slate-800 rounded-xl">
+                  <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Schema FAQ</div>
+                  <div className="text-xs font-semibold text-purple-400 mt-0.5">3 Parent Questions</div>
+                </div>
+              </div>
+
+              {/* Auto Generator Toolbar */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 bg-slate-950/60 border border-slate-800 rounded-xl">
+                <div>
+                  <h3 className="text-xs font-bold text-slate-200">Database Schema Sync</h3>
+                  <p className="text-[11px] text-slate-400 mt-0.5">Re-index courses, ratings, and site metadata directly from your Neon database.</p>
+                </div>
+                <button
+                  onClick={handleGenerateJsonLd}
+                  disabled={isGeneratingJsonLd}
+                  className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-yellow-400 font-bold rounded-xl text-xs flex items-center gap-2 border border-slate-700 transition-all shadow-md self-start sm:self-auto"
+                >
+                  {isGeneratingJsonLd ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+                  <span>Auto-Generate Schema from DB</span>
+                </button>
+              </div>
+
+              {/* Syntax Validation Indicator */}
+              {jsonLdError ? (
+                <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-xs flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                  <span className="font-mono">{jsonLdError}</span>
+                </div>
+              ) : (
+                <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-emerald-400 text-xs flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
+                  <span>Valid JSON-LD Schema.org syntax. Automatically injected into HTML head!</span>
+                </div>
+              )}
+
+              {/* Code Textarea Editor */}
+              <div className="space-y-2">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400">
+                  Schema.org JSON-LD Code Editor
+                </label>
+                <textarea
+                  rows={16}
+                  value={jsonLdCode}
+                  onChange={(e) => handleJsonLdTextChange(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl p-4 font-mono text-xs text-emerald-300 leading-relaxed focus:outline-none focus:border-yellow-500 focus:ring-1 focus:ring-yellow-500"
+                  placeholder="Paste or edit Schema.org JSON-LD graph here..."
+                />
+              </div>
+
+              <div className="pt-4 border-t border-slate-800 flex justify-end">
+                <button
+                  onClick={handleSaveSeo}
+                  disabled={isSaving || !!jsonLdError}
+                  className="px-6 py-3 bg-yellow-500 text-slate-950 font-bold rounded-xl text-xs hover:bg-yellow-400 transition-all flex items-center gap-2 shadow-lg shadow-yellow-500/20 disabled:opacity-50"
+                >
+                  {isSaving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                  <span>Save JSON-LD Schema</span>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* TAB: LLMS.TXT AI ASSISTANT FILE MANAGEMENT */}
+          {activeTab === 'llms-txt' && (
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-6">
+              <div className="border-b border-slate-800 pb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                    <Bot className="w-5 h-5 text-sky-400" />
+                    <span>llms.txt AI Assistant Knowledge Base</span>
+                  </h2>
+                  <p className="text-xs text-slate-400 mt-1">
+                    A clean, curated Markdown document served at <code className="bg-slate-950 text-sky-400 px-1.5 py-0.5 rounded border border-slate-800">/llms.txt</code> for LLM assistants (ChatGPT, Gemini, Perplexity) to index academy programs and articles.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={copyLlmsTxt}
+                    className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold rounded-lg text-xs flex items-center gap-1.5 transition-colors border border-slate-700"
+                  >
+                    {llmsTxtCopied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                    <span>{llmsTxtCopied ? 'Copied' : 'Copy llms.txt'}</span>
+                  </button>
+                  <a
+                    href="/llms.txt"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold rounded-lg text-xs flex items-center gap-1.5 transition-colors border border-slate-700"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                    <span>View Live /llms.txt</span>
+                  </a>
+                </div>
+              </div>
+
+              {/* Auto Generator Toolbar */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 bg-slate-950/60 border border-slate-800 rounded-xl">
+                <div>
+                  <h3 className="text-xs font-bold text-slate-200">Automatic Document Sync</h3>
+                  <p className="text-[11px] text-slate-400 mt-0.5">Gathers active courses, contact numbers, and published blog posts into structured Markdown.</p>
+                </div>
+                <button
+                  onClick={handleGenerateLlmsTxt}
+                  disabled={isGeneratingLlmsTxt}
+                  className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-sky-400 font-bold rounded-xl text-xs flex items-center gap-2 border border-slate-700 transition-all shadow-md self-start sm:self-auto"
+                >
+                  {isGeneratingLlmsTxt ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+                  <span>Auto-Generate llms.txt from DB</span>
+                </button>
+              </div>
+
+              {/* Code Textarea Editor */}
+              <div className="space-y-2">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400">
+                  llms.txt Markdown Editor
+                </label>
+                <textarea
+                  rows={16}
+                  value={llmsTxtCode}
+                  onChange={(e) => {
+                    setLlmsTxtCode(e.target.value);
+                    setSeoData(prev => ({ ...prev, llmsTxt: e.target.value }));
+                  }}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl p-4 font-mono text-xs text-slate-200 leading-relaxed focus:outline-none focus:border-yellow-500 focus:ring-1 focus:ring-yellow-500"
+                  placeholder="Edit llms.txt markdown content here..."
+                />
+              </div>
+
+              <div className="pt-4 border-t border-slate-800 flex justify-end">
+                <button
+                  onClick={handleSaveSeo}
+                  disabled={isSaving}
+                  className="px-6 py-3 bg-yellow-500 text-slate-950 font-bold rounded-xl text-xs hover:bg-yellow-400 transition-all flex items-center gap-2 shadow-lg shadow-yellow-500/20"
+                >
+                  {isSaving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                  <span>Save llms.txt Document</span>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* TAB: ROBOTS.TXT CRAWLER MANAGEMENT */}
+          {activeTab === 'robots-txt' && (
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-6">
+              <div className="border-b border-slate-800 pb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                    <FileCode className="w-5 h-5 text-purple-400" />
+                    <span>robots.txt Search Engine Crawlers</span>
+                  </h2>
+                  <p className="text-xs text-slate-400 mt-1">
+                    Defines crawling directives for search engines (Googlebot, Bingbot) and AI bots (GPTBot, ClaudeBot). Served dynamically at <code className="bg-slate-950 text-purple-400 px-1.5 py-0.5 rounded border border-slate-800">/robots.txt</code>.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={copyRobotsTxt}
+                    className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold rounded-lg text-xs flex items-center gap-1.5 transition-colors border border-slate-700"
+                  >
+                    {robotsTxtCopied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                    <span>{robotsTxtCopied ? 'Copied' : 'Copy robots.txt'}</span>
+                  </button>
+                  <a
+                    href="/robots.txt"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold rounded-lg text-xs flex items-center gap-1.5 transition-colors border border-slate-700"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                    <span>View Live /robots.txt</span>
+                  </a>
+                </div>
+              </div>
+
+              {/* Directive Badges */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="p-3 bg-slate-950 border border-slate-800 rounded-xl">
+                  <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Default Directive</div>
+                  <div className="text-xs font-semibold text-emerald-400 mt-0.5">Allow: /</div>
+                </div>
+                <div className="p-3 bg-slate-950 border border-slate-800 rounded-xl">
+                  <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Protected Routes</div>
+                  <div className="text-xs font-semibold text-red-400 mt-0.5">/admin, /api/</div>
+                </div>
+                <div className="p-3 bg-slate-950 border border-slate-800 rounded-xl">
+                  <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">AI Search Bots</div>
+                  <div className="text-xs font-semibold text-sky-400 mt-0.5">GPT, Claude, Perplexity</div>
+                </div>
+                <div className="p-3 bg-slate-950 border border-slate-800 rounded-xl">
+                  <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">XML Sitemap Link</div>
+                  <div className="text-xs font-semibold text-purple-400 mt-0.5 font-mono truncate">/sitemap.xml</div>
+                </div>
+              </div>
+
+              {/* Auto Generator Toolbar */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 bg-slate-950/60 border border-slate-800 rounded-xl">
+                <div>
+                  <h3 className="text-xs font-bold text-slate-200">Reset & Sync Directives</h3>
+                  <p className="text-[11px] text-slate-400 mt-0.5">Generates clean standard directives matching your configured canonical domain.</p>
+                </div>
+                <button
+                  onClick={handleGenerateRobotsTxt}
+                  disabled={isGeneratingRobotsTxt}
+                  className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-purple-400 font-bold rounded-xl text-xs flex items-center gap-2 border border-slate-700 transition-all shadow-md self-start sm:self-auto"
+                >
+                  {isGeneratingRobotsTxt ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+                  <span>Auto-Generate robots.txt</span>
+                </button>
+              </div>
+
+              {/* Code Textarea Editor */}
+              <div className="space-y-2">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400">
+                  robots.txt Code Editor
+                </label>
+                <textarea
+                  rows={14}
+                  value={robotsTxtCode}
+                  onChange={(e) => {
+                    setRobotsTxtCode(e.target.value);
+                    setSeoData(prev => ({ ...prev, robotsTxt: e.target.value }));
+                  }}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl p-4 font-mono text-xs text-purple-300 leading-relaxed focus:outline-none focus:border-yellow-500 focus:ring-1 focus:ring-yellow-500"
+                  placeholder="Edit robots.txt crawler rules here..."
+                />
+              </div>
+
+              <div className="pt-4 border-t border-slate-800 flex justify-end">
+                <button
+                  onClick={handleSaveSeo}
+                  disabled={isSaving}
+                  className="px-6 py-3 bg-yellow-500 text-slate-950 font-bold rounded-xl text-xs hover:bg-yellow-400 transition-all flex items-center gap-2 shadow-lg shadow-yellow-500/20"
+                >
+                  {isSaving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                  <span>Save robots.txt Directives</span>
                 </button>
               </div>
             </div>

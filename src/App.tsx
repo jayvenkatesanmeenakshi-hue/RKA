@@ -32,6 +32,21 @@ function AppContent() {
     };
   }, []);
 
+  useEffect(() => {
+    // Dynamic client-side canonical tag update
+    const domain = "https://rockingkidsacademy.in";
+    const canonicalPath = path === '/' ? '' : path;
+    const fullCanonicalUrl = `${domain}${canonicalPath}`;
+
+    let link: HTMLLinkElement | null = document.querySelector('link[rel="canonical"]');
+    if (!link) {
+      link = document.createElement('link');
+      link.setAttribute('rel', 'canonical');
+      document.head.appendChild(link);
+    }
+    link.setAttribute('href', fullCanonicalUrl);
+  }, [path]);
+
   const navigateTo = (newPath: string) => {
     window.history.pushState({}, '', newPath);
     setPath(newPath);
