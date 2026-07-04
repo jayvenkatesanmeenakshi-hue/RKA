@@ -12,8 +12,16 @@
       "destination": "/api?sitemap=true"
     },
     {
-      "source": "/(.*)",
-      "destination": "/index.html"
+      "source": "/robots.txt",
+      "destination": "/api?robots=true"
+    },
+    {
+      "source": "/llms.txt",
+      "destination": "/api?llms=true"
+    },
+    {
+      "source": "/((?!assets/|favicon|.*\\..*).*)",
+      "destination": "/api"
     }
   ]
 }

@@ -519,9 +519,13 @@ export async function getOverrideSeo(reqPath: string, baseSeo: any) {
   
   if (reqPath.startsWith('/blog/')) {
     const slug = reqPath.replace('/blog/', '').split('?')[0].split('#')[0];
+    console.log(`[DEBUG SEO] req.path: "${reqPath}"`);
+    console.log(`[DEBUG SEO] slug: "${slug}"`);
     try {
       const blog = await getBlogPostBySlug(slug);
+      console.log(`[DEBUG SEO] whether getBlogPostBySlug() returned a record: ${!!blog}`);
       if (blog) {
+        console.log(`[DEBUG SEO] blog.coverImage: "${blog.coverImage}"`);
         let cover = blog.coverImage;
         const defaultArticleImage = "https://images.unsplash.com/photo-1543269865-cbf427effbad?auto=format&fit=crop&q=80&w=1200";
         
@@ -566,6 +570,8 @@ export async function getOverrideSeo(reqPath: string, baseSeo: any) {
 // Dynamic SEO Injection function
 export async function injectSeo(htmlStr: string, baseSeo: any, reqPath?: string): Promise<string> {
   const seo = reqPath ? await getOverrideSeo(reqPath, baseSeo) : baseSeo;
+
+  console.log(`[DEBUG SEO] seo.ogImage before injectSeo(): "${seo.ogImage}"`);
 
   const canonicalUrl = seo.canonical || "https://rockingkidsacademy.in";
   const canonicalTag = `<link rel="canonical" href="${canonicalUrl}" />`;
@@ -652,6 +658,9 @@ export async function injectSeo(htmlStr: string, baseSeo: any, reqPath?: string)
   } else {
     htmlStr = htmlStr.replace(/<\/head>/i, `${jsonLdScript}\n</head>`);
   }
+
+  const ogImageMetaTag = htmlStr.match(/<meta[^>]*?property="og:image"[^>]*?>/i)?.[0];
+  console.log(`[DEBUG SEO] final HTML og:image tag after injectSeo(): ${ogImageMetaTag}`);
 
   return htmlStr;
 }
@@ -1266,6 +1275,28 @@ app.use("/", apiRouter);
 // Catch-all 404 for unmatched API requests
 app.use("/api/*", (req, res) => {
   res.status(404).json({ error: `API route not found: ${req.method} ${req.originalUrl}` });
+});
+
+// Server-side HTML page rendering with dynamic SEO injection
+app.get("*", async (req, res, next) => {
+  if (req.path.startsWith("/api/") || req.path.includes(".")) {
+    return next();
+  }
+
+  try {
+    let indexHtmlPath = path.join(process.cwd(), "dist", "index.html");
+    if (!fs.existsSync(indexHtmlPath)) {
+      indexHtmlPath = path.join(process.cwd(), "index.html");
+    }
+    const rawHtml = fs.readFileSync(indexHtmlPath, "utf-8");
+    const baseSeo = await loadSeoData();
+    const injectedHtml = await injectSeo(rawHtml, baseSeo, req.path);
+
+    res.status(200).set({ "Content-Type": "text/html; charset=utf-8" }).send(injectedHtml);
+  } catch (err) {
+    console.error("Error serving HTML page in app.ts:", err);
+    next(err);
+  }
 });
 
 // Global Error Handler middleware to enforce JSON response formatting
