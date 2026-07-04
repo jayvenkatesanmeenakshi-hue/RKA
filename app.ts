@@ -1268,19 +1268,21 @@ apiRouter.post("/enquiry", async (req, res) => {
   }
 });
 
-// Mount API router on both /api and / to handle all rewrite variants
+// Mount API router on /api
 app.use("/api", apiRouter);
-app.use("/", apiRouter);
 
-// Catch-all 404 for unmatched API requests
-app.use("/api/*", (req, res) => {
-  res.status(404).json({ error: `API route not found: ${req.method} ${req.originalUrl}` });
-});
-
-// On Vercel serverless environment, handle HTML page rendering with dynamic SEO injection
+// HTML Page Rendering with Server-Side Dynamic SEO Injection for Vercel
 if (process.env.VERCEL) {
   app.get("*", async (req, res, next) => {
-    if (req.path.startsWith("/api/") || req.path.includes(".")) {
+    const targetPath = (req.originalUrl || req.path).split("?")[0].split("#")[0];
+
+    // If this request is explicitly targeting an API endpoint, pass to API 404 handler
+    if (targetPath.startsWith("/api/") || targetPath === "/api") {
+      return next();
+    }
+
+    // If this request is for a static asset with a file extension, skip HTML injection
+    if (targetPath.includes(".") && !targetPath.endsWith(".html")) {
       return next();
     }
 
@@ -1291,7 +1293,7 @@ if (process.env.VERCEL) {
       }
       const rawHtml = fs.readFileSync(indexHtmlPath, "utf-8");
       const baseSeo = await loadSeoData();
-      const injectedHtml = await injectSeo(rawHtml, baseSeo, req.path);
+      const injectedHtml = await injectSeo(rawHtml, baseSeo, targetPath);
 
       res.status(200).set({ "Content-Type": "text/html; charset=utf-8" }).send(injectedHtml);
     } catch (err) {
@@ -1300,6 +1302,14 @@ if (process.env.VERCEL) {
     }
   });
 }
+
+// Catch-all 404 for unmatched API requests
+app.use("/api/*", (req, res) => {
+  res.status(404).json({ error: `API route not found: ${req.method} ${req.originalUrl}` });
+});
+app.use("/api", (req, res) => {
+  res.status(404).json({ error: `API route not found: ${req.method} ${req.originalUrl}` });
+});
 
 // Global Error Handler middleware to enforce JSON response formatting
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {

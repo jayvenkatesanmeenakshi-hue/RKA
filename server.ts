@@ -23,13 +23,14 @@ async function startServer() {
       app.use(vite.middlewares);
 
       app.get("*", async (req, res, next) => {
-        if (req.path.startsWith("/api/") || req.path.includes(".")) {
+        const targetPath = (req.originalUrl || req.path).split("?")[0].split("#")[0];
+        if (targetPath.startsWith("/api/") || targetPath === "/api" || (targetPath.includes(".") && !targetPath.endsWith(".html"))) {
           return next();
         }
         try {
           const rawHtml = fs.readFileSync(path.join(process.cwd(), "index.html"), "utf-8");
           const baseSeo = await loadSeoData();
-          const injected = await injectSeo(rawHtml, baseSeo, req.path);
+          const injected = await injectSeo(rawHtml, baseSeo, targetPath);
           const transformed = await vite.transformIndexHtml(req.url, injected);
           res.status(200).set({ "Content-Type": "text/html" }).end(transformed);
         } catch (e) {
@@ -42,18 +43,22 @@ async function startServer() {
       
       app.use(express.static(distPath, { index: false }));
       
-      app.get("*", async (req, res) => {
+      app.get("*", async (req, res, next) => {
+        const targetPath = (req.originalUrl || req.path).split("?")[0].split("#")[0];
+        if (targetPath.startsWith("/api/") || targetPath === "/api" || (targetPath.includes(".") && !targetPath.endsWith(".html"))) {
+          return next();
+        }
         try {
           const rawHtml = fs.readFileSync(path.join(distPath, "index.html"), "utf-8");
           const baseSeo = await loadSeoData();
-          const injected = await injectSeo(rawHtml, baseSeo, req.path);
+          const injected = await injectSeo(rawHtml, baseSeo, targetPath);
           res.status(200).set({ "Content-Type": "text/html" }).end(injected);
         } catch (e) {
           console.error("Failed to inject SEO tags in production, sending raw index.html:", e);
           if (fs.existsSync(path.join(distPath, "index.html"))) {
             res.sendFile(path.join(distPath, "index.html"));
           } else {
-            res.status(404).json({ error: "Page not found" });
+            next(e);
           }
         }
       });
