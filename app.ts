@@ -1277,27 +1277,29 @@ app.use("/api/*", (req, res) => {
   res.status(404).json({ error: `API route not found: ${req.method} ${req.originalUrl}` });
 });
 
-// Server-side HTML page rendering with dynamic SEO injection
-app.get("*", async (req, res, next) => {
-  if (req.path.startsWith("/api/") || req.path.includes(".")) {
-    return next();
-  }
-
-  try {
-    let indexHtmlPath = path.join(process.cwd(), "dist", "index.html");
-    if (!fs.existsSync(indexHtmlPath)) {
-      indexHtmlPath = path.join(process.cwd(), "index.html");
+// On Vercel serverless environment, handle HTML page rendering with dynamic SEO injection
+if (process.env.VERCEL) {
+  app.get("*", async (req, res, next) => {
+    if (req.path.startsWith("/api/") || req.path.includes(".")) {
+      return next();
     }
-    const rawHtml = fs.readFileSync(indexHtmlPath, "utf-8");
-    const baseSeo = await loadSeoData();
-    const injectedHtml = await injectSeo(rawHtml, baseSeo, req.path);
 
-    res.status(200).set({ "Content-Type": "text/html; charset=utf-8" }).send(injectedHtml);
-  } catch (err) {
-    console.error("Error serving HTML page in app.ts:", err);
-    next(err);
-  }
-});
+    try {
+      let indexHtmlPath = path.join(process.cwd(), "dist", "index.html");
+      if (!fs.existsSync(indexHtmlPath)) {
+        indexHtmlPath = path.join(process.cwd(), "index.html");
+      }
+      const rawHtml = fs.readFileSync(indexHtmlPath, "utf-8");
+      const baseSeo = await loadSeoData();
+      const injectedHtml = await injectSeo(rawHtml, baseSeo, req.path);
+
+      res.status(200).set({ "Content-Type": "text/html; charset=utf-8" }).send(injectedHtml);
+    } catch (err) {
+      console.error("Error serving HTML page in app.ts:", err);
+      next(err);
+    }
+  });
+}
 
 // Global Error Handler middleware to enforce JSON response formatting
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
