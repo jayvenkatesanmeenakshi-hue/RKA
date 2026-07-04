@@ -142,10 +142,34 @@ export const BlogModule = ({ currentSlug, navigateTo }: BlogModuleProps) => {
   // Categories extracted from posts
   const categories = ['All', ...Array.from(new Set(blogPosts.map(post => post.category)))];
 
-  const handleShare = () => {
-    navigator.clipboard.writeText(window.location.href);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  const handleShare = (postTitle?: string, postSlug?: string) => {
+    const canonicalDomain = "https://rockingkidsacademy.in";
+    const articleUrl = postSlug ? `${canonicalDomain}/blog/${postSlug}` : window.location.href;
+    const shareText = postTitle ? `${postTitle} | Rocking Kids Academy\n${articleUrl}` : articleUrl;
+
+    if (navigator.share) {
+      navigator.share({
+        title: postTitle ? `${postTitle} | Rocking Kids Academy` : 'Rocking Kids Academy Blog',
+        text: postTitle ? `${postTitle} - Rocking Kids Academy` : 'Check out this article',
+        url: articleUrl
+      }).catch(() => {
+        navigator.clipboard.writeText(articleUrl);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      });
+    } else {
+      navigator.clipboard.writeText(articleUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  const handleWhatsAppShare = (postTitle: string, postSlug: string) => {
+    const canonicalDomain = "https://rockingkidsacademy.in";
+    const articleUrl = `${canonicalDomain}/blog/${postSlug}`;
+    const message = `${postTitle} | Rocking Kids Academy\n\nRead full article:\n${articleUrl}`;
+    const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
   };
 
   useEffect(() => {
@@ -158,7 +182,7 @@ export const BlogModule = ({ currentSlug, navigateTo }: BlogModuleProps) => {
 
   if (currentPost) {
     // Dynamic SEO title
-    document.title = `${currentPost.title} | Rocking Kids Academy Blog`;
+    document.title = `${currentPost.title} | Rocking Kids Academy`;
 
     // Filter out the current post to show "Related Reads"
     const relatedPosts = blogPosts
@@ -206,21 +230,30 @@ export const BlogModule = ({ currentSlug, navigateTo }: BlogModuleProps) => {
                 <Clock size={14} className="text-yellow-600" /> {currentPost.readTime}
               </span>
               
-              {/* Copy URL Link Button */}
-              <button 
-                onClick={handleShare}
-                className="ml-auto inline-flex items-center gap-2 hover:text-navy-900 text-yellow-600 font-black text-[10px] uppercase tracking-widest transition-colors cursor-pointer"
-              >
-                {copied ? (
-                  <>
-                    <Check size={14} className="text-emerald-600" /> Link Copied
-                  </>
-                ) : (
-                  <>
-                    <Share2 size={14} /> Share Article
-                  </>
-                )}
-              </button>
+              {/* WhatsApp & Share Action Buttons */}
+              <div className="ml-auto flex items-center gap-2">
+                <button
+                  onClick={() => handleWhatsAppShare(currentPost.title, currentPost.slug)}
+                  title="Share Article on WhatsApp"
+                  className="inline-flex items-center gap-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold text-[10px] uppercase tracking-wider px-3 py-1.5 rounded transition-colors cursor-pointer border border-emerald-200/60"
+                >
+                  <Share2 size={13} className="text-emerald-600" /> WhatsApp
+                </button>
+                <button 
+                  onClick={() => handleShare(currentPost.title, currentPost.slug)}
+                  className="inline-flex items-center gap-1.5 hover:text-navy-900 text-yellow-700 bg-yellow-50 hover:bg-yellow-100 font-bold text-[10px] uppercase tracking-wider px-3 py-1.5 rounded transition-colors cursor-pointer border border-yellow-200/60"
+                >
+                  {copied ? (
+                    <>
+                      <Check size={13} className="text-emerald-600" /> Copied
+                    </>
+                  ) : (
+                    <>
+                      <Share2 size={13} /> Share Link
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
 
             {/* Cover Image */}

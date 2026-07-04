@@ -1631,7 +1631,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigateTo }) => {
 
                 <div>
                   <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
-                    OpenGraph Image URL
+                    OpenGraph Image URL (Fallback / General)
                   </label>
                   <input 
                     type="url"
@@ -1639,6 +1639,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigateTo }) => {
                     onChange={(e) => handleInputChange('ogImage', e.target.value)}
                     className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-yellow-500 text-xs"
                   />
+                  <p className="text-[10px] text-slate-500 mt-1">
+                    Note: Articles automatically use their specific cover image as the large preview card when shared on WhatsApp, with "Rocking Kids Academy" logo brand in the title.
+                  </p>
                 </div>
 
                 <div>
@@ -1651,6 +1654,39 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigateTo }) => {
                     onChange={(e) => handleInputChange('ogDescription', e.target.value)}
                     className="w-full bg-slate-950 border border-slate-800 rounded-xl p-4 text-white text-sm focus:outline-none focus:border-yellow-500"
                   />
+                </div>
+
+                {/* WhatsApp Shared Card Live Preview */}
+                <div className="mt-6 pt-6 border-t border-slate-800">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-emerald-400 mb-3 flex items-center gap-1.5">
+                    <Share2 className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>WhatsApp Link Card Preview</span>
+                  </h3>
+                  <div className="max-w-md bg-[#0b141a] p-3 rounded-2xl border border-slate-800 font-sans shadow-xl">
+                    <div className="bg-[#1f2c34] rounded-xl overflow-hidden border border-[#2a3942]">
+                      <div className="aspect-[1.91/1] w-full bg-slate-800 overflow-hidden relative">
+                        <img 
+                          src={seoData.ogImage || "https://images.unsplash.com/photo-1543269865-cbf427effbad?auto=format&fit=crop&q=80&w=1200"} 
+                          alt="WhatsApp Share Preview"
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            (e.target as HTMLElement).style.display = 'none';
+                          }}
+                        />
+                      </div>
+                      <div className="p-3 bg-[#111b21]">
+                        <p className="text-[11px] font-bold text-[#e9edef] line-clamp-1 leading-snug">
+                          {seoData.ogTitle || "Article Title | Rocking Kids Academy"}
+                        </p>
+                        <p className="text-[10px] text-[#8696a0] line-clamp-2 mt-1 leading-normal">
+                          {seoData.ogDescription || "Read article on Rocking Kids Academy..."}
+                        </p>
+                        <p className="text-[9px] text-[#8696a0] uppercase tracking-wider mt-2 font-mono flex items-center gap-1">
+                          <span>rockingkidsacademy.in</span>
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
 

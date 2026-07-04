@@ -453,33 +453,46 @@ export async function getOverrideSeo(reqPath: string, baseSeo: any) {
   const domain = (baseSeo.canonical || "https://rockingkidsacademy.in").replace(/\/$/, "");
   
   if (reqPath === '/blog') {
+    const blogHubImage = "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&q=80&w=1200";
     return {
       ...baseSeo,
       title: "Learning Resource Hub & Blog | Rocking Kids Academy Chennai",
       description: "Discover research-backed parenting tips, child cognitive development guides, phonics reading keys, and handwriting improvement techniques.",
       canonical: `${domain}/blog`,
+      ogType: "website",
+      ogSiteName: "Rocking Kids Academy",
       ogTitle: "Learning Resource Hub & Blog | Rocking Kids Academy Chennai",
-      ogDescription: "Discover research-backed parenting tips, child cognitive development guides, phonics reading keys, and handwriting improvement techniques."
+      ogDescription: "Discover research-backed parenting tips, child cognitive development guides, phonics reading keys, and handwriting improvement techniques.",
+      ogImage: blogHubImage,
+      ogImageSecure: blogHubImage,
+      twitterTitle: "Learning Resource Hub & Blog | Rocking Kids Academy Chennai",
+      twitterDescription: "Discover research-backed parenting tips, child cognitive development guides, phonics reading keys, and handwriting improvement techniques.",
+      twitterImage: blogHubImage
     };
   }
   
   if (reqPath.startsWith('/program/')) {
-    const prog = reqPath.replace('/program/', '');
+    const prog = reqPath.replace('/program/', '').split('?')[0].split('#')[0];
     let title = "";
     let description = "";
+    let coverImage = "";
     
     if (prog === 'Abacus') {
-      title = "Abacus & Brainobrain Affiliation Class Chennai | Rocking Kids Academy";
+      title = "Abacus & Brainobrain Affiliation Class | Rocking Kids Academy";
       description = "Master lightning-fast mental arithmetic computations and boost brain development with our certified Brainobrain abacus program at Ponmar, Chennai. Book a trial.";
+      coverImage = "https://images.unsplash.com/photo-1543269865-cbf427effbad?auto=format&fit=crop&q=80&w=1200";
     } else if (prog === 'Phonics') {
-      title = "Structured Phonics Mastery Course Chennai | Rocking Kids Academy";
+      title = "Structured Phonics Mastery Course | Rocking Kids Academy";
       description = "Synthetic phonics class for early reading fluency, letter sounds, and spelling mastery. Ideal for children aged 4 to 8 at our Chennai center.";
+      coverImage = "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&q=80&w=1200";
     } else if (prog === 'English') {
       title = "English Speaking & Communication Course | Rocking Kids Academy";
       description = "Elevate grammar, descriptive vocabulary, creative writing, and public speaking confidence for children ages 6 to 14. Located in Ponmar, Chennai.";
+      coverImage = "https://images.unsplash.com/photo-1577896851231-70ef18881754?auto=format&fit=crop&q=80&w=1200";
     } else if (prog === 'Handwriting') {
       title = "Handwriting & Cursive Improvement Course | Rocking Kids Academy";
       description = "Scientific handwriting improvement class correcting physical pencil grip, posture, letter sizing, and writing speed. Chennai Ponmar Main Road center.";
+      coverImage = "https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&q=80&w=1200";
     } else {
       return {
         ...baseSeo,
@@ -492,29 +505,50 @@ export async function getOverrideSeo(reqPath: string, baseSeo: any) {
       title,
       description,
       canonical: `${domain}${reqPath}`,
+      ogType: "website",
+      ogSiteName: "Rocking Kids Academy",
       ogTitle: title,
       ogDescription: description,
+      ogImage: coverImage,
+      ogImageSecure: coverImage,
       twitterTitle: title,
-      twitterDescription: description
+      twitterDescription: description,
+      twitterImage: coverImage
     };
   }
   
   if (reqPath.startsWith('/blog/')) {
-    const slug = reqPath.replace('/blog/', '');
+    const slug = reqPath.replace('/blog/', '').split('?')[0].split('#')[0];
     try {
       const blog = await getBlogPostBySlug(slug);
       if (blog) {
+        let cover = blog.coverImage;
+        const defaultArticleImage = "https://images.unsplash.com/photo-1543269865-cbf427effbad?auto=format&fit=crop&q=80&w=1200";
+        
+        if (!cover || cover.trim() === '') {
+          cover = defaultArticleImage;
+        } else if (cover.startsWith('/')) {
+          cover = `${domain}${cover}`;
+        }
+
+        const fullTitle = `${blog.title} | Rocking Kids Academy`;
+        const excerpt = blog.excerpt || "Read this article on Rocking Kids Academy learning blog.";
+
         return {
           ...baseSeo,
-          title: `${blog.title} | Rocking Kids Academy`,
-          description: blog.excerpt,
+          title: fullTitle,
+          description: excerpt,
           canonical: `${domain}${reqPath}`,
-          ogTitle: blog.title,
-          ogDescription: blog.excerpt,
-          ogImage: blog.coverImage || baseSeo.ogImage,
-          twitterTitle: blog.title,
-          twitterDescription: blog.excerpt,
-          twitterImage: blog.coverImage || baseSeo.twitterImage
+          ogType: 'article',
+          ogSiteName: 'Rocking Kids Academy',
+          ogTitle: fullTitle,
+          ogDescription: excerpt,
+          ogImage: cover,
+          ogImageSecure: cover,
+          twitterCard: 'summary_large_image',
+          twitterTitle: fullTitle,
+          twitterDescription: excerpt,
+          twitterImage: cover
         };
       }
     } catch (e) {
@@ -535,13 +569,20 @@ export async function injectSeo(htmlStr: string, baseSeo: any, reqPath?: string)
 
   const canonicalUrl = seo.canonical || "https://rockingkidsacademy.in";
   const canonicalTag = `<link rel="canonical" href="${canonicalUrl}" />`;
+  const ogType = seo.ogType || 'website';
+  const ogSiteName = seo.ogSiteName || 'Rocking Kids Academy';
+  const ogImage = seo.ogImage || 'https://rockingkidsacademy.in/assets/images/logo_icon_1782800321150.jpg';
+  const ogImageSecure = seo.ogImageSecure || ogImage;
 
   htmlStr = htmlStr.replace(/<title>[^<]*<\/title>/i, `<title>${seo.title}</title>`);
   htmlStr = htmlStr.replace(/<meta[^>]*?name="description"[^>]*?content="[^"]*"[^>]*?>/i, `<meta name="description" content="${seo.description}" />`);
   htmlStr = htmlStr.replace(/<meta[^>]*?content="[^"]*"[^>]*?name="description"[^>]*?>/i, `<meta name="description" content="${seo.description}" />`);
-  htmlStr = htmlStr.replace(/<meta[^>]*?name="keywords"[^>]*?content="[^"]*"[^>]*?>/i, `<meta name="keywords" content="${seo.keywords}" />`);
-  htmlStr = htmlStr.replace(/<meta[^>]*?content="[^"]*"[^>]*?name="keywords"[^>]*?>/i, `<meta name="keywords" content="${seo.keywords}" />`);
-  
+  if (seo.keywords) {
+    htmlStr = htmlStr.replace(/<meta[^>]*?name="keywords"[^>]*?content="[^"]*"[^>]*?>/i, `<meta name="keywords" content="${seo.keywords}" />`);
+    htmlStr = htmlStr.replace(/<meta[^>]*?content="[^"]*"[^>]*?name="keywords"[^>]*?>/i, `<meta name="keywords" content="${seo.keywords}" />`);
+  }
+
+  // Canonical tag replacement
   if (htmlStr.includes('rel="canonical"') || htmlStr.includes("rel='canonical'")) {
     htmlStr = htmlStr.replace(/<link[^>]*?rel=["']canonical["'][^>]*?>/i, canonicalTag);
     htmlStr = htmlStr.replace(/<link[^>]*?href="[^"]*"[^>]*?rel=["']canonical["'][^>]*?>/i, canonicalTag);
@@ -549,18 +590,58 @@ export async function injectSeo(htmlStr: string, baseSeo: any, reqPath?: string)
     htmlStr = htmlStr.replace(/<\/head>/i, `  ${canonicalTag}\n</head>`);
   }
 
+  // Open Graph Type
+  if (htmlStr.includes('property="og:type"')) {
+    htmlStr = htmlStr.replace(/<meta[^>]*?property="og:type"[^>]*?>/i, `<meta property="og:type" content="${ogType}" />`);
+  } else {
+    htmlStr = htmlStr.replace(/<\/head>/i, `  <meta property="og:type" content="${ogType}" />\n</head>`);
+  }
+
+  // Open Graph Site Name
+  if (htmlStr.includes('property="og:site_name"')) {
+    htmlStr = htmlStr.replace(/<meta[^>]*?property="og:site_name"[^>]*?>/i, `<meta property="og:site_name" content="${ogSiteName}" />`);
+  } else {
+    htmlStr = htmlStr.replace(/<\/head>/i, `  <meta property="og:site_name" content="${ogSiteName}" />\n</head>`);
+  }
+
+  // Open Graph Title
   htmlStr = htmlStr.replace(/<meta[^>]*?property="og:title"[^>]*?content="[^"]*"[^>]*?>/i, `<meta property="og:title" content="${seo.ogTitle || seo.title}" />`);
   htmlStr = htmlStr.replace(/<meta[^>]*?content="[^"]*"[^>]*?property="og:title"[^>]*?>/i, `<meta property="og:title" content="${seo.ogTitle || seo.title}" />`);
+
+  // Open Graph Description
   htmlStr = htmlStr.replace(/<meta[^>]*?property="og:description"[^>]*?content="[^"]*"[^>]*?>/i, `<meta property="og:description" content="${seo.ogDescription || seo.description}" />`);
   htmlStr = htmlStr.replace(/<meta[^>]*?content="[^"]*"[^>]*?property="og:description"[^>]*?>/i, `<meta property="og:description" content="${seo.ogDescription || seo.description}" />`);
-  htmlStr = htmlStr.replace(/<meta[^>]*?property="og:image"[^>]*?content="[^"]*"[^>]*?>/i, `<meta property="og:image" content="${seo.ogImage || ''}" />`);
-  htmlStr = htmlStr.replace(/<meta[^>]*?content="[^"]*"[^>]*?property="og:image"[^>]*?>/i, `<meta property="og:image" content="${seo.ogImage || ''}" />`);
-  htmlStr = htmlStr.replace(/<meta[^>]*?(?:name|property)="twitter:title"[^>]*?content="[^"]*"[^>]*?>/i, `<meta property="twitter:title" content="${seo.twitterTitle || seo.title}" />`);
-  htmlStr = htmlStr.replace(/<meta[^>]*?content="[^"]*"[^>]*?(?:name|property)="twitter:title"[^>]*?>/i, `<meta property="twitter:title" content="${seo.twitterTitle || seo.title}" />`);
-  htmlStr = htmlStr.replace(/<meta[^>]*?(?:name|property)="twitter:description"[^>]*?content="[^"]*"[^>]*?>/i, `<meta property="twitter:description" content="${seo.twitterDescription || seo.description}" />`);
-  htmlStr = htmlStr.replace(/<meta[^>]*?content="[^"]*"[^>]*?(?:name|property)="twitter:description"[^>]*?>/i, `<meta property="twitter:description" content="${seo.twitterDescription || seo.description}" />`);
-  htmlStr = htmlStr.replace(/<meta[^>]*?(?:name|property)="twitter:image"[^>]*?content="[^"]*"[^>]*?>/i, `<meta property="twitter:image" content="${seo.twitterImage || ''}" />`);
-  htmlStr = htmlStr.replace(/<meta[^>]*?content="[^"]*"[^>]*?(?:name|property)="twitter:image"[^>]*?>/i, `<meta property="twitter:image" content="${seo.twitterImage || ''}" />`);
+
+  // Open Graph Image
+  htmlStr = htmlStr.replace(/<meta[^>]*?property="og:image"[^>]*?content="[^"]*"[^>]*?>/i, `<meta property="og:image" content="${ogImage}" />`);
+  htmlStr = htmlStr.replace(/<meta[^>]*?content="[^"]*"[^>]*?property="og:image"[^>]*?>/i, `<meta property="og:image" content="${ogImage}" />`);
+
+  // Open Graph Image Secure URL
+  if (htmlStr.includes('property="og:image:secure_url"')) {
+    htmlStr = htmlStr.replace(/<meta[^>]*?property="og:image:secure_url"[^>]*?>/i, `<meta property="og:image:secure_url" content="${ogImageSecure}" />`);
+  } else {
+    htmlStr = htmlStr.replace(/<\/head>/i, `  <meta property="og:image:secure_url" content="${ogImageSecure}" />\n</head>`);
+  }
+
+  // Open Graph Image Dimensions
+  if (!htmlStr.includes('property="og:image:width"')) {
+    htmlStr = htmlStr.replace(/<\/head>/i, `  <meta property="og:image:width" content="1200" />\n  <meta property="og:image:height" content="630" />\n</head>`);
+  }
+
+  // Twitter Tags
+  htmlStr = htmlStr.replace(/<meta[^>]*?(?:name|property)="twitter:title"[^>]*?content="[^"]*"[^>]*?>/i, `<meta name="twitter:title" content="${seo.twitterTitle || seo.title}" />`);
+  htmlStr = htmlStr.replace(/<meta[^>]*?content="[^"]*"[^>]*?(?:name|property)="twitter:title"[^>]*?>/i, `<meta name="twitter:title" content="${seo.twitterTitle || seo.title}" />`);
+  htmlStr = htmlStr.replace(/<meta[^>]*?(?:name|property)="twitter:description"[^>]*?content="[^"]*"[^>]*?>/i, `<meta name="twitter:description" content="${seo.twitterDescription || seo.description}" />`);
+  htmlStr = htmlStr.replace(/<meta[^>]*?content="[^"]*"[^>]*?(?:name|property)="twitter:description"[^>]*?>/i, `<meta name="twitter:description" content="${seo.twitterDescription || seo.description}" />`);
+  htmlStr = htmlStr.replace(/<meta[^>]*?(?:name|property)="twitter:image"[^>]*?content="[^"]*"[^>]*?>/i, `<meta name="twitter:image" content="${ogImage}" />`);
+  htmlStr = htmlStr.replace(/<meta[^>]*?content="[^"]*"[^>]*?(?:name|property)="twitter:image"[^>]*?>/i, `<meta name="twitter:image" content="${ogImage}" />`);
+
+  // Twitter Card Type
+  if (htmlStr.includes('name="twitter:card"') || htmlStr.includes('property="twitter:card"')) {
+    htmlStr = htmlStr.replace(/<meta[^>]*?(?:name|property)="twitter:card"[^>]*?>/i, `<meta name="twitter:card" content="summary_large_image" />`);
+  } else {
+    htmlStr = htmlStr.replace(/<\/head>/i, `  <meta name="twitter:card" content="summary_large_image" />\n</head>`);
+  }
   
   // Inject JSON-LD Schema.org script into <head>
   const jsonLdObj = seo.jsonLd || getDefaultJsonLd(seo);
