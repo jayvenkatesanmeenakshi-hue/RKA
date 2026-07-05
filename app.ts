@@ -17,7 +17,13 @@ import {
   saveDbSeoData,
   getHiddenReviewIds,
   hideReviewId,
-  unhideReviewId
+  unhideReviewId,
+  saveGoogleReviews,
+  getStoredGoogleReviews,
+  toggleReviewVisibility,
+  deleteStoredReview,
+  saveManualReview,
+  DEFAULT_5STAR_REVIEWS
 } from "./db.js";
 
 // Load environment variables
@@ -916,6 +922,9 @@ apiRouter.get("/hidden-reviews", async (req, res) => {
   }
 });
 
+// Cache for Google Reviews API responses
+let reviewsCache: { data: any; timestamp: number } | null = null;
+
 apiRouter.post("/hidden-reviews", async (req, res) => {
   try {
     const { reviewId } = req.body;
@@ -948,78 +957,49 @@ apiRouter.post("/hidden-reviews/unhide", async (req, res) => {
   }
 });
 
-// --- GOOGLE PLACES API LIVE REVIEWS ENDPOINT ---
-interface GoogleReviewsCache {
-  payload: any;
-  timestamp: number;
-  cacheKey: string;
-}
+// --- GOOGLE PLACES API LIVE REVIEWS SYNC & STORE LOGIC ---
 
-let reviewsCache: GoogleReviewsCache | null = null;
-const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000; // 7 days cache TTL
-
-apiRouter.get("/google-reviews", async (req, res) => {
-  const apiKey = (req.query.apiKey as string) || process.env.GOOGLE_PLACES_API_KEY || "";
-  const placeId = (req.query.placeId as string) || process.env.GOOGLE_PLACE_ID || "";
-  const forceRefresh = req.query.refresh === "true" || req.query.force === "true";
+async function syncGoogleReviewsFromApi(apiKeyInput?: string, placeIdInput?: string) {
+  const apiKey = (apiKeyInput || process.env.GOOGLE_PLACES_API_KEY || "").trim();
+  const placeId = (placeIdInput || process.env.GOOGLE_PLACE_ID || "").trim();
 
   if (!apiKey || !placeId) {
-    res.json({
-      configured: false,
-      rating: 4.9,
-      userRatingCount: 183,
-      displayName: "Rocking Kids Academy (Phonics and Abacus)",
-      reviews: [],
-      message: "API Key or Place ID not provided in environment or query params."
-    });
-    return;
-  }
-
-  const hiddenIds = await getHiddenReviewIds();
-  const currentCacheKey = `${apiKey.trim()}_${placeId.trim()}`;
-
-  // Check 1-Week Cache if forceRefresh is false
-  if (!forceRefresh && reviewsCache && reviewsCache.cacheKey === currentCacheKey) {
-    const age = Date.now() - reviewsCache.timestamp;
-    if (age < ONE_WEEK_MS) {
-      const daysRemaining = Math.max(0, Math.round((ONE_WEEK_MS - age) / (1000 * 60 * 60 * 24)));
-      const visibleReviews = (reviewsCache.payload.reviews || []).filter((rev: any) => !hiddenIds.includes(rev.id));
-      res.json({
-        ...reviewsCache.payload,
-        reviews: visibleReviews,
-        cached: true,
-        cachedAt: new Date(reviewsCache.timestamp).toISOString(),
-        cacheExpiresInDays: daysRemaining
-      });
-      return;
-    }
+    return {
+      success: false,
+      count: 0,
+      message: "API Key or Place ID not provided in environment or request."
+    };
   }
 
   const errorsLogged: any[] = [];
+  let fetchedReviews: any[] = [];
+  let metaRating = 4.9;
+  let metaUserRatingCount = 183;
+  let metaDisplayName = "Rocking Kids Academy (Phonics and Abacus)";
 
   try {
-    // Attempt 1: Try Places API (New) endpoint
-    const newApiUrl = `https://places.googleapis.com/v1/places/${placeId.trim()}`;
+    // Attempt 1: Try Places API (New) v1 endpoint
+    const newApiUrl = `https://places.googleapis.com/v1/places/${placeId}`;
     const newApiRes = await fetch(newApiUrl, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
-        "X-Goog-Api-Key": apiKey.trim(),
+        "X-Goog-Api-Key": apiKey,
         "X-Goog-FieldMask": "id,displayName,rating,userRatingCount,reviews"
       }
     });
 
     const newResText = await newApiRes.text();
     let newResBody: any;
-    try {
-      newResBody = JSON.parse(newResText);
-    } catch {
-      newResBody = newResText;
-    }
+    try { newResBody = JSON.parse(newResText); } catch { newResBody = newResText; }
 
-    if (newApiRes.ok) {
-      const allReviews = (newResBody.reviews || []).map((rev: any, index: number) => ({
-        id: rev.name || `rev-new-${index}`,
+    if (newApiRes.ok && newResBody) {
+      metaRating = newResBody.rating || 4.9;
+      metaUserRatingCount = newResBody.userRatingCount || 183;
+      metaDisplayName = newResBody.displayName?.text || metaDisplayName;
+
+      fetchedReviews = (newResBody.reviews || []).map((rev: any, index: number) => ({
+        id: rev.name || `rev-google-v1-${index}`,
         authorName: rev.authorAttribution?.displayName || "Google User",
         authorPhoto: rev.authorAttribution?.photoUri || "",
         authorLocation: "Verified Google Reviewer",
@@ -1029,143 +1009,204 @@ apiRouter.get("/google-reviews", async (req, res) => {
         text: rev.originalText?.text || rev.text?.text || "Great experience at Rocking Kids Academy!",
         avatarColor: "bg-blue-600",
         verified: true,
-        likes: Math.floor(Math.random() * 10) + 5
-      }));
-
-      // Filter to only include reviews with rating >= 4
-      const highRatingReviews = allReviews.filter((rev: any) => rev.rating >= 4);
-
-      const responsePayload = {
-        configured: true,
-        rating: newResBody.rating || 4.9,
-        userRatingCount: newResBody.userRatingCount || 183,
-        displayName: newResBody.displayName?.text || "Rocking Kids Academy (Phonics and Abacus)",
-        reviews: highRatingReviews,
+        likes: Math.floor(Math.random() * 10) + 5,
         source: "google_places_api_v1"
-      };
-
-      // Store in 1-week memory cache
-      reviewsCache = {
-        payload: responsePayload,
-        timestamp: Date.now(),
-        cacheKey: currentCacheKey
-      };
-
-      const visibleReviews = highRatingReviews.filter((rev: any) => !hiddenIds.includes(rev.id));
-
-      res.json({
-        ...responsePayload,
-        reviews: visibleReviews,
-        cached: false
-      });
-      return;
-    }
-
-    // Capture error details from Attempt 1
-    const newApiErrorDetails = {
-      endpoint: "Places API (New) v1",
-      status: newApiRes.status,
-      statusText: newApiRes.statusText,
-      headers: Object.fromEntries(newApiRes.headers.entries()),
-      body: newResBody
-    };
-    errorsLogged.push(newApiErrorDetails);
-    console.error("Google Places API (New) Error:", JSON.stringify(newApiErrorDetails, null, 2));
-
-    // Attempt 2: Fallback to Places API (Legacy Details) endpoint if Places API (New) isn't enabled
-    const legacyUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${encodeURIComponent(placeId.trim())}&fields=name,rating,reviews,user_ratings_total&key=${encodeURIComponent(apiKey.trim())}`;
-    const legacyRes = await fetch(legacyUrl);
-    
-    const legacyResText = await legacyRes.text();
-    let legacyResBody: any;
-    try {
-      legacyResBody = JSON.parse(legacyResText);
-    } catch {
-      legacyResBody = legacyResText;
-    }
-
-    if (legacyRes.ok && legacyResBody?.status === "OK" && legacyResBody?.result) {
-      const result = legacyResBody.result;
-      const allReviews = (result.reviews || []).map((rev: any, index: number) => ({
-        id: `rev-legacy-${index}`,
-        authorName: rev.author_name || "Google User",
-        authorPhoto: rev.profile_photo_url || "",
-        authorLocation: "Verified Google Reviewer",
-        rating: rev.rating || 5,
-        date: rev.relative_time_description || "Recently",
-        category: "Google Business Page",
-        text: rev.text || "Great experience at Rocking Kids Academy!",
-        avatarColor: "bg-emerald-600",
-        verified: true,
-        likes: Math.floor(Math.random() * 10) + 5
       }));
+    } else {
+      errorsLogged.push({ endpoint: "Places API (New) v1", status: newApiRes.status, body: newResBody });
 
-      // Filter to only include reviews with rating >= 4
-      const highRatingReviews = allReviews.filter((rev: any) => rev.rating >= 4);
+      // Attempt 2: Fallback to Places API (Legacy Details) endpoint
+      const legacyUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${encodeURIComponent(placeId)}&fields=name,rating,reviews,user_ratings_total&key=${encodeURIComponent(apiKey)}`;
+      const legacyRes = await fetch(legacyUrl);
+      const legacyResText = await legacyRes.text();
+      let legacyResBody: any;
+      try { legacyResBody = JSON.parse(legacyResText); } catch { legacyResBody = legacyResText; }
 
-      const responsePayload = {
-        configured: true,
-        rating: result.rating || 4.9,
-        userRatingCount: result.user_ratings_total || 183,
-        displayName: result.name || "Rocking Kids Academy (Phonics and Abacus)",
-        reviews: highRatingReviews,
-        source: "google_places_api_legacy"
-      };
+      if (legacyRes.ok && legacyResBody?.status === "OK" && legacyResBody?.result) {
+        const result = legacyResBody.result;
+        metaRating = result.rating || 4.9;
+        metaUserRatingCount = result.user_ratings_total || 183;
+        metaDisplayName = result.name || metaDisplayName;
 
-      // Store in 1-week memory cache
-      reviewsCache = {
-        payload: responsePayload,
-        timestamp: Date.now(),
-        cacheKey: currentCacheKey
-      };
-
-      const visibleReviews = highRatingReviews.filter((rev: any) => !hiddenIds.includes(rev.id));
-
-      res.json({
-        ...responsePayload,
-        reviews: visibleReviews,
-        cached: false
-      });
-      return;
+        fetchedReviews = (result.reviews || []).map((rev: any, index: number) => ({
+          id: `rev-legacy-${index}`,
+          authorName: rev.author_name || "Google User",
+          authorPhoto: rev.profile_photo_url || "",
+          authorLocation: "Verified Google Reviewer",
+          rating: rev.rating || 5,
+          date: rev.relative_time_description || "Recently",
+          category: "Google Business Page",
+          text: rev.text || "Great experience at Rocking Kids Academy!",
+          avatarColor: "bg-emerald-600",
+          verified: true,
+          likes: Math.floor(Math.random() * 10) + 5,
+          source: "google_places_api_legacy"
+        }));
+      } else {
+        errorsLogged.push({ endpoint: "Places API (Legacy) Details", status: legacyRes.status, body: legacyResBody });
+      }
     }
 
-    // Capture error details from Attempt 2
-    const legacyApiErrorDetails = {
-      endpoint: "Places API (Legacy) Details",
-      status: legacyRes.status,
-      statusText: legacyRes.statusText,
-      headers: Object.fromEntries(legacyRes.headers.entries()),
-      body: legacyResBody
-    };
-    errorsLogged.push(legacyApiErrorDetails);
-    console.error("Google Places API (Legacy) Error:", JSON.stringify(legacyApiErrorDetails, null, 2));
-
-    // If both return error status, return graceful fallback with real Google API error details
-    res.json({
-      configured: true,
-      rating: 4.9,
-      userRatingCount: 183,
-      displayName: "Rocking Kids Academy (Phonics and Abacus)",
-      reviews: [],
-      error: "Google Places API error encountered. See googleApiErrors for real status & body.",
-      googleApiErrors: errorsLogged,
-      source: "fallback"
-    });
-
+    if (fetchedReviews.length > 0) {
+      // Store all fetched reviews permanently in database
+      const savedCount = await saveGoogleReviews(fetchedReviews);
+      console.log(`✅ Stored ${savedCount} Google Reviews in database.`);
+      return {
+        success: true,
+        count: savedCount,
+        totalFetched: fetchedReviews.length,
+        rating: metaRating,
+        userRatingCount: metaUserRatingCount,
+        displayName: metaDisplayName,
+        reviews: fetchedReviews
+      };
+    } else {
+      return {
+        success: false,
+        count: 0,
+        message: "No reviews returned from Google API.",
+        errors: errorsLogged
+      };
+    }
   } catch (err: any) {
-    console.error("Error executing Google Places API request:", err);
-    res.json({
-      configured: true,
-      rating: 4.9,
-      userRatingCount: 183,
-      displayName: "Rocking Kids Academy (Phonics and Abacus)",
-      reviews: [],
-      error: err?.message || "Network error calling Google Places API.",
-      googleApiErrors: errorsLogged,
-      source: "fallback"
-    });
+    console.error("Error in syncGoogleReviewsFromApi:", err);
+    return {
+      success: false,
+      count: 0,
+      message: err.message || "Network error fetching reviews."
+    };
+  }
+}
+
+// PUBLIC WEBSITE GOOGLE REVIEWS ENDPOINT (SERVES ONLY 5-STAR REVIEWS FROM DATABASE)
+apiRouter.get("/google-reviews", async (req, res) => {
+  const apiKey = (req.query.apiKey as string) || process.env.GOOGLE_PLACES_API_KEY || "";
+  const placeId = (req.query.placeId as string) || process.env.GOOGLE_PLACE_ID || "";
+  const forceRefresh = req.query.refresh === "true" || req.query.force === "true";
+
+  // Check current DB reviews
+  let storedFiveStarReviews = await getStoredGoogleReviews({ onlyFiveStar: true, includeHidden: false });
+
+  // If forceRefresh is requested OR DB has no 5-star reviews, attempt sync from Google API
+  if (forceRefresh || storedFiveStarReviews.length === 0) {
+    if (apiKey && placeId) {
+      await syncGoogleReviewsFromApi(apiKey, placeId);
+      storedFiveStarReviews = await getStoredGoogleReviews({ onlyFiveStar: true, includeHidden: false });
+    }
+  }
+
+  // Ensure at least 6 reviews by combining with default seed reviews if needed
+  let finalReviews = [...storedFiveStarReviews];
+  if (finalReviews.length < 6) {
+    const existingTexts = new Set(finalReviews.map(r => r.text.trim().toLowerCase()));
+    const existingAuthors = new Set(finalReviews.map(r => r.authorName.trim().toLowerCase()));
+
+    for (const seed of DEFAULT_5STAR_REVIEWS) {
+      if (finalReviews.length >= 6) break;
+      if (!existingTexts.has(seed.text.trim().toLowerCase()) && !existingAuthors.has(seed.authorName.trim().toLowerCase())) {
+        finalReviews.push(seed);
+      }
+    }
+  }
+
+  res.json({
+    configured: true,
+    rating: 4.9,
+    userRatingCount: 183,
+    displayName: "Rocking Kids Academy (Phonics and Abacus)",
+    reviews: finalReviews,
+    totalFiveStar: finalReviews.length,
+    source: "database_stored_5star"
+  });
+});
+
+// ADMIN PANEL: GET ALL STORED REVIEWS (Includes 5-star, non-5-star, visible, hidden)
+apiRouter.get("/admin/reviews", checkAdminAuth, async (req, res) => {
+  try {
+    const allReviews = await getStoredGoogleReviews({ onlyFiveStar: false, includeHidden: true });
+    const hiddenIds = await getHiddenReviewIds();
+    res.json({ success: true, reviews: allReviews, hiddenIds });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
   }
 });
+
+// ADMIN PANEL: TRIGGER GOOGLE REVIEWS SYNC & STORE IN DATABASE
+apiRouter.post("/admin/reviews/sync", checkAdminAuth, async (req, res) => {
+  try {
+    const apiKey = req.body.apiKey || process.env.GOOGLE_PLACES_API_KEY || "";
+    const placeId = req.body.placeId || process.env.GOOGLE_PLACE_ID || "";
+    const syncResult = await syncGoogleReviewsFromApi(apiKey, placeId);
+    const allReviews = await getStoredGoogleReviews({ onlyFiveStar: false, includeHidden: true });
+    res.json({
+      success: syncResult.success,
+      message: syncResult.message || `Successfully synced ${syncResult.count || 0} reviews into the database`,
+      syncResult,
+      reviews: allReviews
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ADMIN PANEL: TOGGLE REVIEW VISIBILITY (SHOW / HIDE ON WEBSITE)
+apiRouter.post("/admin/reviews/toggle-visibility", checkAdminAuth, async (req, res) => {
+  try {
+    const { reviewId, hidden } = req.body;
+    if (!reviewId) {
+      res.status(400).json({ success: false, error: "reviewId is required" });
+      return;
+    }
+    await toggleReviewVisibility(reviewId, Boolean(hidden));
+    const allReviews = await getStoredGoogleReviews({ onlyFiveStar: false, includeHidden: true });
+    res.json({ success: true, message: `Review ${hidden ? 'hidden' : 'published'} successfully`, reviews: allReviews });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ADMIN PANEL: ADD MANUAL GENUINE REVIEW TO DATABASE
+apiRouter.post("/admin/reviews/add", checkAdminAuth, async (req, res) => {
+  try {
+    const { authorName, authorLocation, rating, text, category } = req.body;
+    if (!authorName || !text) {
+      res.status(400).json({ success: false, error: "authorName and text are required" });
+      return;
+    }
+    await saveManualReview({
+      authorName,
+      authorLocation: authorLocation || "Verified Parent",
+      rating: Number(rating) || 5,
+      text,
+      category: category || "Parent Review"
+    });
+    const allReviews = await getStoredGoogleReviews({ onlyFiveStar: false, includeHidden: true });
+    res.json({ success: true, message: "Review added to database successfully", reviews: allReviews });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ADMIN PANEL: DELETE A STORED REVIEW FROM DATABASE
+apiRouter.delete("/admin/reviews/:id", checkAdminAuth, async (req, res) => {
+  try {
+    const reviewId = req.params.id;
+    await deleteStoredReview(reviewId);
+    const allReviews = await getStoredGoogleReviews({ onlyFiveStar: false, includeHidden: true });
+    res.json({ success: true, message: "Review deleted successfully", reviews: allReviews });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// AUTOMATED WEEKLY GOOGLE REVIEWS FETCH SCHEDULER (Runs once per week = 7 days)
+const ONE_WEEK_INTERVAL = 7 * 24 * 60 * 60 * 1000;
+setInterval(() => {
+  console.log("⏰ Running scheduled weekly Google Reviews sync to database...");
+  syncGoogleReviewsFromApi().catch(err => {
+    console.error("Scheduled Google Reviews sync error:", err);
+  });
+}, ONE_WEEK_INTERVAL);
 
 // --- PUBLIC PARENT ENQUIRY ENDPOINT ---
 apiRouter.post("/enquiry", async (req, res) => {

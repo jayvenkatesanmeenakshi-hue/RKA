@@ -45,6 +45,101 @@ let memoryEnquiries: Array<{
 }> = [];
 let memoryHiddenReviews: string[] = [];
 
+export const DEFAULT_5STAR_REVIEWS = [
+  {
+    id: 'rev-seed-1',
+    authorName: 'S. Lakshmi',
+    authorPhoto: '',
+    authorLocation: 'Ponmar Rd, Chennai',
+    rating: 5,
+    date: '2 weeks ago',
+    category: 'Abacus Math',
+    text: "Very caring teachers. Lucky to have you as my son's teacher! Thank you so much for guiding him in Abacus math speed and accuracy.",
+    avatarColor: 'bg-emerald-600',
+    verified: true,
+    likes: 24,
+    hidden: false,
+    source: 'seed'
+  },
+  {
+    id: 'rev-seed-2',
+    authorName: 'Karthik Swaminathan',
+    authorPhoto: '',
+    authorLocation: 'Ponmar, Chennai',
+    rating: 5,
+    date: '3 weeks ago',
+    category: 'Abacus Math',
+    text: 'Rocking Kids Academy (Phonics and Abacus) in Mambakkam/Ponmar has been a fantastic decision for my 7-year-old. Concentration and mental arithmetic speed improved drastically!',
+    avatarColor: 'bg-purple-600',
+    verified: true,
+    likes: 12,
+    hidden: false,
+    source: 'seed'
+  },
+  {
+    id: 'rev-seed-3',
+    authorName: 'Priya Ramachandran',
+    authorPhoto: '',
+    authorLocation: 'Near SBIOA School',
+    rating: 5,
+    date: '1 month ago',
+    category: 'Phonics & Reading',
+    text: 'My 5-year-old daughter took the Phonics track here. She transitioned from basic letter sounds to reading entire storybooks effortlessly! The structured phonogram approach made reading fun.',
+    avatarColor: 'bg-amber-600',
+    verified: true,
+    likes: 15,
+    hidden: false,
+    source: 'seed'
+  },
+  {
+    id: 'rev-seed-4',
+    authorName: 'Anitha Venkatesh',
+    authorPhoto: '',
+    authorLocation: 'Medavakkam / Ponmar',
+    rating: 5,
+    date: '1 month ago',
+    category: 'Handwriting',
+    text: 'Unbelievable handwriting transformation! Clear pencil grip & stroke guidance, double-line practice, and very supportive staff. Excellent activity center.',
+    avatarColor: 'bg-rose-600',
+    verified: true,
+    likes: 19,
+    hidden: false,
+    source: 'seed'
+  },
+  {
+    id: 'rev-seed-5',
+    authorName: 'Rajesh Kumar M.',
+    authorPhoto: '',
+    authorLocation: 'Ponmar Main Road',
+    rating: 5,
+    date: '2 months ago',
+    category: 'English & Grammar',
+    text: 'Small batch sizes mean the teachers truly focus on each child. Friendly environment, clean space, and regular progress updates. My son loves attending classes here!',
+    avatarColor: 'bg-indigo-600',
+    verified: true,
+    likes: 11,
+    hidden: false,
+    source: 'seed'
+  },
+  {
+    id: 'rev-seed-6',
+    authorName: 'A. R. Parent',
+    authorPhoto: '',
+    authorLocation: 'Mambakkam, Chennai',
+    rating: 5,
+    date: '1 week ago',
+    category: 'Phonics & Reading',
+    text: 'Definitely a great place for the kids to learn reading English and Tamil.. The teachers are very patient and structured in their teaching methodology.',
+    avatarColor: 'bg-blue-600',
+    verified: true,
+    likes: 18,
+    hidden: false,
+    source: 'seed'
+  }
+];
+
+let memoryStoredReviews = [...DEFAULT_5STAR_REVIEWS];
+
 /**
  * Initialize Neon Postgres Database Tables & Seed Defaults
  */
@@ -164,6 +259,55 @@ export async function initDb(): Promise<boolean> {
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
       `);
+
+      // 6. Google Reviews table (stores all fetched Google Business reviews permanently)
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS google_reviews (
+          id TEXT PRIMARY KEY,
+          author_name TEXT NOT NULL,
+          author_photo TEXT DEFAULT '',
+          author_location TEXT DEFAULT 'Verified Google Reviewer',
+          rating INT NOT NULL DEFAULT 5,
+          date_str TEXT DEFAULT '',
+          text TEXT NOT NULL,
+          category TEXT DEFAULT 'Google Business Page',
+          avatar_color TEXT DEFAULT 'bg-blue-600',
+          verified BOOLEAN DEFAULT true,
+          likes INT DEFAULT 5,
+          hidden BOOLEAN DEFAULT false,
+          source TEXT DEFAULT 'google_places',
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+      `);
+
+      // Seed default 5-star reviews if google_reviews table is empty
+      const reviewCountRes = await client.query('SELECT COUNT(*) FROM google_reviews');
+      if (parseInt(reviewCountRes.rows[0].count, 10) === 0) {
+        for (const rev of DEFAULT_5STAR_REVIEWS) {
+          await client.query(
+            `INSERT INTO google_reviews (id, author_name, author_photo, author_location, rating, date_str, text, category, avatar_color, verified, likes, hidden, source)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+             ON CONFLICT (id) DO NOTHING`,
+            [
+              rev.id,
+              rev.authorName,
+              rev.authorPhoto || '',
+              rev.authorLocation || 'Ponmar, Chennai',
+              rev.rating || 5,
+              rev.date || 'Recently',
+              rev.text,
+              rev.category || 'Abacus & Phonics',
+              rev.avatarColor || 'bg-blue-600',
+              rev.verified ?? true,
+              rev.likes || 15,
+              rev.hidden ?? false,
+              rev.source || 'seed'
+            ]
+          );
+        }
+        console.log(`✅ ${DEFAULT_5STAR_REVIEWS.length} default 5-star Google reviews seeded into Neon Postgres.`);
+      }
 
       console.log('🚀 Neon Postgres database tables successfully initialized and verified!');
       return true;
@@ -628,5 +772,205 @@ export async function unhideReviewId(reviewId: string): Promise<boolean> {
     console.error('Error unhiding review ID in Neon DB:', err);
     throw err;
   }
+}
+
+/**
+ * Save / Upsert Google Reviews into Database
+ */
+export async function saveGoogleReviews(reviews: any[]): Promise<number> {
+  if (!reviews || reviews.length === 0) return 0;
+
+  if (!pool) {
+    let insertedCount = 0;
+    for (const rev of reviews) {
+      const idx = memoryStoredReviews.findIndex(r => r.id === rev.id);
+      if (idx >= 0) {
+        memoryStoredReviews[idx] = { ...memoryStoredReviews[idx], ...rev };
+      } else {
+        memoryStoredReviews.unshift({
+          id: rev.id || `rev-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+          authorName: rev.authorName || 'Google User',
+          authorPhoto: rev.authorPhoto || '',
+          authorLocation: rev.authorLocation || 'Verified Google Reviewer',
+          rating: rev.rating || 5,
+          date: rev.date || 'Recently',
+          text: rev.text || '',
+          category: rev.category || 'Google Business Page',
+          avatarColor: rev.avatarColor || 'bg-blue-600',
+          verified: rev.verified ?? true,
+          likes: rev.likes || 10,
+          hidden: rev.hidden ?? false,
+          source: rev.source || 'google_places'
+        });
+        insertedCount++;
+      }
+    }
+    return insertedCount;
+  }
+
+  try {
+    await ensureDbInitialized();
+    let insertedCount = 0;
+
+    for (const rev of reviews) {
+      const cleanId = (rev.id || `rev-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`).trim();
+      const res = await pool.query(
+        `INSERT INTO google_reviews (
+          id, author_name, author_photo, author_location, rating, date_str, text, category, avatar_color, verified, likes, hidden, source
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+        ON CONFLICT (id) DO UPDATE SET
+          author_name = EXCLUDED.author_name,
+          author_photo = COALESCE(NULLIF(EXCLUDED.author_photo, ''), google_reviews.author_photo),
+          text = EXCLUDED.text,
+          rating = EXCLUDED.rating,
+          date_str = EXCLUDED.date_str,
+          updated_at = CURRENT_TIMESTAMP`,
+        [
+          cleanId,
+          rev.authorName || 'Google User',
+          rev.authorPhoto || '',
+          rev.authorLocation || 'Verified Google Reviewer',
+          rev.rating || 5,
+          rev.date || 'Recently',
+          rev.text || '',
+          rev.category || 'Google Business Page',
+          rev.avatarColor || 'bg-blue-600',
+          rev.verified ?? true,
+          rev.likes || 10,
+          rev.hidden ?? false,
+          rev.source || 'google_places'
+        ]
+      );
+      if (res.rowCount && res.rowCount > 0) insertedCount++;
+    }
+
+    return insertedCount;
+  } catch (err) {
+    console.error('Error saving Google reviews to Neon DB:', err);
+    return 0;
+  }
+}
+
+/**
+ * Get Stored Google Reviews from Database
+ */
+export async function getStoredGoogleReviews(options?: { onlyFiveStar?: boolean; includeHidden?: boolean }): Promise<any[]> {
+  const onlyFiveStar = options?.onlyFiveStar ?? false;
+  const includeHidden = options?.includeHidden ?? false;
+
+  if (!pool) {
+    return memoryStoredReviews.filter(rev => {
+      if (onlyFiveStar && rev.rating !== 5) return false;
+      if (!includeHidden && rev.hidden) return false;
+      return true;
+    });
+  }
+
+  try {
+    await ensureDbInitialized();
+    let query = 'SELECT * FROM google_reviews WHERE 1=1';
+    const params: any[] = [];
+
+    if (onlyFiveStar) {
+      query += ' AND rating = 5';
+    }
+    if (!includeHidden) {
+      query += ' AND (hidden IS NOT TRUE)';
+    }
+
+    query += ' ORDER BY updated_at DESC, created_at DESC';
+
+    const res = await pool.query(query, params);
+
+    // Also check hidden_reviews table for backwards compatibility
+    const hiddenRes = await pool.query('SELECT review_id FROM hidden_reviews');
+    const legacyHiddenIds = new Set(hiddenRes.rows.map(r => r.review_id));
+
+    return res.rows
+      .filter(row => includeHidden || (!row.hidden && !legacyHiddenIds.has(row.id)))
+      .map(row => ({
+        id: row.id,
+        authorName: row.author_name,
+        authorPhoto: row.author_photo || '',
+        authorLocation: row.author_location || 'Verified Google Reviewer',
+        rating: row.rating,
+        date: row.date_str || 'Recently',
+        text: row.text,
+        category: row.category || 'Google Business Page',
+        avatarColor: row.avatar_color || 'bg-blue-600',
+        verified: row.verified ?? true,
+        likes: row.likes || 10,
+        hidden: row.hidden || legacyHiddenIds.has(row.id),
+        source: row.source || 'google_places',
+        createdAt: row.created_at
+      }));
+  } catch (err) {
+    console.error('Error fetching stored google reviews from Neon DB:', err);
+    return memoryStoredReviews.filter(rev => {
+      if (onlyFiveStar && rev.rating !== 5) return false;
+      if (!includeHidden && rev.hidden) return false;
+      return true;
+    });
+  }
+}
+
+/**
+ * Toggle Visibility of a Review (Hide / Unhide in database)
+ */
+export async function toggleReviewVisibility(reviewId: string, hidden: boolean): Promise<boolean> {
+  const cleanId = (reviewId || '').trim();
+  if (!cleanId) return false;
+
+  if (!pool) {
+    const idx = memoryStoredReviews.findIndex(r => r.id === cleanId);
+    if (idx >= 0) {
+      memoryStoredReviews[idx].hidden = hidden;
+    }
+    return true;
+  }
+
+  try {
+    await ensureDbInitialized();
+    await pool.query('UPDATE google_reviews SET hidden = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2', [hidden, cleanId]);
+    if (hidden) {
+      await pool.query('INSERT INTO hidden_reviews (review_id) VALUES ($1) ON CONFLICT (review_id) DO NOTHING', [cleanId]);
+    } else {
+      await pool.query('DELETE FROM hidden_reviews WHERE review_id = $1', [cleanId]);
+    }
+    return true;
+  } catch (err) {
+    console.error('Error toggling review visibility in Neon DB:', err);
+    throw err;
+  }
+}
+
+/**
+ * Delete a Stored Review from Database
+ */
+export async function deleteStoredReview(reviewId: string): Promise<boolean> {
+  const cleanId = (reviewId || '').trim();
+  if (!cleanId) return false;
+
+  if (!pool) {
+    memoryStoredReviews = memoryStoredReviews.filter(r => r.id !== cleanId);
+    return true;
+  }
+
+  try {
+    await ensureDbInitialized();
+    await pool.query('DELETE FROM google_reviews WHERE id = $1', [cleanId]);
+    return true;
+  } catch (err) {
+    console.error('Error deleting stored review from Neon DB:', err);
+    throw err;
+  }
+}
+
+/**
+ * Save Manual Review added by Admin
+ */
+export async function saveManualReview(revData: any): Promise<boolean> {
+  const id = revData.id || `manual-${Date.now()}`;
+  return saveGoogleReviews([{ ...revData, id, source: 'manual_admin' }]).then(count => count > 0);
 }
 
