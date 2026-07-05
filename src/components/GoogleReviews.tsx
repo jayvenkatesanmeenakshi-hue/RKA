@@ -96,24 +96,31 @@ const categories = [];
 
 export const GoogleReviews = () => {
   const [selectedCategory, setSelectedCategory] = useState('All Reviews');
-  const [likedReviews, setLikedReviews] = useState<Record<string, boolean>>({});
+  const [likedReviews, setLikedReviews] = useState<Record<string, boolean>>(() => {
+    try {
+      const saved = localStorage.getItem('rka_helpful_liked_reviews');
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
   const [isLoading, setIsLoading] = useState(false);
 
   // Ratings Data
   const [rating, setRating] = useState(4.9);
   const [userRatingCount, setUserRatingCount] = useState(183);
-  const [reviewsList, setReviewsList] = useState<Review[]>(fallbackReviewsData);
+  const [reviewsList, setReviewsList] = useState<Review[]>(() => fallbackReviewsData.slice(0, 6));
 
   const googleMapsUrl = "https://share.google/v4RsF6b9XjAwE9uFs";
 
-  // Ensure at least 6 reviews are always present by supplementing live Google reviews with verified fallback testimonials
+  // Ensure exactly 6 reviews are always present by combining with verified fallback testimonials
   const combineWithFallback = (liveReviews: Review[]): Review[] => {
     if (!liveReviews || liveReviews.length === 0) {
-      return fallbackReviewsData;
+      return fallbackReviewsData.slice(0, 6);
     }
 
     if (liveReviews.length >= 6) {
-      return liveReviews;
+      return liveReviews.slice(0, 6);
     }
 
     // Supplement with verified fallback reviews to ensure at least 6 cards are always visible
@@ -128,7 +135,7 @@ export const GoogleReviews = () => {
       }
     }
 
-    return [...liveReviews, ...supplements];
+    return [...liveReviews, ...supplements].slice(0, 6);
   };
 
   // Fetch live reviews from server
@@ -158,11 +165,11 @@ export const GoogleReviews = () => {
       if (data.reviews && Array.isArray(data.reviews)) {
         setReviewsList(combineWithFallback(data.reviews));
       } else {
-        setReviewsList(fallbackReviewsData);
+        setReviewsList(fallbackReviewsData.slice(0, 6));
       }
     } catch (err) {
       console.error('Error fetching Google reviews:', err);
-      setReviewsList(fallbackReviewsData);
+      setReviewsList(fallbackReviewsData.slice(0, 6));
     } finally {
       setIsLoading(false);
     }
@@ -175,13 +182,46 @@ export const GoogleReviews = () => {
   const filteredReviews = reviewsList.filter(review => {
     if (selectedCategory === 'All Reviews') return true;
     return review.category.toLowerCase().includes(selectedCategory.toLowerCase());
-  });
+  }).slice(0, 6);
 
-  const toggleLike = (id: string) => {
-    setLikedReviews(prev => ({
-      ...prev,
-      [id]: !prev[id]
+  const toggleLike = async (id: string) => {
+    const isCurrentlyLiked = Boolean(likedReviews[id]);
+    const newLikedState = !isCurrentlyLiked;
+    const action = newLikedState ? 'like' : 'unlike';
+
+    // Update local storage and state optimistically
+    setLikedReviews(prev => {
+      const updated = { ...prev, [id]: newLikedState };
+      try {
+        localStorage.setItem('rka_helpful_liked_reviews', JSON.stringify(updated));
+      } catch (e) {
+        console.error(e);
+      }
+      return updated;
+    });
+
+    setReviewsList(prev => prev.map(rev => {
+      if (rev.id === id) {
+        const currentLikes = typeof rev.likes === 'number' ? rev.likes : 5;
+        return { ...rev, likes: Math.max(0, currentLikes + (newLikedState ? 1 : -1)) };
+      }
+      return rev;
     }));
+
+    // Persist to Neon Postgres Database
+    try {
+      const res = await fetch('/api/google-reviews/helpful', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reviewId: id, action })
+      });
+      const data = await res.json();
+      if (data.success && typeof data.likes === 'number') {
+        setReviewsList(prev => prev.map(rev => rev.id === id ? { ...rev, likes: data.likes } : rev));
+      }
+    } catch (err) {
+      console.error('Error updating helpful likes in database:', err);
+    }
   };
 
   return (
@@ -273,8 +313,8 @@ export const GoogleReviews = () => {
         {/* Reviews Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredReviews.map((review) => {
-            const isLiked = likedReviews[review.id];
-            const likeCount = review.likes + (isLiked ? 1 : 0);
+            const isLiked = Boolean(likedReviews[review.id]);
+            const likeCount = typeof review.likes === 'number' ? review.likes : 5;
 
             return (
               <motion.div

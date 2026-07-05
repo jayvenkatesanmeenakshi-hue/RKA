@@ -294,10 +294,17 @@ export const BlogModule = ({ currentSlug, navigateTo }: BlogModuleProps) => {
               </p>
             </div>
             <button 
-              onClick={() => navigateTo('/')}
+              onClick={() => {
+                navigateTo('/');
+                setTimeout(() => {
+                  const el = document.getElementById('contact');
+                  if (el) el.scrollIntoView({ behavior: 'smooth' });
+                  else window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+                }, 150);
+              }}
               className="bg-yellow-500 text-navy-900 px-8 py-4 rounded-sm font-black text-[10px] uppercase tracking-widest hover:bg-white hover:text-navy-900 transition-all shrink-0 cursor-pointer shadow-lg shadow-yellow-500/10"
             >
-              Book Free Trial Slot
+              BOOK FREE TRIAL SLOT
             </button>
           </div>
         </section>

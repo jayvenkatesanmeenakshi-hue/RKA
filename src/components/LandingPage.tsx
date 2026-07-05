@@ -162,7 +162,7 @@ export const LandingPage = ({ navigateTo }: { navigateTo: (path: string) => void
                 }}
                 className="bg-navy-900 text-white px-8 py-4 rounded-sm font-black text-[10px] uppercase tracking-widest hover:bg-yellow-500 hover:text-navy-900 transition-all shadow-2xl shadow-navy-900/20 cursor-pointer"
               >
-                Enroll Today
+                BOOK FREE TRIAL SLOT
               </button>
               <button 
                 onClick={() => {
@@ -366,7 +366,7 @@ export const LandingPage = ({ navigateTo }: { navigateTo: (path: string) => void
                    }}
                    className="w-full bg-navy-900 text-white py-4 rounded-sm font-black text-[10px] uppercase tracking-widest hover:bg-yellow-500 hover:text-navy-900 transition-all cursor-pointer"
                  >
-                    Contact Admissions
+                    BOOK FREE TRIAL SLOT
                  </button>
              </div>
           </motion.div>
@@ -565,8 +565,8 @@ export const LandingPage = ({ navigateTo }: { navigateTo: (path: string) => void
               className="lg:col-span-7 bg-white p-8 md:p-10 border border-slate-100 rounded-lg shadow-xl shadow-slate-200/40"
             >
               <div className="mb-6">
-                <h3 className="text-xl font-bold text-navy-900 mb-1">Send an Enquiry</h3>
-                <p className="text-navy-400 text-xs font-sans">Submit your contact info and our academic counselor will respond promptly.</p>
+                <h3 className="text-xl font-bold text-navy-900 mb-1">Book Free Trial Slot / Send Enquiry</h3>
+                <p className="text-navy-400 text-xs font-sans">Submit your contact info to lock in a trial session at our Ponmar Main Road center.</p>
               </div>
 
               {formStatus === 'success' ? (

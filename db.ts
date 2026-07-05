@@ -974,3 +974,35 @@ export async function saveManualReview(revData: any): Promise<boolean> {
   return saveGoogleReviews([{ ...revData, id, source: 'manual_admin' }]).then(count => count > 0);
 }
 
+/**
+ * Increment or decrement helpful likes count in database
+ */
+export async function incrementReviewLikes(reviewId: string, delta: number): Promise<number> {
+  const cleanId = (reviewId || '').trim();
+  if (!cleanId) return 0;
+
+  if (!pool) {
+    const idx = memoryStoredReviews.findIndex(r => r.id === cleanId);
+    if (idx >= 0) {
+      memoryStoredReviews[idx].likes = Math.max(0, (memoryStoredReviews[idx].likes || 0) + delta);
+      return memoryStoredReviews[idx].likes;
+    }
+    return 0;
+  }
+
+  try {
+    await ensureDbInitialized();
+    const res = await pool.query(
+      'UPDATE google_reviews SET likes = GREATEST(0, likes + $1), updated_at = CURRENT_TIMESTAMP WHERE id = $2 RETURNING likes',
+      [delta, cleanId]
+    );
+    if (res.rows && res.rows[0] && typeof res.rows[0].likes === 'number') {
+      return res.rows[0].likes;
+    }
+    return 0;
+  } catch (err) {
+    console.error('Error updating review likes in Neon DB:', err);
+    return 0;
+  }
+}
+

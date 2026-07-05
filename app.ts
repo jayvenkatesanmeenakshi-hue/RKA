@@ -23,6 +23,7 @@ import {
   toggleReviewVisibility,
   deleteStoredReview,
   saveManualReview,
+  incrementReviewLikes,
   DEFAULT_5STAR_REVIEWS
 } from "./db.js";
 
@@ -1109,6 +1110,9 @@ apiRouter.get("/google-reviews", async (req, res) => {
     }
   }
 
+  // Limit website display strictly to top 6 reviews from database
+  finalReviews = finalReviews.slice(0, 6);
+
   res.json({
     configured: true,
     rating: 4.9,
@@ -1118,6 +1122,22 @@ apiRouter.get("/google-reviews", async (req, res) => {
     totalFiveStar: finalReviews.length,
     source: "database_stored_5star"
   });
+});
+
+// PUBLIC: INTERACTIVE HELPFUL LIKES BUTTON
+apiRouter.post("/google-reviews/helpful", async (req, res) => {
+  try {
+    const { reviewId, action } = req.body;
+    if (!reviewId) {
+      res.status(400).json({ success: false, error: "reviewId is required" });
+      return;
+    }
+    const delta = action === 'unlike' ? -1 : 1;
+    const newLikes = await incrementReviewLikes(reviewId, delta);
+    res.json({ success: true, likes: newLikes });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
 });
 
 // ADMIN PANEL: GET ALL STORED REVIEWS (Includes 5-star, non-5-star, visible, hidden)

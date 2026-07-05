@@ -123,7 +123,7 @@ export const Navigation = ({ path = '/', navigateTo = () => {} }: NavigationProp
             className="hidden sm:inline-flex bg-navy-900 text-white px-5 lg:px-6 py-2 lg:py-2.5 rounded-sm font-black text-[10px] uppercase tracking-widest hover:bg-yellow-500 hover:text-navy-900 transition-all shadow-xl shadow-navy-900/10 cursor-pointer whitespace-nowrap"
             onClick={handleContactClick}
           >
-            Contact Admissions
+            BOOK FREE TRIAL SLOT
           </button>
 
           {/* Hamburger / Close Icon */}
@@ -198,7 +198,7 @@ export const Navigation = ({ path = '/', navigateTo = () => {} }: NavigationProp
               className="w-full bg-navy-900 text-white py-3 rounded-sm font-black text-[10px] uppercase tracking-widest hover:bg-yellow-500 hover:text-navy-900 transition-all text-center"
               onClick={handleContactClick}
             >
-              Contact Admissions
+              BOOK FREE TRIAL SLOT
             </button>
           </div>
         </div>
