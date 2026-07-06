@@ -1293,17 +1293,60 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigateTo }) => {
                     </div>
 
                     <div>
-                      <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
-                        Cover Image URL
-                      </label>
+                      <div className="flex items-center justify-between mb-2">
+                        <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400">
+                          Cover Image URL
+                        </label>
+                        <span className="text-[10px] text-slate-500 font-mono">Supports https:// or relative paths (/assets/...)</span>
+                      </div>
                       <input 
-                        type="url"
+                        type="text"
                         value={blogForm.coverImage}
                         onChange={(e) => setBlogForm(prev => ({ ...prev, coverImage: e.target.value }))}
-                        placeholder="https://images.unsplash.com/..."
-                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-yellow-500 text-xs"
+                        placeholder="e.g. /assets/images/is-your-child-smart.png or https://..."
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-yellow-500 text-xs font-mono"
                         required
                       />
+
+                      {/* Quick Preset Selector for Local Assets */}
+                      <div className="mt-2 p-3 bg-slate-950/80 border border-slate-800 rounded-xl space-y-2">
+                        <div className="text-[10px] text-slate-400 font-medium flex items-center justify-between">
+                          <span>💡 Local Image Preset Suggestions:</span>
+                        </div>
+                        <div className="flex flex-wrap gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => setBlogForm(prev => ({ ...prev, coverImage: '/assets/images/is-your-child-smart.png' }))}
+                            className="px-2.5 py-1 bg-yellow-500/10 hover:bg-yellow-500/20 text-yellow-400 border border-yellow-500/20 rounded-lg text-[10px] font-mono transition-all cursor-pointer"
+                          >
+                            + /assets/images/is-your-child-smart.png
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setBlogForm(prev => ({ ...prev, coverImage: '/src/assets/images/is-your-child-smart.png' }))}
+                            className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-[10px] font-mono transition-all cursor-pointer"
+                          >
+                            + /src/assets/images/is-your-child-smart.png
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Live Image Preview */}
+                      {blogForm.coverImage && (
+                        <div className="mt-2 p-2 bg-slate-950 border border-slate-800 rounded-xl flex items-center gap-3">
+                          <img 
+                            src={blogForm.coverImage} 
+                            alt="Cover preview" 
+                            className="w-16 h-12 rounded-lg object-cover bg-slate-900 border border-slate-800"
+                            onError={(e) => {
+                              (e.target as HTMLElement).style.display = 'none';
+                            }}
+                          />
+                          <div className="text-[11px] text-slate-400 truncate font-mono">
+                            Previewing: <span className="text-yellow-400">{blogForm.coverImage}</span>
+                          </div>
+                        </div>
+                      )}
                     </div>
 
                     <div>

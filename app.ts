@@ -35,6 +35,12 @@ const app = express();
 // Body parsing middleware
 app.use(express.json());
 
+// Serve static assets from public, public/assets, src/assets
+app.use("/assets", express.static(path.join(process.cwd(), "public", "assets")));
+app.use("/assets", express.static(path.join(process.cwd(), "src", "assets")));
+app.use("/src/assets", express.static(path.join(process.cwd(), "src", "assets")));
+app.use("/public", express.static(path.join(process.cwd(), "public")));
+
 // Normalizer for Vercel Serverless Function Rewrites
 app.use((req, res, next) => {
   const url = req.url || "";
