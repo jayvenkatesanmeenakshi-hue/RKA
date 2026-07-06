@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { formatImageUrl, getReferrerPolicy } from '../utils/imageUtils';
 import { 
   Settings, 
   Globe, 
@@ -1335,15 +1336,16 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigateTo }) => {
                       {blogForm.coverImage && (
                         <div className="mt-2 p-2 bg-slate-950 border border-slate-800 rounded-xl flex items-center gap-3">
                           <img 
-                            src={blogForm.coverImage} 
+                            src={formatImageUrl(blogForm.coverImage)} 
                             alt="Cover preview" 
                             className="w-16 h-12 rounded-lg object-cover bg-slate-900 border border-slate-800"
+                            referrerPolicy={getReferrerPolicy(blogForm.coverImage)}
                             onError={(e) => {
                               (e.target as HTMLElement).style.display = 'none';
                             }}
                           />
                           <div className="text-[11px] text-slate-400 truncate font-mono">
-                            Previewing: <span className="text-yellow-400">{blogForm.coverImage}</span>
+                            Resolved Path: <span className="text-yellow-400">{formatImageUrl(blogForm.coverImage)}</span>
                           </div>
                         </div>
                       )}
@@ -1491,9 +1493,13 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigateTo }) => {
                         >
                           <div className="flex items-center gap-4 min-w-0">
                             <img 
-                              src={blog.coverImage} 
+                              src={formatImageUrl(blog.coverImage)} 
                               alt={blog.title}
                               className="w-20 h-20 object-cover rounded-xl border border-slate-800 flex-shrink-0" 
+                              referrerPolicy={getReferrerPolicy(blog.coverImage)}
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1543269865-cbf427effbad?auto=format&fit=crop&q=80&w=800';
+                              }}
                             />
                             <div className="min-w-0">
                               <div className="flex flex-wrap items-center gap-2 mb-1">

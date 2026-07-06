@@ -7,6 +7,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { useAcademy } from '../context/AcademyContext';
 import { BlogPost } from '../types';
+import { formatImageUrl, getReferrerPolicy } from '../utils/imageUtils';
 import { 
   ArrowLeft, 
   Search, 
@@ -259,11 +260,14 @@ export const BlogModule = ({ currentSlug, navigateTo }: BlogModuleProps) => {
             {/* Cover Image */}
             <div className="aspect-video w-full rounded-md overflow-hidden bg-slate-100 border border-slate-100">
               <img 
-                src={currentPost.coverImage} 
+                src={formatImageUrl(currentPost.coverImage)} 
                 alt={currentPost.title} 
                 className="w-full h-full object-cover"
-                referrerPolicy="no-referrer"
+                referrerPolicy={getReferrerPolicy(currentPost.coverImage)}
                 fetchPriority="high"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1543269865-cbf427effbad?auto=format&fit=crop&q=80&w=800';
+                }}
               />
             </div>
 
@@ -322,11 +326,14 @@ export const BlogModule = ({ currentSlug, navigateTo }: BlogModuleProps) => {
                 >
                   <div className="aspect-[16/9] overflow-hidden bg-slate-100">
                     <img 
-                      src={post.coverImage} 
+                      src={formatImageUrl(post.coverImage)} 
                       alt={post.title} 
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                      referrerPolicy="no-referrer"
+                      referrerPolicy={getReferrerPolicy(post.coverImage)}
                       loading="lazy"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1543269865-cbf427effbad?auto=format&fit=crop&q=80&w=800';
+                      }}
                     />
                   </div>
                   <div className="p-6 flex-grow flex flex-col justify-between">
@@ -469,11 +476,14 @@ export const BlogModule = ({ currentSlug, navigateTo }: BlogModuleProps) => {
                   >
                     <div className="aspect-[16/9] w-full overflow-hidden bg-slate-100 relative">
                       <img 
-                        src={mainPost.coverImage} 
+                        src={formatImageUrl(mainPost.coverImage)} 
                         alt={mainPost.title} 
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                        referrerPolicy="no-referrer"
+                        referrerPolicy={getReferrerPolicy(mainPost.coverImage)}
                         fetchPriority="high"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1543269865-cbf427effbad?auto=format&fit=crop&q=80&w=800';
+                        }}
                       />
                       <div className="absolute top-4 left-4 flex gap-2">
                         <span className="bg-navy-900/90 backdrop-blur-md text-white text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-sm shadow-md">
@@ -538,11 +548,14 @@ export const BlogModule = ({ currentSlug, navigateTo }: BlogModuleProps) => {
                         >
                           <div className="w-20 h-20 shrink-0 rounded-lg overflow-hidden bg-slate-100 border border-slate-100">
                             <img 
-                              src={post.coverImage} 
+                              src={formatImageUrl(post.coverImage)} 
                               alt={post.title} 
                               className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                              referrerPolicy="no-referrer"
+                              referrerPolicy={getReferrerPolicy(post.coverImage)}
                               loading="lazy"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1543269865-cbf427effbad?auto=format&fit=crop&q=80&w=800';
+                              }}
                             />
                           </div>
                           <div className="min-w-0 flex-1 space-y-1.5">
@@ -587,11 +600,14 @@ export const BlogModule = ({ currentSlug, navigateTo }: BlogModuleProps) => {
                     >
                       <div className="aspect-[16/10] overflow-hidden bg-slate-100 relative">
                         <img 
-                          src={post.coverImage} 
+                          src={formatImageUrl(post.coverImage)} 
                           alt={post.title} 
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                          referrerPolicy="no-referrer"
+                          referrerPolicy={getReferrerPolicy(post.coverImage)}
                           loading="lazy"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1543269865-cbf427effbad?auto=format&fit=crop&q=80&w=800';
+                          }}
                         />
                         {post.isFeatured && (
                           <span className="absolute top-3 left-3 bg-navy-900/90 backdrop-blur-md text-white text-[8px] font-black uppercase tracking-widest px-2.5 py-1 rounded-sm shadow">

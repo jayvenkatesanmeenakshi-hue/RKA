@@ -213,5 +213,68 @@ Sometimes, practicing at home can become a source of daily tension between paren
 
 At **Rocking Kids Academy**, we offer a structured, fun, and scientific **Handwriting Improvement** course. We analyze your child’s current writing style, customize worksheets, adjust physical grip posture, and practice cursive connections. In just 2 hours a week, with guided daily tasks, we help children transition to fast, elegant, and legible writing that they will be proud of.
 `
+  },
+  {
+    slug: 'is-your-child-smart-unable-to-focus-10-signs',
+    title: 'Is Your Child Smart... But Unable to Focus? 10 Signs Parents Often Ignore',
+    excerpt: 'Every parent wants their child to succeed in school and life. But high intelligence without focus can lead to frustration and missed potential. Discover 10 subtle signs of focus challenges and how to help.',
+    date: 'July 6, 2026',
+    author: 'Academic Counselor',
+    readTime: '5 Min Read',
+    category: 'Parenting Guides',
+    tags: ['Child Focus', 'Brain Development', 'Abacus', 'Parenting Tips', 'Concentration'],
+    coverImage: '/assets/images/is-your-child-smart.png',
+    isFocus: true,
+    isFeatured: true,
+    content: `
+Every parent wants their child to succeed in school and life. But success isn't just about intelligence—it also depends on the ability to concentrate, stay organized, and follow through on tasks.
+
+Many highly intelligent children struggle with focus. They may be bright, creative, and curious, yet find it difficult to complete homework, sit still, or manage their time.
+
+Here are 10 subtle signs that a smart child might be struggling with focus—and how parents can help them build lasting concentration habits.
+
+---
+
+### 1. High Curiosity, Low Follow-Through
+Your child asks insightful questions and grasps new concepts quickly, but loses interest halfway through completing a project or assignment.
+
+### 2. Homework Takes Hours Longer Than It Should
+A simple 15-minute worksheet stretches into a two-hour battle filled with daydreaming, pencil sharpening, and constant bathroom breaks.
+
+### 3. Hyperfocus on Interests, Disinterest in Routine Tasks
+They can spend hours immersed in Lego or video games, but struggle to spend 10 minutes on spelling words or math drills.
+
+### 4. Frequently Losing School Supplies and Personal Belongings
+Pencils, erasers, notebooks, and jackets routinely go missing despite clear organizational systems at home.
+
+### 5. Difficulty Following Multi-Step Instructions
+Asking them to "Put away your shoes, wash your hands, and set the table" results in only the first task being remembered or completed.
+
+### 6. Careless Mistakes on Easy Tests
+They understand the subject matter thoroughly, yet lose marks due to skipping questions, misreading signs (+ vs -), or rushing through answers.
+
+### 7. Emotional Frustration During Challenging Tasks
+When faced with a difficult problem, they give up quickly, express extreme tiredness, or exhibit emotional outbursts.
+
+### 8. Constant Fidgeting or Need to Move
+They squirm in their chair, tap pencils, wrap legs around furniture, or need to walk around while doing mental work.
+
+### 9. Daydreaming and Off-Task Thoughts
+Teachers report that your child is pleasant and bright, but frequently stares out the window or seems "in their own world" during lectures.
+
+### 10. Difficulty Starting Tasks Without Direct Supervision
+They delay starting assignments until a parent or teacher sits right beside them to guide every step.
+
+---
+
+### How Parents Can Help Build Concentration Muscle
+
+1. **Structured Skill Training:** Programs like **Abacus Mental Arithmetic** explicitly train visual memory, spatial concentration, and rapid auditory-to-visual processing.
+2. **Break Tasks Into Micro-Steps:** Use timer intervals (15 minutes focused work, 3 minutes rest) to keep energy levels high.
+3. **Minimize Visual and Auditory Noise:** Create a clutter-free study space away from screens and family noise.
+4. **Celebrate Effort Over Outcome:** Praise focus duration and perseverance rather than just grades.
+
+At **Rocking Kids Academy**, our specialized Abacus, Phonics, and Academic Skills programs are designed to transform restless energy into laser-focused cognitive confidence.
+`
   }
 ];

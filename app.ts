@@ -35,11 +35,24 @@ const app = express();
 // Body parsing middleware
 app.use(express.json());
 
-// Serve static assets from public, public/assets, src/assets
-app.use("/assets", express.static(path.join(process.cwd(), "public", "assets")));
-app.use("/assets", express.static(path.join(process.cwd(), "src", "assets")));
-app.use("/src/assets", express.static(path.join(process.cwd(), "src", "assets")));
-app.use("/public", express.static(path.join(process.cwd(), "public")));
+// Serve static assets from public, public/assets, src/assets with explicit CORS headers
+const staticOptions = {
+  maxAge: "1d",
+  setHeaders: (res: express.Response) => {
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+  },
+};
+
+app.use("/assets", express.static(path.join(process.cwd(), "public", "assets"), staticOptions));
+app.use("/assets", express.static(path.join(process.cwd(), "src", "assets"), staticOptions));
+app.use("/assets/images", express.static(path.join(process.cwd(), "public", "assets", "images"), staticOptions));
+app.use("/assets/images", express.static(path.join(process.cwd(), "src", "assets", "images"), staticOptions));
+app.use("/src/assets", express.static(path.join(process.cwd(), "src", "assets"), staticOptions));
+app.use("/src/assets", express.static(path.join(process.cwd(), "public", "assets"), staticOptions));
+app.use("/src/assets/images", express.static(path.join(process.cwd(), "src", "assets", "images"), staticOptions));
+app.use("/src/assets/images", express.static(path.join(process.cwd(), "public", "assets", "images"), staticOptions));
+app.use("/public", express.static(path.join(process.cwd(), "public"), staticOptions));
 
 // Normalizer for Vercel Serverless Function Rewrites
 app.use((req, res, next) => {
