@@ -258,11 +258,11 @@ export const BlogModule = ({ currentSlug, navigateTo }: BlogModuleProps) => {
             </div>
 
             {/* Cover Image */}
-            <div className="aspect-video w-full rounded-md overflow-hidden bg-slate-100 border border-slate-100">
+            <div className="aspect-video w-full rounded-xl overflow-hidden bg-slate-100/80 border border-slate-100 relative group flex items-center justify-center p-2 sm:p-4">
               <img 
                 src={formatImageUrl(currentPost.coverImage)} 
                 alt={currentPost.title} 
-                className="w-full h-full object-cover"
+                className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500 rounded-lg"
                 referrerPolicy={getReferrerPolicy(currentPost.coverImage)}
                 fetchPriority="high"
                 onError={(e) => {
@@ -324,11 +324,11 @@ export const BlogModule = ({ currentSlug, navigateTo }: BlogModuleProps) => {
                   onClick={() => navigateTo(`/blog/${post.slug}`)}
                   className="bg-white border border-slate-100 hover:border-yellow-400/60 rounded-lg overflow-hidden flex flex-col cursor-pointer hover:shadow-md transition-all group"
                 >
-                  <div className="aspect-[16/9] overflow-hidden bg-slate-100">
+                  <div className="aspect-[16/9] overflow-hidden bg-slate-100/80 flex items-center justify-center p-2">
                     <img 
                       src={formatImageUrl(post.coverImage)} 
                       alt={post.title} 
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
                       referrerPolicy={getReferrerPolicy(post.coverImage)}
                       loading="lazy"
                       onError={(e) => {
@@ -474,18 +474,18 @@ export const BlogModule = ({ currentSlug, navigateTo }: BlogModuleProps) => {
                     onClick={() => navigateTo(`/blog/${mainPost.slug}`)}
                     className="bg-white border border-slate-100 hover:border-yellow-400 rounded-xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 cursor-pointer group flex flex-col"
                   >
-                    <div className="aspect-[16/9] w-full overflow-hidden bg-slate-100 relative">
+                    <div className="aspect-[16/9] w-full overflow-hidden bg-slate-100/80 relative flex items-center justify-center p-2 sm:p-3">
                       <img 
                         src={formatImageUrl(mainPost.coverImage)} 
                         alt={mainPost.title} 
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                        className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-700"
                         referrerPolicy={getReferrerPolicy(mainPost.coverImage)}
                         fetchPriority="high"
                         onError={(e) => {
                           (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1543269865-cbf427effbad?auto=format&fit=crop&q=80&w=800';
                         }}
                       />
-                      <div className="absolute top-4 left-4 flex gap-2">
+                      <div className="absolute top-4 left-4 flex gap-2 pointer-events-none">
                         <span className="bg-navy-900/90 backdrop-blur-md text-white text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-sm shadow-md">
                           {mainPost.category}
                         </span>
@@ -546,11 +546,11 @@ export const BlogModule = ({ currentSlug, navigateTo }: BlogModuleProps) => {
                           onClick={() => navigateTo(`/blog/${post.slug}`)}
                           className="py-4 first:pt-0 last:pb-0 flex gap-4 items-start group cursor-pointer transition-all"
                         >
-                          <div className="w-20 h-20 shrink-0 rounded-lg overflow-hidden bg-slate-100 border border-slate-100">
+                          <div className="w-20 h-20 shrink-0 rounded-lg overflow-hidden bg-slate-100/80 border border-slate-100 flex items-center justify-center p-1">
                             <img 
                               src={formatImageUrl(post.coverImage)} 
                               alt={post.title} 
-                              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                              className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500"
                               referrerPolicy={getReferrerPolicy(post.coverImage)}
                               loading="lazy"
                               onError={(e) => {
@@ -598,11 +598,11 @@ export const BlogModule = ({ currentSlug, navigateTo }: BlogModuleProps) => {
                       onClick={() => navigateTo(`/blog/${post.slug}`)}
                       className="bg-white border border-slate-100 hover:border-yellow-400 hover:shadow-lg rounded-xl overflow-hidden flex flex-col cursor-pointer transition-all group"
                     >
-                      <div className="aspect-[16/10] overflow-hidden bg-slate-100 relative">
+                      <div className="aspect-[16/10] overflow-hidden bg-slate-100/80 relative flex items-center justify-center p-2">
                         <img 
                           src={formatImageUrl(post.coverImage)} 
                           alt={post.title} 
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
                           referrerPolicy={getReferrerPolicy(post.coverImage)}
                           loading="lazy"
                           onError={(e) => {
@@ -610,7 +610,7 @@ export const BlogModule = ({ currentSlug, navigateTo }: BlogModuleProps) => {
                           }}
                         />
                         {post.isFeatured && (
-                          <span className="absolute top-3 left-3 bg-navy-900/90 backdrop-blur-md text-white text-[8px] font-black uppercase tracking-widest px-2.5 py-1 rounded-sm shadow">
+                          <span className="absolute top-3 left-3 bg-navy-900/90 backdrop-blur-md text-white text-[8px] font-black uppercase tracking-widest px-2.5 py-1 rounded-sm shadow pointer-events-none">
                             Featured
                           </span>
                         )}
