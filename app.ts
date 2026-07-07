@@ -675,36 +675,37 @@ export async function injectSeo(htmlStr: string, baseSeo: any, reqPath?: string)
   }
 
   // Open Graph Title
-  htmlStr = htmlStr.replace(/<meta[^>]*?property="og:title"[^>]*?content="[^"]*"[^>]*?>/i, `<meta property="og:title" content="${seo.ogTitle || seo.title}" />`);
-  htmlStr = htmlStr.replace(/<meta[^>]*?content="[^"]*"[^>]*?property="og:title"[^>]*?>/i, `<meta property="og:title" content="${seo.ogTitle || seo.title}" />`);
+  htmlStr = htmlStr.replace(/<meta[^>]*?property=["']og:title["'][^>]*?content="[^"]*"[^>]*?>/i, `<meta property="og:title" content="${seo.ogTitle || seo.title}" />`);
+  htmlStr = htmlStr.replace(/<meta[^>]*?content="[^"]*"[^>]*?property=["']og:title["'][^>]*?>/i, `<meta property="og:title" content="${seo.ogTitle || seo.title}" />`);
 
   // Open Graph Description
-  htmlStr = htmlStr.replace(/<meta[^>]*?property="og:description"[^>]*?content="[^"]*"[^>]*?>/i, `<meta property="og:description" content="${seo.ogDescription || seo.description}" />`);
-  htmlStr = htmlStr.replace(/<meta[^>]*?content="[^"]*"[^>]*?property="og:description"[^>]*?>/i, `<meta property="og:description" content="${seo.ogDescription || seo.description}" />`);
+  htmlStr = htmlStr.replace(/<meta[^>]*?property=["']og:description["'][^>]*?content="[^"]*"[^>]*?>/i, `<meta property="og:description" content="${seo.ogDescription || seo.description}" />`);
+  htmlStr = htmlStr.replace(/<meta[^>]*?content="[^"]*"[^>]*?property=["']og:description["'][^>]*?>/i, `<meta property="og:description" content="${seo.ogDescription || seo.description}" />`);
 
   // Open Graph Image
-  htmlStr = htmlStr.replace(/<meta[^>]*?property="og:image"[^>]*?content="[^"]*"[^>]*?>/i, `<meta property="og:image" content="${ogImage}" />`);
-  htmlStr = htmlStr.replace(/<meta[^>]*?content="[^"]*"[^>]*?property="og:image"[^>]*?>/i, `<meta property="og:image" content="${ogImage}" />`);
+  htmlStr = htmlStr.replace(/<meta[^>]*?property=["']og:image["'][^>]*?content="[^"]*"[^>]*?>/i, `<meta property="og:image" content="${ogImage}" />`);
+  htmlStr = htmlStr.replace(/<meta[^>]*?content="[^"]*"[^>]*?property=["']og:image["'][^>]*?>/i, `<meta property="og:image" content="${ogImage}" />`);
 
   // Open Graph Image Secure URL
-  if (htmlStr.includes('property="og:image:secure_url"')) {
-    htmlStr = htmlStr.replace(/<meta[^>]*?property="og:image:secure_url"[^>]*?>/i, `<meta property="og:image:secure_url" content="${ogImageSecure}" />`);
+  if (htmlStr.includes('property="og:image:secure_url"') || htmlStr.includes("property='og:image:secure_url'")) {
+    htmlStr = htmlStr.replace(/<meta[^>]*?property=["']og:image:secure_url["'][^>]*?content="[^"]*"[^>]*?>/i, `<meta property="og:image:secure_url" content="${ogImageSecure}" />`);
+    htmlStr = htmlStr.replace(/<meta[^>]*?content="[^"]*"[^>]*?property=["']og:image:secure_url["'][^>]*?>/i, `<meta property="og:image:secure_url" content="${ogImageSecure}" />`);
   } else {
     htmlStr = htmlStr.replace(/<\/head>/i, `  <meta property="og:image:secure_url" content="${ogImageSecure}" />\n</head>`);
   }
 
   // Open Graph Image Dimensions
-  if (!htmlStr.includes('property="og:image:width"')) {
+  if (!htmlStr.includes('property="og:image:width"') && !htmlStr.includes("property='og:image:width'")) {
     htmlStr = htmlStr.replace(/<\/head>/i, `  <meta property="og:image:width" content="1200" />\n  <meta property="og:image:height" content="630" />\n</head>`);
   }
 
   // Twitter Tags
-  htmlStr = htmlStr.replace(/<meta[^>]*?(?:name|property)="twitter:title"[^>]*?content="[^"]*"[^>]*?>/i, `<meta name="twitter:title" content="${seo.twitterTitle || seo.title}" />`);
-  htmlStr = htmlStr.replace(/<meta[^>]*?content="[^"]*"[^>]*?(?:name|property)="twitter:title"[^>]*?>/i, `<meta name="twitter:title" content="${seo.twitterTitle || seo.title}" />`);
-  htmlStr = htmlStr.replace(/<meta[^>]*?(?:name|property)="twitter:description"[^>]*?content="[^"]*"[^>]*?>/i, `<meta name="twitter:description" content="${seo.twitterDescription || seo.description}" />`);
-  htmlStr = htmlStr.replace(/<meta[^>]*?content="[^"]*"[^>]*?(?:name|property)="twitter:description"[^>]*?>/i, `<meta name="twitter:description" content="${seo.twitterDescription || seo.description}" />`);
-  htmlStr = htmlStr.replace(/<meta[^>]*?(?:name|property)="twitter:image"[^>]*?content="[^"]*"[^>]*?>/i, `<meta name="twitter:image" content="${ogImage}" />`);
-  htmlStr = htmlStr.replace(/<meta[^>]*?content="[^"]*"[^>]*?(?:name|property)="twitter:image"[^>]*?>/i, `<meta name="twitter:image" content="${ogImage}" />`);
+  htmlStr = htmlStr.replace(/<meta[^>]*?(?:name|property)=["']twitter:title["'][^>]*?content="[^"]*"[^>]*?>/i, `<meta name="twitter:title" content="${seo.twitterTitle || seo.title}" />`);
+  htmlStr = htmlStr.replace(/<meta[^>]*?content="[^"]*"[^>]*?(?:name|property)=["']twitter:title["'][^>]*?>/i, `<meta name="twitter:title" content="${seo.twitterTitle || seo.title}" />`);
+  htmlStr = htmlStr.replace(/<meta[^>]*?(?:name|property)=["']twitter:description["'][^>]*?content="[^"]*"[^>]*?>/i, `<meta name="twitter:description" content="${seo.twitterDescription || seo.description}" />`);
+  htmlStr = htmlStr.replace(/<meta[^>]*?content="[^"]*"[^>]*?(?:name|property)=["']twitter:description["'][^>]*?>/i, `<meta name="twitter:description" content="${seo.twitterDescription || seo.description}" />`);
+  htmlStr = htmlStr.replace(/<meta[^>]*?(?:name|property)=["']twitter:image["'][^>]*?content="[^"]*"[^>]*?>/i, `<meta name="twitter:image" content="${ogImage}" />`);
+  htmlStr = htmlStr.replace(/<meta[^>]*?content="[^"]*"[^>]*?(?:name|property)=["']twitter:image["'][^>]*?>/i, `<meta name="twitter:image" content="${ogImage}" />`);
 
   // Twitter Card Type
   if (htmlStr.includes('name="twitter:card"') || htmlStr.includes('property="twitter:card"')) {
