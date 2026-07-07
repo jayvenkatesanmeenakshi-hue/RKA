@@ -564,6 +564,43 @@ export async function getOverrideSeo(reqPath: string, baseSeo: any) {
         const fullTitle = `${blog.title} | Rocking Kids Academy`;
         const excerpt = blog.excerpt || "Read this article on Rocking Kids Academy learning blog.";
 
+        let isoDate = new Date().toISOString();
+        if (blog.createdAt) {
+          try {
+            isoDate = new Date(blog.createdAt).toISOString();
+          } catch (e) {}
+        } else if (blog.date) {
+          try {
+            isoDate = new Date(blog.date).toISOString();
+          } catch (e) {}
+        }
+
+        const articleJsonLd = {
+          "@context": "https://schema.org",
+          "@type": "BlogPosting",
+          "headline": blog.title,
+          "image": [cover],
+          "datePublished": isoDate,
+          "dateModified": isoDate,
+          "author": {
+            "@type": "Person",
+            "name": blog.author || "Academic Counselor"
+          },
+          "publisher": {
+            "@type": "Organization",
+            "name": "Rocking Kids Academy",
+            "logo": {
+              "@type": "ImageObject",
+              "url": "https://rockingkidsacademy.in/assets/images/logo_icon_1782800321150.jpg"
+            }
+          },
+          "description": excerpt,
+          "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": `${domain}${reqPath}`
+          }
+        };
+
         return {
           ...baseSeo,
           title: fullTitle,
@@ -578,7 +615,8 @@ export async function getOverrideSeo(reqPath: string, baseSeo: any) {
           twitterCard: 'summary_large_image',
           twitterTitle: fullTitle,
           twitterDescription: excerpt,
-          twitterImage: cover
+          twitterImage: cover,
+          jsonLd: articleJsonLd
         };
       }
     } catch (e) {

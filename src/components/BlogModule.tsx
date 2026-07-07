@@ -140,6 +140,9 @@ export const BlogModule = ({ currentSlug, navigateTo }: BlogModuleProps) => {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [copied, setCopied] = useState(false);
 
+  // Find the selected post if viewing a single article
+  const currentPost = currentSlug ? blogPosts.find(p => p.slug === currentSlug) : null;
+
   // Categories extracted from posts
   const categories = ['All', ...Array.from(new Set(blogPosts.map(post => post.category)))];
 
@@ -178,8 +181,89 @@ export const BlogModule = ({ currentSlug, navigateTo }: BlogModuleProps) => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [currentSlug]);
 
-  // Find the selected post if viewing a single article
-  const currentPost = currentSlug ? blogPosts.find(p => p.slug === currentSlug) : null;
+  useEffect(() => {
+    if (currentSlug && currentPost) {
+      // Dynamically add/update JSON-LD script for this article on the client-side
+      let script = document.getElementById('json-ld-schema') as HTMLScriptElement;
+      let isNew = false;
+      if (!script) {
+        script = document.createElement('script');
+        script.type = 'application/ld+json';
+        script.id = 'json-ld-schema';
+        isNew = true;
+      }
+
+      const domain = "https://rockingkidsacademy.in";
+      let cover = currentPost.coverImage;
+      if (cover && cover.startsWith('/')) {
+        cover = `${domain}${cover}`;
+      } else if (!cover) {
+        cover = "https://images.unsplash.com/photo-1543269865-cbf427effbad?auto=format&fit=crop&q=80&w=1200";
+      }
+
+      let isoDate = new Date().toISOString();
+      if (currentPost.date) {
+        try {
+          isoDate = new Date(currentPost.date).toISOString();
+        } catch (e) {}
+      }
+
+      const jsonLdObj = {
+        "@context": "https://schema.org",
+        "@type": "BlogPosting",
+        "headline": currentPost.title,
+        "image": [cover],
+        "datePublished": isoDate,
+        "dateModified": isoDate,
+        "author": {
+          "@type": "Person",
+          "name": currentPost.author || "Academic Counselor"
+        },
+        "publisher": {
+          "@type": "Organization",
+          "name": "Rocking Kids Academy",
+          "logo": {
+            "@type": "ImageObject",
+            "url": "https://rockingkidsacademy.in/assets/images/logo_icon_1782800321150.jpg"
+          }
+        },
+        "description": currentPost.excerpt || "Read this article on Rocking Kids Academy learning blog.",
+        "mainEntityOfPage": {
+          "@type": "WebPage",
+          "@id": `${domain}/blog/${currentPost.slug}`
+        }
+      };
+
+      script.textContent = JSON.stringify(jsonLdObj, null, 2);
+      if (isNew) {
+        document.head.appendChild(script);
+      }
+    } else {
+      // When not viewing a specific blog post, restore the site-wide default JSON-LD
+      fetch('/json-ld.json')
+        .then(res => {
+          if (res.ok) return res.json();
+          throw new Error('Not found');
+        })
+        .then(data => {
+          const script = document.getElementById('json-ld-schema') as HTMLScriptElement;
+          if (script) {
+            script.textContent = JSON.stringify(data, null, 2);
+          }
+        })
+        .catch(() => {
+          const script = document.getElementById('json-ld-schema') as HTMLScriptElement;
+          if (script) {
+            script.textContent = JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "EducationalOrganization",
+              "name": "Rocking Kids Academy",
+              "url": "https://rockingkidsacademy.in"
+            }, null, 2);
+          }
+        });
+    }
+  }, [currentSlug, currentPost]);
 
   if (currentPost) {
     // Dynamic SEO title
