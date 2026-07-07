@@ -164,7 +164,12 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigateTo }) => {
     author: 'Admin',
     tags: 'Abacus, Child Development, Education',
     isFeatured: false,
-    isFocus: false
+    isFocus: false,
+    published: true,
+    metaTitle: '',
+    metaDescription: '',
+    seriesName: '',
+    seriesOrder: 0
   });
 
   // Parent Enquiries States
@@ -420,8 +425,15 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigateTo }) => {
   // --- BLOGS MANAGEMENT ---
   const loadBlogs = async () => {
     setIsLoadingBlogs(true);
+    const token = localStorage.getItem('admin_token') || '';
+    const user = localStorage.getItem('admin_username') || 'admin';
     try {
-      const res = await fetch('/api/blogs');
+      const res = await fetch('/api/admin/blogs', {
+        headers: {
+          'x-admin-token': token,
+          'x-admin-username': user
+        }
+      });
       if (res.ok) {
         const data = await res.json();
         setBlogsList(data);
@@ -447,7 +459,12 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigateTo }) => {
       author: 'Admin',
       tags: 'Abacus, Education, Brain Development',
       isFeatured: false,
-      isFocus: false
+      isFocus: false,
+      published: true,
+      metaTitle: '',
+      metaDescription: '',
+      seriesName: '',
+      seriesOrder: 0
     });
   };
 
@@ -465,7 +482,12 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigateTo }) => {
       author: blog.author || 'Admin',
       tags: blog.tags ? blog.tags.join(', ') : '',
       isFeatured: !!blog.isFeatured,
-      isFocus: !!blog.isFocus
+      isFocus: !!blog.isFocus,
+      published: blog.published !== false,
+      metaTitle: blog.metaTitle || '',
+      metaDescription: blog.metaDescription || '',
+      seriesName: blog.seriesName || '',
+      seriesOrder: blog.seriesOrder || 0
     });
   };
 
@@ -513,7 +535,12 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigateTo }) => {
         author: blogForm.author,
         tags: tagsArray,
         isFeatured: blogForm.isFeatured,
-        isFocus: blogForm.isFocus
+        isFocus: blogForm.isFocus,
+        published: blogForm.published,
+        metaTitle: blogForm.metaTitle,
+        metaDescription: blogForm.metaDescription,
+        seriesName: blogForm.seriesName,
+        seriesOrder: Number(blogForm.seriesOrder) || 0
       };
 
       const res = await fetch('/api/admin/blogs', {
@@ -1294,6 +1321,20 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigateTo }) => {
                     </div>
 
                     <div>
+                      <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
+                        Post Status (Draft/Publish)
+                      </label>
+                      <select 
+                        value={blogForm.published ? 'published' : 'draft'}
+                        onChange={(e) => setBlogForm(prev => ({ ...prev, published: e.target.value === 'published' }))}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-yellow-500 font-medium"
+                      >
+                        <option value="draft">🔴 Draft (Expert Review & Draft Mode)</option>
+                        <option value="published">🟢 Published (Live to Public)</option>
+                      </select>
+                    </div>
+
+                    <div>
                       <div className="flex items-center justify-between mb-2">
                         <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400">
                           Cover Image URL
@@ -1407,6 +1448,95 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigateTo }) => {
                     </label>
                   </div>
 
+                  {/* SEO Meta Fields (Optional, auto-generated otherwise) */}
+                  <div className="p-4 bg-slate-950 border border-slate-800 rounded-xl space-y-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-yellow-400 uppercase tracking-wider flex items-center gap-1.5">
+                        <span>🔍 Custom SEO Meta Fields</span>
+                      </span>
+                      <span className="text-[10px] text-slate-400">Falls back to dynamic Title and Excerpt if left blank</span>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <div className="flex justify-between mb-1">
+                          <label className="block text-[11px] text-slate-400 font-medium">
+                            Meta Title (Recommended max 60 chars)
+                          </label>
+                          <span className={`text-[10px] ${blogForm.metaTitle.length > 60 ? 'text-red-400 font-bold' : 'text-slate-500'}`}>
+                            {blogForm.metaTitle.length} / 60
+                          </span>
+                        </div>
+                        <input 
+                          type="text"
+                          maxLength={100}
+                          value={blogForm.metaTitle}
+                          onChange={(e) => setBlogForm(prev => ({ ...prev, metaTitle: e.target.value }))}
+                          placeholder="e.g. 5 Benefits of Abacus Training | Rocking Kids"
+                          className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2 text-white text-xs focus:outline-none focus:border-yellow-500"
+                        />
+                      </div>
+
+                      <div>
+                        <div className="flex justify-between mb-1">
+                          <label className="block text-[11px] text-slate-400 font-medium">
+                            Meta Description (Recommended max 155 chars)
+                          </label>
+                          <span className={`text-[10px] ${blogForm.metaDescription.length > 155 ? 'text-red-400 font-bold' : 'text-slate-500'}`}>
+                            {blogForm.metaDescription.length} / 155
+                          </span>
+                        </div>
+                        <input 
+                          type="text"
+                          maxLength={250}
+                          value={blogForm.metaDescription}
+                          onChange={(e) => setBlogForm(prev => ({ ...prev, metaDescription: e.target.value }))}
+                          placeholder="e.g. Discover how learning abacus math builds laser focus, visual memory, and speed calculations..."
+                          className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2 text-white text-xs focus:outline-none focus:border-yellow-500"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Series & Ordering Settings */}
+                  <div className="p-4 bg-slate-950 border border-slate-800 rounded-xl space-y-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+                        <span>📚 Article Series & Sort Order</span>
+                      </span>
+                      <span className="text-[10px] text-slate-400">Group articles together as a multi-part series</span>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-[11px] text-slate-400 font-medium mb-1">
+                          Series Name
+                        </label>
+                        <input 
+                          type="text"
+                          maxLength={100}
+                          value={blogForm.seriesName}
+                          onChange={(e) => setBlogForm(prev => ({ ...prev, seriesName: e.target.value }))}
+                          placeholder="e.g. Abacus Mastery Foundations (leave blank if none)"
+                          className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2 text-white text-xs focus:outline-none focus:border-yellow-500"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] text-slate-400 font-medium mb-1">
+                          Sort Order within Series (e.g. 1, 2, 3)
+                        </label>
+                        <input 
+                          type="number"
+                          min={0}
+                          value={blogForm.seriesOrder}
+                          onChange={(e) => setBlogForm(prev => ({ ...prev, seriesOrder: Number(e.target.value) || 0 }))}
+                          className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2 text-white text-xs focus:outline-none focus:border-yellow-500 font-mono"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
                   <div>
                     <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
                       Short Excerpt
@@ -1506,6 +1636,17 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigateTo }) => {
                                 <span className="px-2 py-0.5 bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 rounded-md text-[10px] font-bold">
                                   {blog.category}
                                 </span>
+                                {blog.published === false ? (
+                                  <span className="px-2 py-0.5 bg-rose-500/10 text-rose-400 border border-rose-500/20 rounded-md text-[9px] font-bold uppercase tracking-wider flex items-center gap-1">
+                                    <span className="w-1.5 h-1.5 bg-rose-500 rounded-full animate-pulse" />
+                                    Draft
+                                  </span>
+                                ) : (
+                                  <span className="px-2 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-md text-[9px] font-bold uppercase tracking-wider flex items-center gap-1">
+                                    <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full" />
+                                    Published
+                                  </span>
+                                )}
                                 {blog.isFocus && (
                                   <span className="px-2 py-0.5 bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded-md text-[9px] font-black uppercase tracking-wider">
                                     ★ Focus Post
@@ -1514,6 +1655,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigateTo }) => {
                                 {blog.isFeatured && (
                                   <span className="px-2 py-0.5 bg-blue-500/20 text-blue-300 border border-blue-500/30 rounded-md text-[9px] font-black uppercase tracking-wider">
                                     Featured
+                                  </span>
+                                )}
+                                {blog.seriesName && (
+                                  <span className="px-2 py-0.5 bg-purple-500/20 text-purple-300 border border-purple-500/30 rounded-md text-[9px] font-bold uppercase tracking-wider">
+                                    📚 {blog.seriesName} (Part {blog.seriesOrder})
                                   </span>
                                 )}
                                 <span className="text-[10px] text-slate-500 flex items-center gap-1">

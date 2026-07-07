@@ -190,6 +190,10 @@ export async function initDb(): Promise<boolean> {
           published BOOLEAN DEFAULT true,
           is_featured BOOLEAN DEFAULT false,
           is_focus BOOLEAN DEFAULT false,
+          meta_title VARCHAR(255),
+          meta_description VARCHAR(500),
+          series_name VARCHAR(255),
+          series_order INTEGER DEFAULT 0,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
@@ -199,6 +203,11 @@ export async function initDb(): Promise<boolean> {
       await client.query(`
         ALTER TABLE blog_posts ADD COLUMN IF NOT EXISTS is_featured BOOLEAN DEFAULT false;
         ALTER TABLE blog_posts ADD COLUMN IF NOT EXISTS is_focus BOOLEAN DEFAULT false;
+        ALTER TABLE blog_posts ADD COLUMN IF NOT EXISTS published BOOLEAN DEFAULT true;
+        ALTER TABLE blog_posts ADD COLUMN IF NOT EXISTS meta_title VARCHAR(255);
+        ALTER TABLE blog_posts ADD COLUMN IF NOT EXISTS meta_description VARCHAR(500);
+        ALTER TABLE blog_posts ADD COLUMN IF NOT EXISTS series_name VARCHAR(255);
+        ALTER TABLE blog_posts ADD COLUMN IF NOT EXISTS series_order INTEGER DEFAULT 0;
       `);
 
       // Seed initial blogs if table is empty
@@ -404,9 +413,13 @@ export async function getBlogPosts(): Promise<any[]> {
       readTime: row.read_time,
       author: row.author,
       date: row.date,
-      published: row.published,
+      published: row.published ?? true,
       isFeatured: row.is_featured ?? false,
       isFocus: row.is_focus ?? false,
+      metaTitle: row.meta_title || '',
+      metaDescription: row.meta_description || '',
+      seriesName: row.series_name || '',
+      seriesOrder: row.series_order ?? 0,
       createdAt: row.created_at
     }));
   } catch (err) {
@@ -440,9 +453,13 @@ export async function getBlogPostBySlug(slug: string): Promise<any | null> {
       readTime: row.read_time,
       author: row.author,
       date: row.date,
-      published: row.published,
+      published: row.published ?? true,
       isFeatured: row.is_featured ?? false,
       isFocus: row.is_focus ?? false,
+      metaTitle: row.meta_title || '',
+      metaDescription: row.meta_description || '',
+      seriesName: row.series_name || '',
+      seriesOrder: row.series_order ?? 0,
       createdAt: row.created_at
     };
   } catch (err) {
@@ -467,11 +484,21 @@ export async function saveBlogPost(blogData: {
   date?: string;
   isFeatured?: boolean;
   isFocus?: boolean;
+  published?: boolean;
+  metaTitle?: string;
+  metaDescription?: string;
+  seriesName?: string;
+  seriesOrder?: number;
 }): Promise<any> {
   const dateStr = blogData.date || new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
   const tagsArr = blogData.tags || [];
   const isFeatured = blogData.isFeatured ?? false;
   const isFocus = blogData.isFocus ?? false;
+  const published = blogData.published ?? true;
+  const metaTitle = blogData.metaTitle || null;
+  const metaDescription = blogData.metaDescription || null;
+  const seriesName = blogData.seriesName || null;
+  const seriesOrder = blogData.seriesOrder ?? 0;
 
   if (!pool) {
     if (isFocus) {
@@ -490,7 +517,12 @@ export async function saveBlogPost(blogData: {
       author: blogData.author || 'Admin',
       date: dateStr,
       isFeatured: isFeatured,
-      isFocus: isFocus
+      isFocus: isFocus,
+      published: published,
+      metaTitle: metaTitle || '',
+      metaDescription: metaDescription || '',
+      seriesName: seriesName || '',
+      seriesOrder: seriesOrder
     };
     if (existingIdx >= 0) {
       memoryBlogs[existingIdx] = newBlog;
@@ -509,8 +541,8 @@ export async function saveBlogPost(blogData: {
     }
 
     const query = `
-      INSERT INTO blog_posts (slug, title, excerpt, content, category, tags, cover_image, read_time, author, date, published, is_featured, is_focus, updated_at)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, true, $11, $12, CURRENT_TIMESTAMP)
+      INSERT INTO blog_posts (slug, title, excerpt, content, category, tags, cover_image, read_time, author, date, published, is_featured, is_focus, meta_title, meta_description, series_name, series_order, updated_at)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, CURRENT_TIMESTAMP)
       ON CONFLICT (slug) DO UPDATE SET
         title = EXCLUDED.title,
         excerpt = EXCLUDED.excerpt,
@@ -521,8 +553,13 @@ export async function saveBlogPost(blogData: {
         read_time = EXCLUDED.read_time,
         author = EXCLUDED.author,
         date = EXCLUDED.date,
+        published = EXCLUDED.published,
         is_featured = EXCLUDED.is_featured,
         is_focus = EXCLUDED.is_focus,
+        meta_title = EXCLUDED.meta_title,
+        meta_description = EXCLUDED.meta_description,
+        series_name = EXCLUDED.series_name,
+        series_order = EXCLUDED.series_order,
         updated_at = CURRENT_TIMESTAMP
       RETURNING *;
     `;
@@ -537,8 +574,13 @@ export async function saveBlogPost(blogData: {
       blogData.readTime || '5 Min Read',
       blogData.author || 'Admin',
       dateStr,
+      published,
       isFeatured,
-      isFocus
+      isFocus,
+      metaTitle,
+      metaDescription,
+      seriesName,
+      seriesOrder
     ];
     const res = await pool.query(query, values);
     const row = res.rows[0];
@@ -554,8 +596,13 @@ export async function saveBlogPost(blogData: {
       readTime: row.read_time,
       author: row.author,
       date: row.date,
+      published: row.published ?? true,
       isFeatured: row.is_featured ?? false,
-      isFocus: row.is_focus ?? false
+      isFocus: row.is_focus ?? false,
+      metaTitle: row.meta_title || '',
+      metaDescription: row.meta_description || '',
+      seriesName: row.series_name || '',
+      seriesOrder: row.series_order ?? 0
     };
   } catch (err) {
     console.error('Error saving blog post to Neon DB:', err);

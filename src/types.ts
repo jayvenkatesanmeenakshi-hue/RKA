@@ -50,4 +50,9 @@ export interface BlogPost {
   tags: string[];
   isFeatured?: boolean;
   isFocus?: boolean;
+  published?: boolean;
+  metaTitle?: string;
+  metaDescription?: string;
+  seriesName?: string;
+  seriesOrder?: number;
 }

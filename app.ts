@@ -561,8 +561,8 @@ export async function getOverrideSeo(reqPath: string, baseSeo: any) {
           cover = `${domain}${cover}`;
         }
 
-        const fullTitle = `${blog.title} | Rocking Kids Academy`;
-        const excerpt = blog.excerpt || "Read this article on Rocking Kids Academy learning blog.";
+        const fullTitle = blog.metaTitle && blog.metaTitle.trim() !== '' ? blog.metaTitle : `${blog.title} | Rocking Kids Academy`;
+        const excerpt = blog.metaDescription && blog.metaDescription.trim() !== '' ? blog.metaDescription : (blog.excerpt || "Read this article on Rocking Kids Academy learning blog.");
 
         let isoDate = new Date().toISOString();
         if (blog.createdAt) {
@@ -780,7 +780,9 @@ apiRouter.post("/admin/login", async (req, res) => {
 apiRouter.get("/blogs", async (req, res) => {
   try {
     const blogs = await getBlogPosts();
-    res.json(blogs);
+    // Filter out unpublished (draft) posts for the public view
+    const publishedBlogs = blogs.filter(b => b.published !== false);
+    res.json(publishedBlogs);
   } catch (err: any) {
     res.status(500).json({ error: err.message || "Failed to fetch blog posts" });
   }
@@ -799,9 +801,18 @@ apiRouter.get("/blogs/:slug", async (req, res) => {
   }
 });
 
+apiRouter.get("/admin/blogs", checkAdminAuth, async (req, res) => {
+  try {
+    const blogs = await getBlogPosts();
+    res.json(blogs);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || "Failed to fetch blog posts for admin" });
+  }
+});
+
 apiRouter.post("/admin/blogs", checkAdminAuth, async (req, res) => {
   try {
-    const { slug, title, excerpt, content, category, tags, coverImage, readTime, author, date, isFeatured, isFocus } = req.body;
+    const { slug, title, excerpt, content, category, tags, coverImage, readTime, author, date, isFeatured, isFocus, published, metaTitle, metaDescription, seriesName, seriesOrder } = req.body;
     if (!slug || !title || !content) {
       res.status(400).json({ error: "Slug, title, and content are required fields" });
       return;
@@ -819,7 +830,12 @@ apiRouter.post("/admin/blogs", checkAdminAuth, async (req, res) => {
       author,
       date,
       isFeatured: !!isFeatured,
-      isFocus: !!isFocus
+      isFocus: !!isFocus,
+      published: published !== false,
+      metaTitle: metaTitle || "",
+      metaDescription: metaDescription || "",
+      seriesName: seriesName || "",
+      seriesOrder: seriesOrder !== undefined ? Number(seriesOrder) : 0
     });
 
     res.json({ success: true, message: "Blog post successfully saved to Neon Postgres!", blog });

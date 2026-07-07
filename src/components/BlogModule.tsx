@@ -183,7 +183,28 @@ export const BlogModule = ({ currentSlug, navigateTo }: BlogModuleProps) => {
 
   useEffect(() => {
     if (currentSlug && currentPost) {
-      // Dynamically add/update JSON-LD script for this article on the client-side
+      // 1. Dynamic document Title
+      const titleText = currentPost.metaTitle && currentPost.metaTitle.trim() !== ''
+        ? currentPost.metaTitle
+        : `${currentPost.title} | Rocking Kids Academy`;
+      document.title = titleText;
+
+      // 2. Dynamic document Meta Description
+      const descText = currentPost.metaDescription && currentPost.metaDescription.trim() !== ''
+        ? currentPost.metaDescription
+        : (currentPost.excerpt || "Read this article on Rocking Kids Academy learning blog.");
+
+      let metaDescTag = document.querySelector('meta[name="description"]');
+      if (metaDescTag) {
+        metaDescTag.setAttribute('content', descText);
+      } else {
+        metaDescTag = document.createElement('meta');
+        metaDescTag.setAttribute('name', 'description');
+        metaDescTag.setAttribute('content', descText);
+        document.head.appendChild(metaDescTag);
+      }
+
+      // 3. Dynamically add/update JSON-LD script for this article
       let script = document.getElementById('json-ld-schema') as HTMLScriptElement;
       let isNew = false;
       if (!script) {
@@ -227,7 +248,7 @@ export const BlogModule = ({ currentSlug, navigateTo }: BlogModuleProps) => {
             "url": "https://rockingkidsacademy.in/assets/images/logo_icon_1782800321150.jpg"
           }
         },
-        "description": currentPost.excerpt || "Read this article on Rocking Kids Academy learning blog.",
+        "description": descText,
         "mainEntityOfPage": {
           "@type": "WebPage",
           "@id": `${domain}/blog/${currentPost.slug}`
@@ -239,6 +260,14 @@ export const BlogModule = ({ currentSlug, navigateTo }: BlogModuleProps) => {
         document.head.appendChild(script);
       }
     } else {
+      // Restore default titles and descriptions
+      document.title = "Rocking Kids Academy | Premier Learning Center for Abacus, Phonics & English";
+      const defaultDesc = "Rocking Kids Academy is a premier learning center dedicated to skill development for children ages 4 to 14. We offer expert-led courses in Abacus, Phonics, English, and Handwriting mastery.";
+      const metaDescTag = document.querySelector('meta[name="description"]');
+      if (metaDescTag) {
+        metaDescTag.setAttribute('content', defaultDesc);
+      }
+
       // When not viewing a specific blog post, restore the site-wide default JSON-LD
       fetch('/json-ld.json')
         .then(res => {
@@ -266,13 +295,49 @@ export const BlogModule = ({ currentSlug, navigateTo }: BlogModuleProps) => {
   }, [currentSlug, currentPost]);
 
   if (currentPost) {
-    // Dynamic SEO title
-    document.title = `${currentPost.title} | Rocking Kids Academy`;
+    // 1. Same series posts
+    let seriesPosts: BlogPost[] = [];
+    if (currentPost.seriesName) {
+      seriesPosts = blogPosts
+        .filter(p => p.seriesName === currentPost.seriesName && p.published !== false)
+        .sort((a, b) => (a.seriesOrder ?? 0) - (b.seriesOrder ?? 0));
+    }
 
-    // Filter out the current post to show "Related Reads"
-    const relatedPosts = blogPosts
-      .filter(p => p.slug !== currentPost.slug)
-      .slice(0, 2);
+    // 2. Build Smart Related Posts
+    let relatedPosts: BlogPost[] = [];
+    
+    // Tier A: Same series recommendations
+    if (currentPost.seriesName) {
+      const sameSeries = blogPosts
+        .filter(p => p.seriesName === currentPost.seriesName && p.slug !== currentPost.slug && p.published !== false)
+        .sort((a, b) => (a.seriesOrder ?? 0) - (b.seriesOrder ?? 0));
+      relatedPosts.push(...sameSeries);
+    }
+    
+    // Tier B: Same category recommendations
+    if (relatedPosts.length < 2) {
+      const sameCategory = blogPosts
+        .filter(p => p.category === currentPost.category && p.slug !== currentPost.slug && p.published !== false && !relatedPosts.some(r => r.slug === p.slug));
+      relatedPosts.push(...sameCategory);
+    }
+    
+    // Tier C: Shared tags recommendations
+    if (relatedPosts.length < 2) {
+      const sameTags = blogPosts
+        .filter(p => p.slug !== currentPost.slug && p.published !== false && !relatedPosts.some(r => r.slug === p.slug))
+        .filter(p => p.tags.some(t => currentPost.tags.includes(t)));
+      relatedPosts.push(...sameTags);
+    }
+    
+    // Tier D: Default fallback
+    if (relatedPosts.length < 2) {
+      const fallbacks = blogPosts
+        .filter(p => p.slug !== currentPost.slug && p.published !== false && !relatedPosts.some(r => r.slug === p.slug));
+      relatedPosts.push(...fallbacks);
+    }
+    
+    // Limit to top 2 recommendations
+    relatedPosts = relatedPosts.slice(0, 2);
 
     return (
       <div className="bg-slate-50/50 min-h-screen pb-24">
@@ -354,6 +419,66 @@ export const BlogModule = ({ currentSlug, navigateTo }: BlogModuleProps) => {
                 }}
               />
             </div>
+
+            {/* Series Navigation Box */}
+            {seriesPosts.length > 1 && (
+              <div className="bg-slate-50 border border-slate-200/60 rounded-xl p-6 mt-8 font-sans">
+                <div className="flex flex-wrap items-center gap-2 mb-3">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-navy-900 bg-yellow-400 px-2.5 py-1 rounded-sm">
+                    📚 Learning Series
+                  </span>
+                  <span className="text-xs font-bold text-navy-800">
+                    {currentPost.seriesName}
+                  </span>
+                  <span className="text-[11px] text-slate-500 font-mono sm:ml-auto bg-slate-200/50 px-2 py-0.5 rounded">
+                    Part {currentPost.seriesOrder || 1} of {seriesPosts.length}
+                  </span>
+                </div>
+                
+                <p className="text-xs text-navy-600 leading-relaxed mb-4">
+                  This article is part of our comprehensive multi-part learning guide. Continue reading or navigate between parts below:
+                </p>
+
+                <div className="grid grid-cols-1 gap-2 max-h-60 overflow-y-auto pr-1">
+                  {seriesPosts.map((sp, idx) => {
+                    const isActive = sp.slug === currentPost.slug;
+                    return (
+                      <div 
+                        key={sp.slug}
+                        onClick={() => {
+                          if (!isActive) navigateTo(`/blog/${sp.slug}`);
+                        }}
+                        className={`flex items-center justify-between p-3 rounded-lg border text-xs transition-all ${
+                          isActive 
+                            ? 'bg-yellow-500/10 border-yellow-400 text-yellow-900 font-bold shadow-xs' 
+                            : 'bg-white hover:bg-slate-100 border-slate-100 hover:border-slate-200 text-navy-800 cursor-pointer'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3 min-w-0 pr-4">
+                          <span className={`w-5 h-5 rounded-full flex items-center justify-center font-mono text-[10px] font-bold shrink-0 ${
+                            isActive 
+                              ? 'bg-yellow-500 text-navy-900' 
+                              : 'bg-slate-100 text-slate-500'
+                          }`}>
+                            {sp.seriesOrder || (idx + 1)}
+                          </span>
+                          <span className="truncate">{sp.title}</span>
+                        </div>
+                        {isActive ? (
+                          <span className="text-[9px] uppercase font-black tracking-widest text-yellow-700 bg-yellow-400/20 px-2 py-0.5 rounded shrink-0">
+                            Reading Now
+                          </span>
+                        ) : (
+                          <span className="text-[10px] font-medium text-slate-400 hover:text-navy-900 shrink-0 flex items-center gap-1">
+                            Go to Part &rarr;
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             {/* Parsed content text */}
             <div className="mt-10 px-0 md:px-4">
@@ -578,12 +703,20 @@ export const BlogModule = ({ currentSlug, navigateTo }: BlogModuleProps) => {
 
                     <div className="p-6 sm:p-8 md:p-10 space-y-4 flex-grow flex flex-col justify-between">
                       <div className="space-y-3">
-                        <div className="flex items-center gap-3 text-xs text-navy-400 font-sans">
+                        <div className="flex flex-wrap items-center gap-3 text-xs text-navy-400 font-sans">
                           <span className="flex items-center gap-1.5"><User size={13} className="text-yellow-600" /> {mainPost.author}</span>
                           <span>•</span>
                           <span className="flex items-center gap-1.5"><Calendar size={13} className="text-yellow-600" /> {mainPost.date}</span>
                           <span>•</span>
                           <span className="flex items-center gap-1.5"><Clock size={13} className="text-yellow-600" /> {mainPost.readTime}</span>
+                          {mainPost.seriesName && (
+                            <>
+                              <span>•</span>
+                              <span className="text-[10px] font-bold text-purple-700 bg-purple-100 border border-purple-200 px-2 py-0.5 rounded-sm flex items-center gap-1">
+                                📚 {mainPost.seriesName} (Part {mainPost.seriesOrder || 1})
+                              </span>
+                            </>
+                          )}
                         </div>
 
                         <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-navy-900 tracking-tight leading-tight group-hover:text-yellow-600 transition-colors">
@@ -643,10 +776,17 @@ export const BlogModule = ({ currentSlug, navigateTo }: BlogModuleProps) => {
                             />
                           </div>
                           <div className="min-w-0 flex-1 space-y-1.5">
-                            <div className="flex items-center justify-between gap-2">
-                              <span className="text-[8px] font-black uppercase tracking-wider text-yellow-700 bg-yellow-50 border border-yellow-200/60 px-2 py-0.5 rounded-sm">
-                                {post.category}
-                              </span>
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                              <div className="flex items-center gap-1">
+                                <span className="text-[8px] font-black uppercase tracking-wider text-yellow-700 bg-yellow-50 border border-yellow-200/60 px-2 py-0.5 rounded-sm">
+                                  {post.category}
+                                </span>
+                                {post.seriesName && (
+                                  <span className="text-[8px] font-bold text-purple-700 bg-purple-50 border border-purple-100 px-1.5 py-0.5 rounded-sm">
+                                    Part {post.seriesOrder || 1}
+                                  </span>
+                                )}
+                              </div>
                               <span className="text-[9px] font-mono text-navy-300 shrink-0">{post.readTime}</span>
                             </div>
                             <h3 className="text-xs font-bold text-navy-900 leading-snug line-clamp-2 group-hover:text-yellow-600 transition-colors">
@@ -701,9 +841,16 @@ export const BlogModule = ({ currentSlug, navigateTo }: BlogModuleProps) => {
                       </div>
                       <div className="p-6 flex-grow flex flex-col justify-between">
                         <div className="space-y-3">
-                          <span className="text-[9px] font-black uppercase tracking-widest text-yellow-600 bg-yellow-50 px-2 py-1 rounded-sm">
-                            {post.category}
-                          </span>
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <span className="text-[9px] font-black uppercase tracking-widest text-yellow-600 bg-yellow-50 px-2 py-1 rounded-sm">
+                              {post.category}
+                            </span>
+                            {post.seriesName && (
+                              <span className="text-[9px] font-bold text-purple-700 bg-purple-50 border border-purple-100 px-2 py-1 rounded-sm">
+                                📚 {post.seriesName} (Part {post.seriesOrder || 1})
+                              </span>
+                            )}
+                          </div>
                           <h3 className="text-base font-bold text-navy-900 line-clamp-2 leading-snug group-hover:text-yellow-600 transition-colors">
                             {post.title}
                           </h3>
