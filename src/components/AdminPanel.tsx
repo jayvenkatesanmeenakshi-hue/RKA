@@ -111,6 +111,12 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigateTo }) => {
     category: 'Abacus & Phonics'
   });
 
+  // Share Blog Modal State
+  const [sharingBlog, setSharingBlog] = useState<BlogPost | null>(null);
+  const [copiedLink, setCopiedLink] = useState<boolean>(false);
+  const [copiedCaption, setCopiedCaption] = useState<boolean>(false);
+  const [useProductionUrl, setUseProductionUrl] = useState<boolean>(true);
+
   // JSON-LD, llms.txt & robots.txt Editor States
   const [jsonLdCode, setJsonLdCode] = useState<string>('');
   const [jsonLdError, setJsonLdError] = useState<string | null>(null);
@@ -1673,13 +1679,27 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigateTo }) => {
                             </div>
                           </div>
 
-                          <div className="flex items-center gap-2 self-end md:self-center flex-shrink-0">
+                          <div className="flex items-center gap-2 self-end md:self-center flex-shrink-0 font-sans">
                             <button
                               onClick={() => window.open(`/blog/${blog.slug}`, '_blank')}
                               className="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl transition-colors"
                               title="Preview Article"
                             >
                               <Eye className="w-4 h-4" />
+                            </button>
+
+                            <button
+                              onClick={() => {
+                                setSharingBlog(blog);
+                                setCopiedLink(false);
+                                setCopiedCaption(false);
+                                setUseProductionUrl(true);
+                              }}
+                              className="px-3 py-2 bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 border border-purple-500/20 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors"
+                              title="Share & Promote Article"
+                            >
+                              <Share2 className="w-3.5 h-3.5" />
+                              <span>Share</span>
                             </button>
 
                             <button
@@ -2739,6 +2759,315 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigateTo }) => {
                         </button>
                       </div>
                     </form>
+                  </div>
+                </div>
+              )}
+
+              {/* Modal for Social Media Sharing & Promotion */}
+              {sharingBlog && (
+                <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 overflow-y-auto">
+                  <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-2xl w-full my-8 shadow-2xl overflow-hidden font-sans">
+                    {/* Header */}
+                    <div className="bg-slate-950 px-6 py-5 border-b border-slate-800 flex items-center justify-between">
+                      <div className="flex items-center gap-2.5">
+                        <div className="p-2 bg-purple-500/10 text-purple-400 rounded-xl border border-purple-500/20">
+                          <Share2 className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <h3 className="text-base font-bold text-white leading-tight">Promote & Share Article</h3>
+                          <p className="text-[11px] text-slate-400 mt-0.5">Share this article across your academy's social media platforms</p>
+                        </div>
+                      </div>
+                      <button 
+                        onClick={() => setSharingBlog(null)}
+                        className="text-slate-400 hover:text-white p-2 rounded-xl hover:bg-slate-800/50 transition-colors text-sm font-bold"
+                        aria-label="Close modal"
+                      >
+                        ✕
+                      </button>
+                    </div>
+
+                    <div className="p-6 space-y-6 max-h-[70vh] overflow-y-auto custom-scrollbar">
+                      {/* Active Blog Summary */}
+                      <div className="p-4 bg-slate-950/50 border border-slate-800/80 rounded-xl flex gap-4">
+                        <img 
+                          src={formatImageUrl(sharingBlog.coverImage)} 
+                          alt={sharingBlog.title}
+                          className="w-16 h-16 object-cover rounded-lg border border-slate-800 shrink-0"
+                          referrerPolicy={getReferrerPolicy(sharingBlog.coverImage)}
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1543269865-cbf427effbad?auto=format&fit=crop&q=80&w=800';
+                          }}
+                        />
+                        <div className="min-w-0 flex-1">
+                          <span className="px-2 py-0.5 bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 rounded text-[9px] font-bold uppercase tracking-wider">
+                            {sharingBlog.category}
+                          </span>
+                          <h4 className="text-sm font-bold text-white mt-1.5 truncate leading-tight">{sharingBlog.title}</h4>
+                          <p className="text-xs text-slate-400 truncate mt-0.5">{sharingBlog.excerpt}</p>
+                        </div>
+                      </div>
+
+                      {/* URL Source Preference Option */}
+                      <div className="space-y-2.5">
+                        <label className="block text-xs font-bold uppercase tracking-wider text-slate-400">
+                          1. Choose Target Web Address
+                        </label>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                          <button
+                            type="button"
+                            onClick={() => { setUseProductionUrl(true); setCopiedLink(false); }}
+                            className={`p-3.5 rounded-xl border text-left transition-all ${
+                              useProductionUrl 
+                                ? 'bg-yellow-500/10 border-yellow-500/30 text-white' 
+                                : 'bg-slate-950/40 border-slate-800 text-slate-400 hover:border-slate-700'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs font-bold">Production Link (Live Site)</span>
+                              <div className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center ${
+                                useProductionUrl ? 'border-yellow-500 bg-yellow-500' : 'border-slate-600'
+                              }`}>
+                                {useProductionUrl && <div className="w-1.5 h-1.5 rounded-full bg-slate-950" />}
+                              </div>
+                            </div>
+                            <p className="text-[10px] text-slate-400 mt-1 font-mono leading-tight truncate">https://rockingkidsacademy.in/blog/{sharingBlog.slug}</p>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => { setUseProductionUrl(false); setCopiedLink(false); }}
+                            className={`p-3.5 rounded-xl border text-left transition-all ${
+                              !useProductionUrl 
+                                ? 'bg-yellow-500/10 border-yellow-500/30 text-white' 
+                                : 'bg-slate-950/40 border-slate-800 text-slate-400 hover:border-slate-700'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs font-bold">Current Sandbox Link (Preview)</span>
+                              <div className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center ${
+                                !useProductionUrl ? 'border-yellow-500 bg-yellow-500' : 'border-slate-600'
+                              }`}>
+                                {!useProductionUrl && <div className="w-1.5 h-1.5 rounded-full bg-slate-950" />}
+                              </div>
+                            </div>
+                            <p className="text-[10px] text-slate-400 mt-1 font-mono leading-tight truncate">{window.location.origin}/blog/{sharingBlog.slug}</p>
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Copy Link Bar */}
+                      <div className="bg-slate-950 border border-slate-800 rounded-xl p-3 flex items-center justify-between gap-3">
+                        <div className="text-xs text-slate-300 font-mono select-all truncate flex-1 pl-1">
+                          {useProductionUrl 
+                            ? `https://rockingkidsacademy.in/blog/${sharingBlog.slug}` 
+                            : `${window.location.origin}/blog/${sharingBlog.slug}`
+                          }
+                        </div>
+                        <button
+                          onClick={() => {
+                            const url = useProductionUrl 
+                              ? `https://rockingkidsacademy.in/blog/${sharingBlog.slug}` 
+                              : `${window.location.origin}/blog/${sharingBlog.slug}`;
+                            navigator.clipboard.writeText(url);
+                            setCopiedLink(true);
+                            setTimeout(() => setCopiedLink(false), 2000);
+                          }}
+                          className="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-white text-[11px] font-semibold rounded-lg flex items-center gap-1.5 shrink-0 transition-colors"
+                        >
+                          {copiedLink ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                          <span>{copiedLink ? 'Copied!' : 'Copy'}</span>
+                        </button>
+                      </div>
+
+                      {/* Quick Instant Share Channels Grid */}
+                      <div className="space-y-2.5">
+                        <label className="block text-xs font-bold uppercase tracking-wider text-slate-400">
+                          2. Quick Web Shares
+                        </label>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                          {/* Facebook */}
+                          <a
+                            href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(
+                              useProductionUrl 
+                                ? `https://rockingkidsacademy.in/blog/${sharingBlog.slug}` 
+                                : `${window.location.origin}/blog/${sharingBlog.slug}`
+                            )}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="bg-slate-950 border border-slate-800 hover:border-[#1877F2]/40 p-4 rounded-xl flex flex-col items-center justify-center gap-2 transition-all hover:bg-[#1877F2]/5 group text-center"
+                          >
+                            <div className="p-2.5 bg-slate-900 rounded-xl group-hover:bg-[#1877F2]/10 transition-colors">
+                              <svg className="w-5 h-5 text-slate-400 group-hover:text-[#1877F2] transition-colors" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M22 12c0-5.52-4.48-10-10-10S2 6.48 2 12c0 4.84 3.44 8.87 8 9.8V15H8v-3h2V9.5C10 7.57 11.57 6 13.5 6H16v3h-2c-.55 0-1 .45-1 1v2h3v3h-3v6.95c4.56-.93 8-4.96 8-9.75z" />
+                              </svg>
+                            </div>
+                            <span className="text-[11px] font-bold text-slate-300 group-hover:text-white">Facebook</span>
+                          </a>
+
+                          {/* LinkedIn */}
+                          <a
+                            href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(
+                              useProductionUrl 
+                                ? `https://rockingkidsacademy.in/blog/${sharingBlog.slug}` 
+                                : `${window.location.origin}/blog/${sharingBlog.slug}`
+                            )}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="bg-slate-950 border border-slate-800 hover:border-[#0A66C2]/40 p-4 rounded-xl flex flex-col items-center justify-center gap-2 transition-all hover:bg-[#0A66C2]/5 group text-center"
+                          >
+                            <div className="p-2.5 bg-slate-900 rounded-xl group-hover:bg-[#0A66C2]/10 transition-colors">
+                              <svg className="w-5 h-5 text-slate-400 group-hover:text-[#0A66C2] transition-colors" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.32 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.79M6.88 8.56a1.68 1.68 0 0 0 1.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 0 0-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z" />
+                              </svg>
+                            </div>
+                            <span className="text-[11px] font-bold text-slate-300 group-hover:text-white">LinkedIn</span>
+                          </a>
+
+                          {/* Twitter / X */}
+                          <a
+                            href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(
+                              useProductionUrl 
+                                ? `https://rockingkidsacademy.in/blog/${sharingBlog.slug}` 
+                                : `${window.location.origin}/blog/${sharingBlog.slug}`
+                            )}&text=${encodeURIComponent(`${sharingBlog.title} | Rocking Kids Academy`)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="bg-slate-950 border border-slate-800 hover:border-slate-100/20 p-4 rounded-xl flex flex-col items-center justify-center gap-2 transition-all hover:bg-white/5 group text-center"
+                          >
+                            <div className="p-2.5 bg-slate-900 rounded-xl group-hover:bg-white/5 transition-colors">
+                              <svg className="w-5 h-5 text-slate-400 group-hover:text-white transition-colors" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                              </svg>
+                            </div>
+                            <span className="text-[11px] font-bold text-slate-300 group-hover:text-white">Twitter / X</span>
+                          </a>
+
+                          {/* WhatsApp */}
+                          <a
+                            href={`https://api.whatsapp.com/send?text=${encodeURIComponent(
+                              `${sharingBlog.title} | Rocking Kids Academy\n\nRead article:\n${
+                                useProductionUrl 
+                                  ? `https://rockingkidsacademy.in/blog/${sharingBlog.slug}` 
+                                  : `${window.location.origin}/blog/${sharingBlog.slug}`
+                              }`
+                            )}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="bg-slate-950 border border-slate-800 hover:border-[#25D366]/40 p-4 rounded-xl flex flex-col items-center justify-center gap-2 transition-all hover:bg-[#25D366]/5 group text-center"
+                          >
+                            <div className="p-2.5 bg-slate-900 rounded-xl group-hover:bg-[#25D366]/10 transition-colors">
+                              <svg className="w-5 h-5 text-slate-400 group-hover:text-[#25D366] transition-colors" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M12.004 2C6.48 2 2.004 6.48 2.004 12c0 1.76.46 3.42 1.27 4.9L2 22l5.24-1.37c1.42.78 3.03 1.21 4.76 1.21 5.52 0 10-4.48 10-10s-4.48-10-10-10zm.01 17.8c-1.59 0-3.15-.43-4.52-1.24l-.32-.19-3.36.88.9-3.27-.21-.34A7.74 7.74 0 0 1 3.8 12c0-4.29 3.49-7.79 7.79-7.79 4.3 0 7.79 3.49 7.79 7.79 0 4.3-3.49 7.8-7.78 7.8z" />
+                              </svg>
+                            </div>
+                            <span className="text-[11px] font-bold text-slate-300 group-hover:text-white">WhatsApp</span>
+                          </a>
+                        </div>
+                      </div>
+
+                      {/* Instagram Promotion Assistant */}
+                      <div className="bg-gradient-to-tr from-[#9b51e0]/10 to-[#ee2a7b]/10 border border-[#ee2a7b]/30 rounded-2xl overflow-hidden">
+                        <div className="bg-gradient-to-r from-[#8a3ab9] via-[#e95950] to-[#fccc63] px-5 py-4 flex items-center justify-between text-white">
+                          <div className="flex items-center gap-2">
+                            <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.051.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z" />
+                            </svg>
+                            <span className="text-xs font-bold uppercase tracking-wider">Instagram & Social Media Assistant</span>
+                          </div>
+                          <span className="text-[10px] bg-white/20 text-white font-bold px-2.5 py-0.5 rounded-full border border-white/20">Creative Tool</span>
+                        </div>
+
+                        <div className="p-5 space-y-4">
+                          <p className="text-[11px] text-slate-300 leading-relaxed">
+                            Instagram does not support direct link shares from the browser. Follow these three steps to publish a highly engaging promotional post to your profile:
+                          </p>
+
+                          <div className="space-y-3 pt-1 text-slate-300 text-xs">
+                            {/* Step 1 */}
+                            <div className="flex items-start gap-3">
+                              <span className="w-5 h-5 bg-[#ee2a7b]/20 border border-[#ee2a7b]/30 rounded-full flex items-center justify-center font-bold text-[10px] text-[#ee2a7b] shrink-0 mt-0.5">
+                                1
+                              </span>
+                              <div className="flex-1">
+                                <h5 className="text-xs font-bold text-white">Download or Save Cover Visual</h5>
+                                <p className="text-[10px] text-slate-400 mt-0.5 mb-2">Save the high-quality article graphic to post on your Instagram feed.</p>
+                                <button
+                                  type="button"
+                                  onClick={() => window.open(formatImageUrl(sharingBlog.coverImage), '_blank')}
+                                  className="px-3 py-1.5 bg-slate-950 hover:bg-slate-900 border border-slate-800 rounded-lg text-[10px] font-bold text-slate-200 flex items-center gap-1.5 transition-colors"
+                                >
+                                  <ExternalLink className="w-3 h-3 text-[#ee2a7b]" />
+                                  <span>Open Cover Image in New Tab</span>
+                                </button>
+                              </div>
+                            </div>
+
+                            {/* Step 2 */}
+                            <div className="flex items-start gap-3 border-t border-slate-800/60 pt-3">
+                              <span className="w-5 h-5 bg-[#e95950]/20 border border-[#e95950]/30 rounded-full flex items-center justify-center font-bold text-[10px] text-[#e95950] shrink-0 mt-0.5">
+                                2
+                              </span>
+                              <div className="flex-1">
+                                <div className="flex items-center justify-between gap-2">
+                                  <h5 className="text-xs font-bold text-white">Copy Custom Promotion Caption</h5>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const url = useProductionUrl 
+                                        ? `https://rockingkidsacademy.in/blog/${sharingBlog.slug}` 
+                                        : `${window.location.origin}/blog/${sharingBlog.slug}`;
+                                      const caption = `📚 NEW ARTICLE: ${sharingBlog.title}\n\n${sharingBlog.excerpt || "Check out our latest educational insights and parenting guides."}\n\n👉 Read the full article here:\n${url}\n\n#rockingkidsacademy #childdevelopment #education #parenting #abacus #phonics #kidslearning #learningisfun #chennaiparents #growthmindset`;
+                                      navigator.clipboard.writeText(caption);
+                                      setCopiedCaption(true);
+                                      setTimeout(() => setCopiedCaption(false), 2000);
+                                    }}
+                                    className="px-2.5 py-1 bg-[#ee2a7b]/10 hover:bg-[#ee2a7b]/20 border border-[#ee2a7b]/20 rounded text-[10px] font-bold text-pink-400 flex items-center gap-1 transition-colors"
+                                  >
+                                    {copiedCaption ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                                    <span>{copiedCaption ? 'Copied Caption!' : 'Copy Caption'}</span>
+                                  </button>
+                                </div>
+                                <p className="text-[10px] text-slate-400 mt-0.5">A professionally formatted post caption with related learning tags.</p>
+                                
+                                <div className="mt-2.5 bg-slate-950 border border-slate-800/80 rounded-lg p-3 text-[10px] font-mono text-slate-300 leading-relaxed max-h-36 overflow-y-auto select-all whitespace-pre-line custom-scrollbar">
+                                  {`📚 NEW ARTICLE: ${sharingBlog.title}\n\n${sharingBlog.excerpt || "Check out our latest educational insights and parenting guides."}\n\n👉 Read the full article here:\n${
+                                    useProductionUrl 
+                                      ? `https://rockingkidsacademy.in/blog/${sharingBlog.slug}` 
+                                      : `${window.location.origin}/blog/${sharingBlog.slug}`
+                                  }\n\n#rockingkidsacademy #childdevelopment #education #parenting #abacus #phonics #kidslearning #learningisfun #chennaiparents #growthmindset`}
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Step 3 */}
+                            <div className="flex items-start gap-3 border-t border-slate-800/60 pt-3">
+                              <span className="w-5 h-5 bg-[#fccc63]/20 border border-[#fccc63]/30 rounded-full flex items-center justify-center font-bold text-[10px] text-[#fccc63] shrink-0 mt-0.5">
+                                3
+                              </span>
+                              <div className="flex-1">
+                                <h5 className="text-xs font-bold text-white">Create the Instagram Post</h5>
+                                <p className="text-[10px] text-slate-300 leading-normal mt-0.5">
+                                  Create a new post on your account, upload the cover graphic, paste the copied caption, and don't forget to put <code className="text-yellow-400 font-mono">rockingkidsacademy.in/blog/{sharingBlog.slug}</code> in your bio or story link sticker!
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Footer */}
+                    <div className="bg-slate-950 px-6 py-4 border-t border-slate-800 flex items-center justify-between">
+                      <span className="text-[10px] text-slate-500 font-medium">✨ Powered by Rocking Kids Social Promoter</span>
+                      <button
+                        type="button"
+                        onClick={() => setSharingBlog(null)}
+                        className="px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold rounded-xl text-xs transition-colors"
+                      >
+                        Done
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
