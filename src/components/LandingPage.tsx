@@ -190,7 +190,7 @@ export const LandingPage = ({ navigateTo }: { navigateTo: (path: string) => void
           >
             <div className="aspect-[4/3] bg-navy-50 border-4 border-white shadow-2xl relative overflow-hidden rounded-lg group">
                <img 
-                src="https://images.jdmagicbox.com/v2/comp/chennai/z1/044pxx44.xx44.140111110123.q7z1/catalogue/rocking-kids-mandaveli-chennai-handwriting-classes-elkuhnvsl7.jpg" 
+                src="https://s3.ap-south-1.amazonaws.com/medias.prithureader.com/rk-websites/dot-in/website/jay-reading-card-1.1.png" 
                 alt="Learning at Rocking Kids Academy" 
                 className="w-full h-full object-cover grayscale-[0.1] group-hover:grayscale-0 transition-all duration-1000 group-hover:scale-105"
                 fetchPriority="high"
