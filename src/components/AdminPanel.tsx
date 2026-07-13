@@ -609,6 +609,46 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigateTo }) => {
     }
   };
 
+  const handleTogglePublish = async (blog: BlogPost) => {
+    const token = localStorage.getItem('admin_token') || '';
+    const user = localStorage.getItem('admin_username') || 'admin';
+    const nextPublished = !blog.published;
+
+    try {
+      const payload = {
+        ...blog,
+        tags: Array.isArray(blog.tags) ? blog.tags : [],
+        published: nextPublished
+      };
+
+      const res = await fetch('/api/admin/blogs', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-token': token,
+          'x-admin-username': user
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (res.ok) {
+        setBlogStatus({
+          type: 'success',
+          message: `Successfully ${nextPublished ? 'published' : 'reverted to draft'}: "${blog.title}"`
+        });
+        await loadBlogs();
+        await refetchBlogs();
+        setTimeout(() => setBlogStatus({ type: null, message: '' }), 3000);
+      } else {
+        const errData = await res.json();
+        alert(`Failed to update publish status: ${errData.error || 'Server error'}`);
+      }
+    } catch (err: any) {
+      console.error('Error toggling publish:', err);
+      alert(`Network error: ${err.message}`);
+    }
+  };
+
   // --- ENQUIRIES MANAGEMENT ---
   const loadEnquiries = async (tokenOverride?: string, userOverride?: string) => {
     setIsLoadingEnquiries(true);
@@ -1686,6 +1726,19 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigateTo }) => {
                               title="Preview Article"
                             >
                               <Eye className="w-4 h-4" />
+                            </button>
+
+                            <button
+                              onClick={() => handleTogglePublish(blog)}
+                              className={`px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors border ${
+                                blog.published === false 
+                                  ? 'bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border-emerald-500/20' 
+                                  : 'bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border-amber-500/20'
+                              }`}
+                              title={blog.published === false ? "Publish Live" : "Revert to Draft"}
+                            >
+                              <CheckCircle2 className="w-3.5 h-3.5" />
+                              <span>{blog.published === false ? 'Publish' : 'Make Draft'}</span>
                             </button>
 
                             <button

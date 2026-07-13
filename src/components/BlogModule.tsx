@@ -20,7 +20,9 @@ import {
   BookOpen, 
   ChevronRight,
   Sparkles,
-  Star
+  Star,
+  CheckCircle2,
+  AlertCircle
 } from 'lucide-react';
 
 // A super clean and fast custom Markdown parser to avoid peer dependency issues with React 19.
@@ -134,14 +136,19 @@ interface BlogModuleProps {
 }
 
 export const BlogModule = ({ currentSlug, navigateTo }: BlogModuleProps) => {
-  const { blogPosts } = useAcademy();
+  const { blogPosts, refetchBlogs } = useAcademy();
   
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [copied, setCopied] = useState(false);
 
-  // Find the selected post if viewing a single article
-  const currentPost = currentSlug ? blogPosts.find(p => p.slug === currentSlug) : null;
+  const [fetchedPost, setFetchedPost] = useState<BlogPost | null>(null);
+  const [isFetchingPost, setIsFetchingPost] = useState(false);
+
+  // Find the selected post if viewing a single article (or use fetchedPost as fallback)
+  const currentPost = currentSlug 
+    ? (blogPosts.find(p => p.slug === currentSlug) || fetchedPost) 
+    : null;
 
   // Categories extracted from posts
   const categories = ['All', ...Array.from(new Set(blogPosts.map(post => post.category)))];
@@ -180,6 +187,35 @@ export const BlogModule = ({ currentSlug, navigateTo }: BlogModuleProps) => {
     // Scroll to top on page or view transition
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [currentSlug]);
+
+  useEffect(() => {
+    if (currentSlug) {
+      const found = blogPosts.find(p => p.slug === currentSlug);
+      if (found) {
+        setFetchedPost(found);
+      } else {
+        // Fetch from API to support draft previews or direct dynamic loads
+        setIsFetchingPost(true);
+        fetch(`/api/blogs/${currentSlug}`)
+          .then(res => {
+            if (res.ok) return res.json();
+            throw new Error('Not found');
+          })
+          .then(data => {
+            setFetchedPost(data);
+          })
+          .catch(err => {
+            console.error('Failed to fetch blog post by slug:', err);
+            setFetchedPost(null);
+          })
+          .finally(() => {
+            setIsFetchingPost(false);
+          });
+      }
+    } else {
+      setFetchedPost(null);
+    }
+  }, [currentSlug, blogPosts]);
 
   useEffect(() => {
     if (currentSlug && currentPost) {
@@ -294,6 +330,39 @@ export const BlogModule = ({ currentSlug, navigateTo }: BlogModuleProps) => {
     }
   }, [currentSlug, currentPost]);
 
+  if (currentSlug) {
+    if (isFetchingPost) {
+      return (
+        <div className="min-h-screen bg-slate-50/50 flex flex-col items-center justify-center p-4 font-sans">
+          <div className="flex flex-col items-center gap-4">
+            <div className="h-10 w-10 border-4 border-yellow-500 border-t-transparent rounded-full animate-spin"></div>
+            <p className="text-navy-600 font-sans text-sm font-semibold">Loading article preview...</p>
+          </div>
+        </div>
+      );
+    }
+
+    if (!currentPost) {
+      return (
+        <div className="min-h-screen bg-slate-50/50 flex flex-col items-center justify-center p-6 text-center font-sans">
+          <div className="max-w-md bg-white border border-slate-100 p-8 rounded-lg shadow-sm space-y-4">
+            <BookOpen className="mx-auto text-navy-200" size={48} />
+            <h2 className="text-xl font-bold text-navy-900">Article Not Found</h2>
+            <p className="text-sm text-navy-500 leading-relaxed">
+              We couldn't find the blog post you're looking for. It may have been removed, or the URL slug might be incorrect.
+            </p>
+            <button
+              onClick={() => navigateTo('/blog')}
+              className="mt-2 w-full bg-navy-900 hover:bg-yellow-500 hover:text-navy-900 text-white py-3 rounded-sm font-black text-[10px] uppercase tracking-widest transition-all cursor-pointer"
+            >
+              Back to Blog Resource Hub
+            </button>
+          </div>
+        </div>
+      );
+    }
+  }
+
   if (currentPost) {
     // 1. Same series posts
     let seriesPosts: BlogPost[] = [];
@@ -341,6 +410,51 @@ export const BlogModule = ({ currentSlug, navigateTo }: BlogModuleProps) => {
 
     return (
       <div className="bg-slate-50/50 min-h-screen pb-24">
+        {currentPost.published === false && (
+          <div className="bg-amber-50 border-b border-amber-200/60 px-8 py-3.5 text-xs font-sans text-amber-800 flex flex-col sm:flex-row items-center justify-center gap-3">
+            <span className="flex items-center gap-1.5 font-semibold text-center">
+              <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+              📝 DRAFT MODE — This article is not yet visible to the public. You are viewing a live preview.
+            </span>
+            {localStorage.getItem('admin_token') && (
+              <button
+                onClick={async () => {
+                  try {
+                    const token = localStorage.getItem('admin_token') || '';
+                    const user = localStorage.getItem('admin_username') || 'admin';
+                    const payload = {
+                      ...currentPost,
+                      published: true
+                    };
+                    const res = await fetch('/api/admin/blogs', {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                        'x-admin-token': token,
+                        'x-admin-username': user
+                      },
+                      body: JSON.stringify(payload)
+                    });
+                    if (res.ok) {
+                      setFetchedPost(prev => prev ? { ...prev, published: true } : null);
+                      alert('Article published successfully! It is now live to the public.');
+                      refetchBlogs();
+                    } else {
+                      const errData = await res.json();
+                      alert(`Failed to publish: ${errData.error || 'Server error'}`);
+                    }
+                  } catch (err: any) {
+                    alert(`Error publishing article: ${err.message}`);
+                  }
+                }}
+                className="px-3.5 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded text-[10px] font-black uppercase tracking-widest cursor-pointer shadow-sm transition-colors"
+              >
+                Publish Live Now
+              </button>
+            )}
+          </div>
+        )}
+
         {/* Blog Navigation Header */}
         <div className="bg-white border-b border-slate-100 py-6 px-8">
           <div className="max-w-4xl mx-auto flex items-center justify-between">
