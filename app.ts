@@ -584,7 +584,7 @@ export async function getOverrideSeo(reqPath: string, baseSeo: any) {
           "dateModified": isoDate,
           "author": {
             "@type": "Person",
-            "name": blog.author || "Academic Counselor"
+            "name": blog.author === 'Founder' ? "Meenakshi D. Venkatesan" : (blog.author || "Academic Counselor")
           },
           "publisher": {
             "@type": "Organization",

@@ -275,7 +275,7 @@ export const BlogModule = ({ currentSlug, navigateTo }: BlogModuleProps) => {
         "dateModified": isoDate,
         "author": {
           "@type": "Person",
-          "name": currentPost.author || "Academic Counselor"
+          "name": currentPost.author === 'Founder' ? "Meenakshi D. Venkatesan" : (currentPost.author || "Academic Counselor")
         },
         "publisher": {
           "@type": "Organization",
@@ -503,8 +503,26 @@ export const BlogModule = ({ currentSlug, navigateTo }: BlogModuleProps) => {
 
             {/* Author, Date & Read Time */}
             <div className="flex flex-wrap items-center gap-6 text-xs text-navy-400 border-y border-slate-100 py-4 font-sans">
-              <span className="flex items-center gap-1.5">
-                <User size={14} className="text-yellow-600" /> By {currentPost.author}
+              <span className="flex items-center gap-2">
+                {currentPost.author === 'Founder' ? (
+                  <>
+                    <img 
+                      src="https://s3.ap-south-1.amazonaws.com/medias.prithureader.com/rk-websites/dot-in/website/rk-founder.png" 
+                      alt="Meenakshi D. Venkatesan" 
+                      className="w-7 h-7 rounded-full object-cover border border-yellow-200 shadow-sm"
+                      referrerPolicy="no-referrer"
+                    />
+                    <span className="font-semibold text-navy-900">Meenakshi D. Venkatesan</span>
+                    <span className="bg-yellow-100 text-yellow-800 text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border border-yellow-200">Founder</span>
+                  </>
+                ) : (
+                  <>
+                    <div className="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center text-navy-600 border border-slate-200">
+                      <User size={14} />
+                    </div>
+                    <span>By <span className="font-semibold text-navy-900">{currentPost.author || 'Admin'}</span></span>
+                  </>
+                )}
               </span>
               <span className="flex items-center gap-1.5">
                 <Calendar size={14} className="text-yellow-600" /> {currentPost.date}
@@ -837,7 +855,23 @@ export const BlogModule = ({ currentSlug, navigateTo }: BlogModuleProps) => {
                     <div className="p-6 sm:p-8 md:p-10 space-y-4 flex-grow flex flex-col justify-between">
                       <div className="space-y-3">
                         <div className="flex flex-wrap items-center gap-3 text-xs text-navy-400 font-sans">
-                          <span className="flex items-center gap-1.5"><User size={13} className="text-yellow-600" /> {mainPost.author}</span>
+                          <span className="flex items-center gap-1.5">
+                            {mainPost.author === 'Founder' ? (
+                              <span className="flex items-center gap-1.5">
+                                <img 
+                                  src="https://s3.ap-south-1.amazonaws.com/medias.prithureader.com/rk-websites/dot-in/website/rk-founder.png" 
+                                  alt="Meenakshi D. Venkatesan" 
+                                  className="w-5 h-5 rounded-full object-cover border border-yellow-200"
+                                  referrerPolicy="no-referrer"
+                                />
+                                <span className="font-semibold text-navy-800">Meenakshi D. Venkatesan (Founder)</span>
+                              </span>
+                            ) : (
+                              <span className="flex items-center gap-1.5">
+                                <User size={13} className="text-yellow-600" /> {mainPost.author || 'Admin'}
+                              </span>
+                            )}
+                          </span>
                           <span>•</span>
                           <span className="flex items-center gap-1.5"><Calendar size={13} className="text-yellow-600" /> {mainPost.date}</span>
                           <span>•</span>
@@ -991,9 +1025,32 @@ export const BlogModule = ({ currentSlug, navigateTo }: BlogModuleProps) => {
                             {post.excerpt}
                           </p>
                         </div>
-                        <div className="pt-4 border-t border-slate-50 mt-6 flex items-center justify-between text-[10px] font-mono text-navy-300">
-                          <span>{post.date}</span>
-                          <span>{post.readTime}</span>
+                        <div className="pt-4 border-t border-slate-100 mt-6 flex items-center justify-between text-[11px] font-sans text-navy-500">
+                          <div className="flex items-center gap-1.5">
+                            {post.author === 'Founder' ? (
+                              <>
+                                <img 
+                                  src="https://s3.ap-south-1.amazonaws.com/medias.prithureader.com/rk-websites/dot-in/website/rk-founder.png" 
+                                  alt="Meenakshi D. Venkatesan" 
+                                  className="w-5 h-5 rounded-full object-cover border border-yellow-200"
+                                  referrerPolicy="no-referrer"
+                                />
+                                <span className="font-semibold text-navy-800 text-[10px]">Meenakshi D.</span>
+                              </>
+                            ) : (
+                              <>
+                                <div className="w-5 h-5 rounded-full bg-slate-50 flex items-center justify-center text-navy-400 text-[9px] border border-slate-200 font-sans">
+                                  <User size={10} />
+                                </div>
+                                <span className="text-[10px] font-medium text-navy-600">{post.author || 'Admin'}</span>
+                              </>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2 text-[10px] text-navy-400 font-mono">
+                            <span>{post.date}</span>
+                            <span>•</span>
+                            <span>{post.readTime}</span>
+                          </div>
                         </div>
                       </div>
                     </div>

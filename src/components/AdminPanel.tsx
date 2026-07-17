@@ -1456,6 +1456,20 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigateTo }) => {
 
                     <div>
                       <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
+                        Author / Publisher
+                      </label>
+                      <select 
+                        value={blogForm.author}
+                        onChange={(e) => setBlogForm(prev => ({ ...prev, author: e.target.value }))}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-yellow-500 font-medium"
+                      >
+                        <option value="Admin">🛡️ Admin (Rocking Kids Academy)</option>
+                        <option value="Founder">👩‍🏫 Founder (Meenakshi D. Venkatesan)</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
                         Tags (comma-separated)
                       </label>
                       <input 
@@ -1649,7 +1663,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigateTo }) => {
                                 {blogForm.title || "Untitled Article"}
                               </h1>
                               <p className="text-xs text-navy-500 mt-2 font-sans">
-                                By {blogForm.author || "Admin"} • {blogForm.readTime || "5 Min Read"}
+                                By {blogForm.author === 'Founder' ? "Meenakshi D. Venkatesan (Founder)" : (blogForm.author || "Admin")} • {blogForm.readTime || "5 Min Read"}
                               </p>
                             </div>
                             
