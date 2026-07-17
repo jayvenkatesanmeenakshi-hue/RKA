@@ -713,6 +713,13 @@ export const LandingPage = ({ navigateTo }: { navigateTo: (path: string) => void
           <div className="flex items-center gap-8 text-[10px] font-black uppercase tracking-widest text-navy-600">
             <a href="#curriculum" className="hover:text-yellow-500 transition-colors">Curriculum</a>
             <a href="#location" className="hover:text-yellow-500 transition-colors">Location</a>
+            <a 
+              href="/founder" 
+              onClick={(e) => { e.preventDefault(); navigateTo('/founder'); }} 
+              className="hover:text-yellow-500 transition-colors"
+            >
+              Founder
+            </a>
             <a href="#contact" className="hover:text-yellow-500 transition-colors">Contact</a>
           </div>
           

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { Star, CheckCircle2, ExternalLink, ThumbsUp, MessageSquareQuote, ShieldCheck, RefreshCw } from 'lucide-react';
+import { safeStorage } from '../utils/safeStorage';
 
 interface Review {
   id: string;
@@ -98,7 +99,7 @@ export const GoogleReviews = () => {
   const [selectedCategory, setSelectedCategory] = useState('All Reviews');
   const [likedReviews, setLikedReviews] = useState<Record<string, boolean>>(() => {
     try {
-      const saved = localStorage.getItem('rka_helpful_liked_reviews');
+      const saved = safeStorage.getItem('rka_helpful_liked_reviews');
       return saved ? JSON.parse(saved) : {};
     } catch {
       return {};
@@ -143,8 +144,8 @@ export const GoogleReviews = () => {
     setIsLoading(true);
 
     try {
-      const apiKey = localStorage.getItem('google_places_api_key') || '';
-      const placeId = localStorage.getItem('google_place_id') || '';
+      const apiKey = safeStorage.getItem('google_places_api_key') || '';
+      const placeId = safeStorage.getItem('google_place_id') || '';
 
       let url = '/api/google-reviews';
       const params = new URLSearchParams();
@@ -193,7 +194,7 @@ export const GoogleReviews = () => {
     setLikedReviews(prev => {
       const updated = { ...prev, [id]: newLikedState };
       try {
-        localStorage.setItem('rka_helpful_liked_reviews', JSON.stringify(updated));
+        safeStorage.setItem('rka_helpful_liked_reviews', JSON.stringify(updated));
       } catch (e) {
         console.error(e);
       }

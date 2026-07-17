@@ -7,6 +7,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { useAcademy } from '../context/AcademyContext';
 import { BlogPost } from '../types';
+import { safeStorage } from '../utils/safeStorage';
 import { formatImageUrl, getReferrerPolicy } from '../utils/imageUtils';
 import { 
   ArrowLeft, 
@@ -27,7 +28,7 @@ import {
 
 // A super clean and fast custom Markdown parser to avoid peer dependency issues with React 19.
 // This splits text into paragraphs, headings, list items, and strong highlights.
-const SimpleMarkdownRenderer = ({ content }: { content: string }) => {
+export const SimpleMarkdownRenderer = ({ content }: { content: string }) => {
   const lines = content.split('\n');
   const renderedElements: React.ReactNode[] = [];
   let currentList: React.ReactNode[] = [];
@@ -416,41 +417,49 @@ export const BlogModule = ({ currentSlug, navigateTo }: BlogModuleProps) => {
               <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
               📝 DRAFT MODE — This article is not yet visible to the public. You are viewing a live preview.
             </span>
-            {localStorage.getItem('admin_token') && (
-              <button
-                onClick={async () => {
-                  try {
-                    const token = localStorage.getItem('admin_token') || '';
-                    const user = localStorage.getItem('admin_username') || 'admin';
-                    const payload = {
-                      ...currentPost,
-                      published: true
-                    };
-                    const res = await fetch('/api/admin/blogs', {
-                      method: 'POST',
-                      headers: {
-                        'Content-Type': 'application/json',
-                        'x-admin-token': token,
-                        'x-admin-username': user
-                      },
-                      body: JSON.stringify(payload)
-                    });
-                    if (res.ok) {
-                      setFetchedPost(prev => prev ? { ...prev, published: true } : null);
-                      alert('Article published successfully! It is now live to the public.');
-                      refetchBlogs();
-                    } else {
-                      const errData = await res.json();
-                      alert(`Failed to publish: ${errData.error || 'Server error'}`);
+            {safeStorage.getItem('admin_token') && (
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => navigateTo('/admin')}
+                  className="px-3 py-1.5 bg-slate-800 hover:bg-slate-900 text-white rounded text-[10px] font-black uppercase tracking-widest cursor-pointer shadow-sm transition-colors"
+                >
+                  ← Back to Admin
+                </button>
+                <button
+                  onClick={async () => {
+                    try {
+                      const token = safeStorage.getItem('admin_token') || '';
+                      const user = safeStorage.getItem('admin_username') || 'admin';
+                      const payload = {
+                        ...currentPost,
+                        published: true
+                      };
+                      const res = await fetch('/api/admin/blogs', {
+                        method: 'POST',
+                        headers: {
+                          'Content-Type': 'application/json',
+                          'x-admin-token': token,
+                          'x-admin-username': user
+                        },
+                        body: JSON.stringify(payload)
+                      });
+                      if (res.ok) {
+                        setFetchedPost(prev => prev ? { ...prev, published: true } : null);
+                        alert('Article published successfully! It is now live to the public.');
+                        refetchBlogs();
+                      } else {
+                        const errData = await res.json();
+                        alert(`Failed to publish: ${errData.error || 'Server error'}`);
+                      }
+                    } catch (err: any) {
+                      alert(`Error publishing article: ${err.message}`);
                     }
-                  } catch (err: any) {
-                    alert(`Error publishing article: ${err.message}`);
-                  }
-                }}
-                className="px-3.5 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded text-[10px] font-black uppercase tracking-widest cursor-pointer shadow-sm transition-colors"
-              >
-                Publish Live Now
-              </button>
+                  }}
+                  className="px-3.5 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded text-[10px] font-black uppercase tracking-widest cursor-pointer shadow-sm transition-colors"
+                >
+                  Publish Live Now
+                </button>
+              </div>
             )}
           </div>
         )}
@@ -458,12 +467,22 @@ export const BlogModule = ({ currentSlug, navigateTo }: BlogModuleProps) => {
         {/* Blog Navigation Header */}
         <div className="bg-white border-b border-slate-100 py-6 px-8">
           <div className="max-w-4xl mx-auto flex items-center justify-between">
-            <button 
-              onClick={() => navigateTo('/blog')}
-              className="group inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-navy-400 hover:text-navy-900 transition-colors cursor-pointer"
-            >
-              <ArrowLeft size={14} className="group-hover:-translate-x-1 transition-transform" /> Back to Blog
-            </button>
+            <div className="flex items-center gap-4">
+              <button 
+                onClick={() => navigateTo('/blog')}
+                className="group inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-navy-400 hover:text-navy-900 transition-colors cursor-pointer"
+              >
+                <ArrowLeft size={14} className="group-hover:-translate-x-1 transition-transform" /> Back to Blog
+              </button>
+              {safeStorage.getItem('admin_token') && (
+                <button 
+                  onClick={() => navigateTo('/admin')}
+                  className="inline-flex items-center gap-1 bg-slate-900 text-white hover:bg-yellow-500 hover:text-navy-900 px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all cursor-pointer shadow-sm"
+                >
+                  ← Admin Panel
+                </button>
+              )}
+            </div>
             <div className="text-[10px] font-black uppercase tracking-widest text-yellow-600 font-mono">
               Category: {currentPost.category}
             </div>

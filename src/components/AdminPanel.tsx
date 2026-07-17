@@ -38,6 +38,8 @@ import {
 } from 'lucide-react';
 import { useAcademy } from '../context/AcademyContext';
 import { BlogPost } from '../types';
+import { SimpleMarkdownRenderer } from './BlogModule';
+import { safeStorage } from '../utils/safeStorage';
 
 interface SitemapUrl {
   url: string;
@@ -90,8 +92,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigateTo }) => {
   const [activeTab, setActiveTab] = useState<'blogs' | 'enquiries' | 'basic' | 'social' | 'json-ld' | 'llms-txt' | 'robots-txt' | 'sitemap' | 'google-reviews'>('blogs');
   
   // Google Places API & Database Reviews State
-  const [googleApiKey, setGoogleApiKey] = useState(() => localStorage.getItem('google_places_api_key') || '');
-  const [googlePlaceId, setGooglePlaceId] = useState(() => localStorage.getItem('google_place_id') || '');
+  const [googleApiKey, setGoogleApiKey] = useState(() => safeStorage.getItem('google_places_api_key') || '');
+  const [googlePlaceId, setGooglePlaceId] = useState(() => safeStorage.getItem('google_place_id') || '');
   const [googleTestStatus, setGoogleTestStatus] = useState<{ type: 'success' | 'error' | null; message: string }>({ type: null, message: '' });
   const [isTestingGoogle, setIsTestingGoogle] = useState(false);
   
@@ -158,6 +160,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigateTo }) => {
   const [isCreatingBlog, setIsCreatingBlog] = useState<boolean>(false);
   const [blogStatus, setBlogStatus] = useState<{ type: 'success' | 'error' | null; message: string }>({ type: null, message: '' });
   const [isSavingBlog, setIsSavingBlog] = useState<boolean>(false);
+  const [editorMode, setEditorMode] = useState<'write' | 'preview'>('write');
 
   const [blogForm, setBlogForm] = useState({
     title: '',
@@ -190,8 +193,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigateTo }) => {
 
   // Check auth on mount
   useEffect(() => {
-    const savedToken = localStorage.getItem('admin_token');
-    const savedUser = localStorage.getItem('admin_username') || 'admin';
+    const savedToken = safeStorage.getItem('admin_token');
+    const savedUser = safeStorage.getItem('admin_username') || 'admin';
     if (savedToken) {
       testToken(savedUser, savedToken);
     } else {
@@ -230,8 +233,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigateTo }) => {
 
   const handleGenerateJsonLd = async () => {
     setIsGeneratingJsonLd(true);
-    const token = localStorage.getItem('admin_token') || '';
-    const user = localStorage.getItem('admin_username') || 'admin';
+    const token = safeStorage.getItem('admin_token') || '';
+    const user = safeStorage.getItem('admin_username') || 'admin';
     try {
       const res = await fetch('/api/admin/seo/generate-jsonld', {
         method: 'POST',
@@ -257,8 +260,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigateTo }) => {
 
   const handleGenerateLlmsTxt = async () => {
     setIsGeneratingLlmsTxt(true);
-    const token = localStorage.getItem('admin_token') || '';
-    const user = localStorage.getItem('admin_username') || 'admin';
+    const token = safeStorage.getItem('admin_token') || '';
+    const user = safeStorage.getItem('admin_username') || 'admin';
     try {
       const res = await fetch('/api/admin/seo/generate-llmstxt', {
         method: 'POST',
@@ -283,8 +286,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigateTo }) => {
 
   const handleGenerateRobotsTxt = async () => {
     setIsGeneratingRobotsTxt(true);
-    const token = localStorage.getItem('admin_token') || '';
-    const user = localStorage.getItem('admin_username') || 'admin';
+    const token = safeStorage.getItem('admin_token') || '';
+    const user = safeStorage.getItem('admin_username') || 'admin';
     try {
       const res = await fetch('/api/admin/seo/generate-robotstxt', {
         method: 'POST',
@@ -336,8 +339,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigateTo }) => {
       });
       if (response.ok) {
         setIsAuthenticated(true);
-        localStorage.setItem('admin_token', tokenToTest);
-        localStorage.setItem('admin_username', userToTest);
+        safeStorage.setItem('admin_token', tokenToTest);
+        safeStorage.setItem('admin_username', userToTest);
         
         const seoRes = await fetch('/api/seo');
         if (seoRes.ok) {
@@ -348,8 +351,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigateTo }) => {
         loadBlogs();
         loadEnquiries(tokenToTest, userToTest);
       } else {
-        localStorage.removeItem('admin_token');
-        localStorage.removeItem('admin_username');
+        safeStorage.removeItem('admin_token');
+        safeStorage.removeItem('admin_username');
         setIsAuthenticated(false);
       }
     } catch (err) {
@@ -397,8 +400,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigateTo }) => {
 
       if (response.ok && resData.success) {
         setIsAuthenticated(true);
-        localStorage.setItem('admin_token', cleanPass);
-        localStorage.setItem('admin_username', cleanUser);
+        safeStorage.setItem('admin_token', cleanPass);
+        safeStorage.setItem('admin_username', cleanUser);
         
         // Fetch SEO data
         const seoRes = await fetch('/api/seo');
@@ -422,8 +425,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigateTo }) => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('admin_token');
-    localStorage.removeItem('admin_username');
+    safeStorage.removeItem('admin_token');
+    safeStorage.removeItem('admin_username');
     setIsAuthenticated(false);
     setPassword('');
   };
@@ -431,8 +434,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigateTo }) => {
   // --- BLOGS MANAGEMENT ---
   const loadBlogs = async () => {
     setIsLoadingBlogs(true);
-    const token = localStorage.getItem('admin_token') || '';
-    const user = localStorage.getItem('admin_username') || 'admin';
+    const token = safeStorage.getItem('admin_token') || '';
+    const user = safeStorage.getItem('admin_username') || 'admin';
     try {
       const res = await fetch('/api/admin/blogs', {
         headers: {
@@ -525,8 +528,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigateTo }) => {
 
     setIsSavingBlog(true);
     setBlogStatus({ type: null, message: '' });
-    const token = localStorage.getItem('admin_token') || '';
-    const user = localStorage.getItem('admin_username') || 'admin';
+    const token = safeStorage.getItem('admin_token') || '';
+    const user = safeStorage.getItem('admin_username') || 'admin';
 
     try {
       const tagsArray = blogForm.tags.split(',').map(t => t.trim()).filter(Boolean);
@@ -582,8 +585,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigateTo }) => {
   const handleDeleteBlog = async (slug: string) => {
     if (!confirm(`Are you sure you want to delete the blog post "${slug}"?`)) return;
 
-    const token = localStorage.getItem('admin_token') || '';
-    const user = localStorage.getItem('admin_username') || 'admin';
+    const token = safeStorage.getItem('admin_token') || '';
+    const user = safeStorage.getItem('admin_username') || 'admin';
 
     try {
       const res = await fetch(`/api/admin/blogs/${slug}`, {
@@ -610,8 +613,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigateTo }) => {
   };
 
   const handleTogglePublish = async (blog: BlogPost) => {
-    const token = localStorage.getItem('admin_token') || '';
-    const user = localStorage.getItem('admin_username') || 'admin';
+    const token = safeStorage.getItem('admin_token') || '';
+    const user = safeStorage.getItem('admin_username') || 'admin';
     const nextPublished = !blog.published;
 
     try {
@@ -652,8 +655,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigateTo }) => {
   // --- ENQUIRIES MANAGEMENT ---
   const loadEnquiries = async (tokenOverride?: string, userOverride?: string) => {
     setIsLoadingEnquiries(true);
-    const token = tokenOverride || localStorage.getItem('admin_token') || '';
-    const user = userOverride || localStorage.getItem('admin_username') || 'admin';
+    const token = tokenOverride || safeStorage.getItem('admin_token') || '';
+    const user = userOverride || safeStorage.getItem('admin_username') || 'admin';
 
     try {
       const res = await fetch('/api/admin/enquiries', {
@@ -676,8 +679,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigateTo }) => {
   const handleDeleteEnquiry = async (id: number) => {
     if (!confirm('Are you sure you want to delete this enquiry record?')) return;
 
-    const token = localStorage.getItem('admin_token') || '';
-    const user = localStorage.getItem('admin_username') || 'admin';
+    const token = safeStorage.getItem('admin_token') || '';
+    const user = safeStorage.getItem('admin_username') || 'admin';
 
     try {
       const res = await fetch(`/api/admin/enquiries/${id}`, {
@@ -702,8 +705,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigateTo }) => {
   const handleSaveSeo = async () => {
     setIsSaving(true);
     setSaveStatus({ type: null, message: '' });
-    const token = localStorage.getItem('admin_token') || '';
-    const user = localStorage.getItem('admin_username') || 'admin';
+    const token = safeStorage.getItem('admin_token') || '';
+    const user = safeStorage.getItem('admin_username') || 'admin';
 
     let parsedJsonLd = seoData.jsonLd;
     if (jsonLdCode) {
@@ -812,8 +815,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigateTo }) => {
 
   const loadAdminReviews = async () => {
     setIsLoadingReviews(true);
-    const token = localStorage.getItem('admin_token') || '';
-    const user = localStorage.getItem('admin_username') || 'admin';
+    const token = safeStorage.getItem('admin_token') || '';
+    const user = safeStorage.getItem('admin_username') || 'admin';
     try {
       const res = await fetch('/api/admin/reviews', {
         headers: {
@@ -838,13 +841,13 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigateTo }) => {
   const handleSyncGoogleReviews = async () => {
     setIsSyncingReviews(true);
     setGoogleTestStatus({ type: null, message: '' });
-    const token = localStorage.getItem('admin_token') || '';
-    const user = localStorage.getItem('admin_username') || 'admin';
+    const token = safeStorage.getItem('admin_token') || '';
+    const user = safeStorage.getItem('admin_username') || 'admin';
     try {
       const apiKey = googleApiKey.trim();
       const placeId = googlePlaceId.trim();
-      if (apiKey) localStorage.setItem('google_places_api_key', apiKey);
-      if (placeId) localStorage.setItem('google_place_id', placeId);
+      if (apiKey) safeStorage.setItem('google_places_api_key', apiKey);
+      if (placeId) safeStorage.setItem('google_place_id', placeId);
 
       const res = await fetch('/api/admin/reviews/sync', {
         method: 'POST',
@@ -879,8 +882,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigateTo }) => {
   };
 
   const handleToggleReviewVisibility = async (reviewId: string, currentHidden: boolean) => {
-    const token = localStorage.getItem('admin_token') || '';
-    const user = localStorage.getItem('admin_username') || 'admin';
+    const token = safeStorage.getItem('admin_token') || '';
+    const user = safeStorage.getItem('admin_username') || 'admin';
     try {
       const res = await fetch('/api/admin/reviews/toggle-visibility', {
         method: 'POST',
@@ -906,8 +909,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigateTo }) => {
 
   const handleDeleteReview = async (reviewId: string) => {
     if (!window.confirm('Are you sure you want to delete this review from the database?')) return;
-    const token = localStorage.getItem('admin_token') || '';
-    const user = localStorage.getItem('admin_username') || 'admin';
+    const token = safeStorage.getItem('admin_token') || '';
+    const user = safeStorage.getItem('admin_username') || 'admin';
     try {
       const res = await fetch(`/api/admin/reviews/${encodeURIComponent(reviewId)}`, {
         method: 'DELETE',
@@ -932,8 +935,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigateTo }) => {
   const handleAddManualReview = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newReviewForm.authorName || !newReviewForm.text) return;
-    const token = localStorage.getItem('admin_token') || '';
-    const user = localStorage.getItem('admin_username') || 'admin';
+    const token = safeStorage.getItem('admin_token') || '';
+    const user = safeStorage.getItem('admin_username') || 'admin';
     try {
       const res = await fetch('/api/admin/reviews/add', {
         method: 'POST',
@@ -1598,17 +1601,68 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigateTo }) => {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
-                      Full Article Content (Markdown format)
-                    </label>
-                    <textarea 
-                      rows={14}
-                      value={blogForm.content}
-                      onChange={(e) => setBlogForm(prev => ({ ...prev, content: e.target.value }))}
-                      placeholder="Write your article content using Markdown (# Headings, **bold**, *lists*, etc.)"
-                      className="w-full bg-slate-950 border border-slate-800 rounded-xl p-4 text-white text-sm font-mono focus:outline-none focus:border-yellow-500 leading-relaxed"
-                      required
-                    />
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400">
+                        Full Article Content (Markdown format)
+                      </label>
+                      <div className="flex bg-slate-950 p-1 border border-slate-800 rounded-lg">
+                        <button
+                          type="button"
+                          onClick={() => setEditorMode('write')}
+                          className={`px-3 py-1 rounded-md text-[10px] uppercase tracking-wider font-bold transition-all ${
+                            editorMode === 'write' ? 'bg-yellow-500 text-slate-950 shadow-md font-black' : 'text-slate-400 hover:text-white'
+                          }`}
+                        >
+                          Write
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setEditorMode('preview')}
+                          className={`px-3 py-1 rounded-md text-[10px] uppercase tracking-wider font-bold transition-all ${
+                            editorMode === 'preview' ? 'bg-yellow-500 text-slate-950 shadow-md font-black' : 'text-slate-400 hover:text-white'
+                          }`}
+                        >
+                          Live Preview
+                        </button>
+                      </div>
+                    </div>
+
+                    {editorMode === 'write' ? (
+                      <textarea 
+                        rows={14}
+                        value={blogForm.content}
+                        onChange={(e) => setBlogForm(prev => ({ ...prev, content: e.target.value }))}
+                        placeholder="Write your article content using Markdown (# Headings, **bold**, *lists*, etc.)"
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl p-4 text-white text-sm font-mono focus:outline-none focus:border-yellow-500 leading-relaxed"
+                        required
+                      />
+                    ) : (
+                      <div className="w-full min-h-[350px] max-h-[500px] overflow-y-auto bg-white border border-slate-200 rounded-xl p-6 md:p-8 text-slate-800 font-sans shadow-inner">
+                        {blogForm.content ? (
+                          <div className="max-w-2xl mx-auto text-left">
+                            {/* Visual article header preview to show how it'll look */}
+                            <div className="mb-6 pb-6 border-b border-slate-100">
+                              <span className="px-2.5 py-1 bg-yellow-500/10 text-yellow-700 rounded-md text-xs font-bold font-sans">
+                                {blogForm.category}
+                              </span>
+                              <h1 className="text-2xl md:text-3xl font-black text-navy-900 mt-3 font-sans tracking-tight">
+                                {blogForm.title || "Untitled Article"}
+                              </h1>
+                              <p className="text-xs text-navy-500 mt-2 font-sans">
+                                By {blogForm.author || "Admin"} • {blogForm.readTime || "5 Min Read"}
+                              </p>
+                            </div>
+                            
+                            <SimpleMarkdownRenderer content={blogForm.content} />
+                          </div>
+                        ) : (
+                          <div className="text-center py-12 text-slate-400 space-y-2">
+                            <FileText className="w-8 h-8 mx-auto opacity-50" />
+                            <p className="text-xs italic font-sans">No content to preview yet. Start typing in the 'Write' tab.</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-800">
@@ -1633,7 +1687,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigateTo }) => {
                       ) : (
                         <>
                           <Save className="w-4 h-4" />
-                          <span>Publish to Neon Database</span>
+                          <span>{blogForm.published ? 'Save & Publish Live' : 'Save Draft to Postgres'}</span>
                         </>
                       )}
                     </button>
@@ -1721,7 +1775,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigateTo }) => {
 
                           <div className="flex items-center gap-2 self-end md:self-center flex-shrink-0 font-sans">
                             <button
-                              onClick={() => window.open(`/blog/${blog.slug}`, '_blank')}
+                              onClick={() => navigateTo(`/blog/${blog.slug}`)}
                               className="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl transition-colors"
                               title="Preview Article"
                             >

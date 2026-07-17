@@ -108,6 +108,13 @@ export const Navigation = ({ path = '/', navigateTo = () => {} }: NavigationProp
             Reviews
           </a>
           <a 
+            href="/founder" 
+            onClick={(e) => { e.preventDefault(); navigateTo('/founder'); }} 
+            className={`transition-all hover:translate-y-[-1px] ${path === '/founder' ? 'text-yellow-600 font-bold' : 'hover:text-yellow-600'}`}
+          >
+            Founder
+          </a>
+          <a 
             href="/blog" 
             onClick={(e) => { e.preventDefault(); navigateTo('/blog'); }} 
             className={`transition-all hover:translate-y-[-1px] ${path.startsWith('/blog') ? 'text-yellow-600 font-bold' : 'hover:text-yellow-600'}`}
@@ -182,6 +189,13 @@ export const Navigation = ({ path = '/', navigateTo = () => {} }: NavigationProp
               className="py-2 px-3 hover:bg-slate-50 rounded-sm hover:text-yellow-600 transition-all"
             >
               Reviews
+            </a>
+            <a 
+              href="/founder" 
+              onClick={(e) => { e.preventDefault(); closeMenu(); navigateTo('/founder'); }}
+              className={`py-2 px-3 rounded-sm hover:bg-slate-50 transition-all ${path === '/founder' ? 'text-yellow-600 font-bold bg-slate-50' : 'hover:text-yellow-600'}`}
+            >
+              Founder
             </a>
             <a 
               href="/blog" 

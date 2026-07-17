@@ -15,6 +15,7 @@ import { LandingPage } from './components/LandingPage';
 import { AdminPanel } from './components/AdminPanel';
 import { ProgramDetailsPage } from './components/ProgramDetailsPage';
 import { BlogModule } from './components/BlogModule';
+import { FounderPage } from './components/FounderPage';
 import { ProgramType } from './types';
 
 function AppContent() {
@@ -64,6 +65,8 @@ function AppContent() {
   if (path.startsWith('/program/')) {
     const programId = path.replace('/program/', '') as ProgramType;
     mainContent = <ProgramDetailsPage programId={programId} navigateTo={navigateTo} />;
+  } else if (path === '/founder') {
+    mainContent = <FounderPage navigateTo={navigateTo} />;
   } else if (path === '/blog') {
     mainContent = <BlogModule currentSlug={null} navigateTo={navigateTo} />;
   } else if (path.startsWith('/blog/')) {
