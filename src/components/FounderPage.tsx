@@ -148,7 +148,7 @@ export const FounderPage = ({ navigateTo }: FounderPageProps) => {
               <div className="relative bg-white p-2.5 rounded-xl shadow-xl border border-slate-100 overflow-hidden max-w-sm sm:max-w-md">
                 <img 
                   src="https://s3.ap-south-1.amazonaws.com/medias.prithureader.com/rk-websites/dot-in/website/rk-founder.png" 
-                  alt="Meenakshi D. Venkatesan" 
+                  alt="Meenakshi D" 
                   className="w-full h-auto object-cover rounded-lg aspect-[4/5]"
                   referrerPolicy="no-referrer"
                   loading="eager"
@@ -158,7 +158,7 @@ export const FounderPage = ({ navigateTo }: FounderPageProps) => {
                 {/* Embedded Floating Tag */}
                 <div className="absolute bottom-6 left-6 right-6 bg-navy-900/95 backdrop-blur-md text-white p-4 rounded-lg shadow-lg border border-white/10">
                   <p className="text-[10px] font-black uppercase tracking-widest text-yellow-400 mb-1">Founder & Director</p>
-                  <h3 className="text-lg font-bold font-serif text-white">Meenakshi D. Venkatesan</h3>
+                  <h3 className="text-lg font-bold font-serif text-white">Meenakshi D</h3>
                 </div>
               </div>
             </div>
@@ -176,7 +176,7 @@ export const FounderPage = ({ navigateTo }: FounderPageProps) => {
                 <Sparkles size={12} /> Meet Our Founder
               </span>
               <h1 className="text-4xl md:text-5xl font-extrabold text-navy-900 font-serif leading-tight">
-                Meenakshi D. Venkatesan
+                Meenakshi D
               </h1>
               <p className="text-xs md:text-sm font-black uppercase tracking-widest text-yellow-600 leading-relaxed font-sans">
                 Early Literacy Specialist • Child Development Educator • Parent Coach
