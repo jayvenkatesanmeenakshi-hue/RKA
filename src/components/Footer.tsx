@@ -199,7 +199,7 @@ export const Footer: React.FC<FooterProps> = ({ navigateTo }) => {
             </p>
             <div className="space-y-1">
               <p className="text-[10px] font-black text-navy-400 uppercase tracking-widest">Academy Location:</p>
-              <p className="text-navy-600 text-xs font-medium">Ponmar Main Road (Near Mambakkam & Medavakkam), Chennai, India - 600127</p>
+              <p className="text-navy-600 text-xs font-medium">Mambakkam Main Road (Near Mambakkam & Medavakkam), Chennai, India - 600127</p>
             </div>
           </div>
 

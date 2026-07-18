@@ -79,7 +79,7 @@ export function getDefaultJsonLd(seo: any) {
         "@id": `${domain}/#organization`,
         "name": "Rocking Kids Academy",
         "alternateName": "Rocking Kids Academy Phonics and Abacus Center",
-        "description": seo?.description || "Premier child skill development and learning center in Ponmar, Chennai, specializing in Abacus, Phonics, English, and Handwriting mastery.",
+        "description": seo?.description || "Premier child skill development and learning center in Mambakkam, Chennai, specializing in Abacus, Phonics, English, and Handwriting mastery.",
         "url": domain,
         "logo": `${domain}/assets/images/logo-icon.png`,
         "image": `${domain}/assets/images/logo-icon.png`,
@@ -87,8 +87,8 @@ export function getDefaultJsonLd(seo: any) {
         "email": "meenakshidevarajan@gmail.com",
         "address": {
           "@type": "PostalAddress",
-          "streetAddress": "Ponmar Main Road",
-          "addressLocality": "Ponmar, Chennai",
+          "streetAddress": "Mambakkam Main Road",
+          "addressLocality": "Mambakkam, Chennai",
           "addressRegion": "Tamil Nadu",
           "postalCode": "600130",
           "addressCountry": "IN"
@@ -190,7 +190,7 @@ export function getDefaultJsonLd(seo: any) {
             "name": "Where is Rocking Kids Academy located?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Rocking Kids Academy is located on Ponmar Main Road, Ponmar, Chennai, Tamil Nadu (serving Ponmar, Mambakkam, and Medavakkam regions)."
+              "text": "Rocking Kids Academy is located on Mambakkam Main Road, Mambakkam, Chennai, Tamil Nadu (serving Mambakkam, Ponmar, and Medavakkam regions)."
             }
           }
         ]
@@ -204,7 +204,7 @@ export function getDefaultLlmsTxt(seo: any) {
   const domain = (seo?.canonical || "https://rockingkidsacademy.in").replace(/\/$/, "");
   return `# Rocking Kids Academy
 
-Rocking Kids Academy is a premier child skill development and learning center based in Ponmar, Chennai, India. We specialize in expert-led, scientifically structured courses designed for children aged 4 to 14. Our programs build cognitive abilities, literacy, communication skills, and motor coordination.
+Rocking Kids Academy is a premier child skill development and learning center based in Mambakkam, Chennai, India. We specialize in expert-led, scientifically structured courses designed for children aged 4 to 14. Our programs build cognitive abilities, literacy, communication skills, and motor coordination.
 
 ## Core Programs
 
@@ -229,7 +229,7 @@ Rocking Kids Academy is a premier child skill development and learning center ba
 
 ## Contact & Location
 
-- **Address**: Ponmar Main Road, Ponmar, Chennai (near Mandaveli / Ponmar region).
+- **Address**: Mambakkam Main Road, Mambakkam, Chennai (near Mandaveli / Mambakkam region).
 - **Inquiries**: For admissions or trial classes, parents can use the interactive contact form on the home page or email meenakshidevarajan@gmail.com / cc venky1302@gmail.com.
 `;
 }
@@ -659,7 +659,7 @@ export async function getOverrideSeo(reqPath: string, baseSeo: any) {
     
     if (prog === 'Abacus') {
       title = "Abacus & Brainobrain Affiliation Class | Rocking Kids Academy";
-      description = "Master lightning-fast mental arithmetic computations and boost brain development with our certified Brainobrain abacus program at Ponmar, Chennai. Book a trial.";
+      description = "Master lightning-fast mental arithmetic computations and boost brain development with our certified Brainobrain abacus program at Mambakkam, Chennai. Book a trial.";
       coverImage = "https://images.unsplash.com/photo-1543269865-cbf427effbad?auto=format&fit=crop&q=80&w=1200";
     } else if (prog === 'Phonics') {
       title = "Structured Phonics Mastery Course | Rocking Kids Academy";
@@ -667,11 +667,11 @@ export async function getOverrideSeo(reqPath: string, baseSeo: any) {
       coverImage = "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&q=80&w=1200";
     } else if (prog === 'English') {
       title = "English Speaking & Communication Course | Rocking Kids Academy";
-      description = "Elevate grammar, descriptive vocabulary, creative writing, and public speaking confidence for children ages 6 to 14. Located in Ponmar, Chennai.";
+      description = "Elevate grammar, descriptive vocabulary, creative writing, and public speaking confidence for children ages 6 to 14. Located in Mambakkam, Chennai.";
       coverImage = "https://images.unsplash.com/photo-1577896851231-70ef18881754?auto=format&fit=crop&q=80&w=1200";
     } else if (prog === 'Handwriting') {
       title = "Handwriting & Cursive Improvement Course | Rocking Kids Academy";
-      description = "Scientific handwriting improvement class correcting physical pencil grip, posture, letter sizing, and writing speed. Chennai Ponmar Main Road center.";
+      description = "Scientific handwriting improvement class correcting physical pencil grip, posture, letter sizing, and writing speed. Chennai Mambakkam Main Road center.";
       coverImage = "https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&q=80&w=1200";
     } else {
       return {

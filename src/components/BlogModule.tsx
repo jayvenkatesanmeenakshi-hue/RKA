@@ -654,7 +654,7 @@ export const BlogModule = ({ currentSlug, navigateTo }: BlogModuleProps) => {
               <p className="text-yellow-400 text-[10px] font-black uppercase tracking-widest">Enrollment Active</p>
               <h3 className="text-2xl font-bold tracking-tight">Unlock Your Child’s True Cognitive Capabilities</h3>
               <p className="text-xs text-navy-200 font-sans leading-relaxed">
-                Experience our custom programs in Abacus, Phonics, English, or Handwriting. Reserve a free trial session at our state-of-the-art Ponmar Main Road center.
+                Experience our custom programs in Abacus, Phonics, English, or Handwriting. Reserve a free trial session at our state-of-the-art Mambakkam Main Road center.
               </p>
             </div>
             <button 

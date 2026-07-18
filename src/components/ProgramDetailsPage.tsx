@@ -325,7 +325,7 @@ export const ProgramDetailsPage = ({ programId, navigateTo }: ProgramDetailsPage
               <p className="text-[10px] font-black text-yellow-600 uppercase tracking-widest">Enrollment Active</p>
               <h3 className="text-2xl font-bold text-navy-900">Enquire for {details.id}</h3>
               <p className="text-xs text-navy-400 font-sans">
-                Submit this enquiry to lock in a trial session at our Ponmar Main Road center.
+                Submit this enquiry to lock in a trial session at our Mambakkam Main Road center.
               </p>
             </div>
 

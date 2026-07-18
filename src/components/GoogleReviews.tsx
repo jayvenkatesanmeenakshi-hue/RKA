@@ -21,7 +21,7 @@ const fallbackReviewsData: Review[] = [
   {
     id: '1',
     authorName: 'S. Lakshmi',
-    authorLocation: 'Ponmar Rd, Chennai',
+    authorLocation: 'Mambakkam Rd, Chennai',
     rating: 5,
     date: '2 weeks ago',
     category: 'Abacus Math',
@@ -33,11 +33,11 @@ const fallbackReviewsData: Review[] = [
   {
     id: '2',
     authorName: 'Karthik Swaminathan',
-    authorLocation: 'Ponmar, Chennai',
+    authorLocation: 'Mambakkam, Chennai',
     rating: 5,
     date: '3 weeks ago',
     category: 'Abacus Math',
-    text: 'Rocking Kids Academy (Phonics and Abacus) in Mambakkam/Ponmar has been a fantastic decision for my 7-year-old. Concentration and mental arithmetic speed improved drastically!',
+    text: 'Rocking Kids Academy (Phonics and Abacus) in Mambakkam has been a fantastic decision for my 7-year-old. Concentration and mental arithmetic speed improved drastically!',
     avatarColor: 'bg-purple-600',
     verified: true,
     likes: 12
@@ -57,7 +57,7 @@ const fallbackReviewsData: Review[] = [
   {
     id: '4',
     authorName: 'Anitha Venkatesh',
-    authorLocation: 'Medavakkam / Ponmar',
+    authorLocation: 'Medavakkam / Mambakkam',
     rating: 5,
     date: '1 month ago',
     category: 'Handwriting',
@@ -69,7 +69,7 @@ const fallbackReviewsData: Review[] = [
   {
     id: '5',
     authorName: 'Rajesh Kumar M.',
-    authorLocation: 'Ponmar Main Road',
+    authorLocation: 'Mambakkam Main Road',
     rating: 5,
     date: '2 months ago',
     category: 'English & Grammar',
@@ -248,7 +248,7 @@ export const GoogleReviews = () => {
             </h2>
 
             <p className="text-navy-500 font-sans text-sm leading-relaxed">
-              Real feedback from parents at Rocking Kids Academy on Ponmar Main Road. Live synchronized with our official Google Business page.
+              Real feedback from parents at Rocking Kids Academy on Mambakkam Main Road. Live synchronized with our official Google Business page.
             </p>
           </div>
 

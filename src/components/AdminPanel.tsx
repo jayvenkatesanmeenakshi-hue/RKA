@@ -108,7 +108,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigateTo }) => {
   const [showAddReviewModal, setShowAddReviewModal] = useState<boolean>(false);
   const [newReviewForm, setNewReviewForm] = useState({
     authorName: '',
-    authorLocation: 'Ponmar, Chennai',
+    authorLocation: 'Mambakkam, Chennai',
     rating: 5,
     text: '',
     category: 'Abacus & Phonics'
@@ -1008,7 +1008,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigateTo }) => {
       if (data.success && data.reviews) {
         setAllAdminReviews(data.reviews);
         setShowAddReviewModal(false);
-        setNewReviewForm({ authorName: '', authorLocation: 'Ponmar, Chennai', rating: 5, text: '', category: 'Abacus & Phonics' });
+        setNewReviewForm({ authorName: '', authorLocation: 'Mambakkam, Chennai', rating: 5, text: '', category: 'Abacus & Phonics' });
         setGoogleTestStatus({
           type: 'success',
           message: 'New genuine review added to database!'
@@ -2984,7 +2984,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigateTo }) => {
                             type="text"
                             value={newReviewForm.authorLocation}
                             onChange={(e) => setNewReviewForm({ ...newReviewForm, authorLocation: e.target.value })}
-                            placeholder="e.g. Ponmar, Chennai"
+                            placeholder="e.g. Mambakkam, Chennai"
                             className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-white text-xs focus:outline-none focus:border-yellow-500"
                           />
                         </div>

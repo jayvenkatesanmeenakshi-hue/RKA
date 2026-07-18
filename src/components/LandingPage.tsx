@@ -286,7 +286,7 @@ export const LandingPage = ({ navigateTo }: { navigateTo: (path: string) => void
             </motion.div>
 
             <motion.p variants={textRevealVariants} className="text-[10px] text-navy-400 font-sans italic">
-              * Also available: offline physical classroom sessions at our premium Ponmar, Chennai hub!
+              * Also available: offline physical classroom sessions at our premium Mambakkam, Chennai hub!
             </motion.p>
           </motion.div>
 
@@ -311,11 +311,6 @@ export const LandingPage = ({ navigateTo }: { navigateTo: (path: string) => void
                 fetchPriority="high"
               />
               <div className="absolute inset-0 bg-navy-900/5"></div>
-              
-              {/* Dynamic Overlay Badges */}
-              <div className="absolute top-4 left-4 bg-navy-900/95 text-white px-3 py-1.5 rounded-md text-[9px] font-black uppercase tracking-wider border border-white/10 shadow-lg backdrop-blur-sm">
-                🔴 LIVE CLASS DEMO ACTIVE
-              </div>
 
               <div className="absolute -bottom-1 -right-1 bg-yellow-400 p-8 shadow-xl">
                  <div className="text-navy-900 text-center">
@@ -378,13 +373,13 @@ export const LandingPage = ({ navigateTo }: { navigateTo: (path: string) => void
             {/* Edge Card 2 */}
             <motion.div variants={cardVariants} className="bg-white p-8 rounded-lg border border-slate-200/60 shadow-md hover:shadow-xl hover:border-yellow-400 transition-all duration-300 group">
               <div className="w-12 h-12 rounded bg-yellow-100 flex items-center justify-center mb-6 group-hover:bg-yellow-400 transition-colors">
-                <Sparkles className="text-navy-950" size={24} />
+                <PenTool className="text-navy-950" size={24} />
               </div>
               <h3 className="text-lg font-black text-navy-900 uppercase tracking-wide font-sans mb-3">
-                Gamified Synthetic Phonics
+                Interactive Student Portal
               </h3>
               <p className="text-navy-500 text-sm leading-relaxed font-sans font-medium">
-                We make phonics learning active with digital interactive soundboards, animated stories, songs, and flashcard-based reading quizzes.
+                Facilitators assign exercises and worksheets through our portal, and students can access them directly through their student login.
               </p>
             </motion.div>
 
@@ -394,27 +389,14 @@ export const LandingPage = ({ navigateTo }: { navigateTo: (path: string) => void
                 <Laptop className="text-navy-950" size={24} />
               </div>
               <h3 className="text-lg font-black text-navy-900 uppercase tracking-wide font-sans mb-3">
-                Expert Certified Mentors
+                Expert Trained Facilitators
               </h3>
               <p className="text-navy-500 text-sm leading-relaxed font-sans font-medium">
-                Our classes are conducted exclusively by certified, friendly child-development mentors skilled in maintaining high energy and attention spans.
+                Our classes are conducted exclusively by expert trained facilitators skilled in maintaining high energy and attention spans.
               </p>
             </motion.div>
 
             {/* Edge Card 4 */}
-            <motion.div variants={cardVariants} className="bg-white p-8 rounded-lg border border-slate-200/60 shadow-md hover:shadow-xl hover:border-yellow-400 transition-all duration-300 group">
-              <div className="w-12 h-12 rounded bg-yellow-100 flex items-center justify-center mb-6 group-hover:bg-yellow-400 transition-colors">
-                <BookOpen className="text-navy-950" size={24} />
-              </div>
-              <h3 className="text-lg font-black text-navy-900 uppercase tracking-wide font-sans mb-3">
-                Printed Physical Study Kits
-              </h3>
-              <p className="text-navy-500 text-sm leading-relaxed font-sans font-medium">
-                We combine digital delivery with printed worksheets and reading books shipped directly to your home for healthy, off-screen practice.
-              </p>
-            </motion.div>
-
-            {/* Edge Card 5 */}
             <motion.div variants={cardVariants} className="bg-white p-8 rounded-lg border border-slate-200/60 shadow-md hover:shadow-xl hover:border-yellow-400 transition-all duration-300 group">
               <div className="w-12 h-12 rounded bg-yellow-100 flex items-center justify-center mb-6 group-hover:bg-yellow-400 transition-colors">
                 <Clock className="text-navy-950" size={24} />
@@ -427,7 +409,7 @@ export const LandingPage = ({ navigateTo }: { navigateTo: (path: string) => void
               </p>
             </motion.div>
 
-            {/* Edge Card 6 */}
+            {/* Edge Card 5 */}
             <motion.div variants={cardVariants} className="bg-white p-8 rounded-lg border border-slate-200/60 shadow-md hover:shadow-xl hover:border-yellow-400 transition-all duration-300 group">
               <div className="w-12 h-12 rounded bg-yellow-100 flex items-center justify-center mb-6 group-hover:bg-yellow-400 transition-colors">
                 <Globe className="text-navy-950" size={24} />
@@ -436,7 +418,7 @@ export const LandingPage = ({ navigateTo }: { navigateTo: (path: string) => void
                 Proven Milestone Success
               </h3>
               <p className="text-navy-500 text-sm leading-relaxed font-sans font-medium">
-                Over 5,000+ graduates have transitioned into highly fluent readers, confident public speakers, and mental math experts.
+                Over 1,000+ kids have successfully transitioned into highly fluent readers, confident public speakers, and mental math experts. We train kids aged 4 to 14 (and sometimes at 3 years if the child can sit for 30 minutes in an online class).
               </p>
             </motion.div>
           </motion.div>
@@ -624,7 +606,7 @@ export const LandingPage = ({ navigateTo }: { navigateTo: (path: string) => void
                        <div>
                           <p className="font-bold text-xs uppercase tracking-tight text-navy-900">Location Details</p>
                           <p className="text-[11px] text-navy-400 font-sans mt-1">
-                             Ponmar Main Road, Near SBIOA<br/>
+                             Mambakkam Main Road, Near SBIOA<br/>
                              Chennai 600127
                           </p>
                        </div>
@@ -659,7 +641,7 @@ export const LandingPage = ({ navigateTo }: { navigateTo: (path: string) => void
               <motion.p variants={textRevealVariants} className="text-yellow-600 text-[10px] font-black uppercase tracking-[0.4em] font-sans">Campus Presence</motion.p>
               <motion.h2 variants={textRevealVariants} className="text-4xl font-bold text-navy-900 tracking-tight">Visit our Center</motion.h2>
               <motion.p variants={textRevealVariants} className="text-navy-500 font-sans leading-relaxed text-sm">
-                Strategically located on Ponmar Main Road, our activity center is easily accessible for residents and surrounding educational hubs.
+                Strategically located on Mambakkam Main Road, our activity center is easily accessible for residents and surrounding educational hubs.
               </motion.p>
             </div>
             
@@ -669,7 +651,7 @@ export const LandingPage = ({ navigateTo }: { navigateTo: (path: string) => void
                 <div className="space-y-1">
                   <p className="text-xs font-black uppercase tracking-widest text-navy-900">Main Campus</p>
                   <p className="text-[11px] text-navy-500 leading-normal font-sans">
-                    Trivesh Complex, Ponmar Main Road,<br/>
+                    Trivesh Complex, Mambakkam Main Road,<br/>
                     Near SBIOA School, Chennai 600127
                   </p>
                 </div>
@@ -954,7 +936,7 @@ export const LandingPage = ({ navigateTo }: { navigateTo: (path: string) => void
                         className="w-full bg-slate-50 border border-slate-200 focus:border-yellow-500 focus:bg-white px-4 py-3 text-sm rounded outline-none transition-all font-sans text-navy-900"
                       >
                         <option value="Live Online Class">Live Online Class (Learn from Anywhere)</option>
-                        <option value="Offline Classroom">Offline Classroom (Ponmar, Chennai Centre)</option>
+                        <option value="Offline Classroom">Offline Classroom (Mambakkam, Chennai Centre)</option>
                       </select>
                     </div>
                   </div>

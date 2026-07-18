@@ -1,6 +1,6 @@
 # Rocking Kids Academy
 
-Rocking Kids Academy is a premier child skill development and learning center based in Ponmar, Chennai, India. We specialize in expert-led, scientifically structured courses designed for children aged 4 to 14. Our programs build cognitive abilities, literacy, communication skills, and motor coordination.
+Rocking Kids Academy is a premier child skill development and learning center based in Mambakkam, Chennai, India. We specialize in expert-led, scientifically structured courses designed for children aged 4 to 14. Our programs build cognitive abilities, literacy, communication skills, and motor coordination.
 
 ## Core Programs
 
@@ -25,5 +25,5 @@ Rocking Kids Academy is a premier child skill development and learning center ba
 
 ## Contact & Location
 
-- **Address**: Ponmar Main Road, Ponmar, Chennai (near Mandaveli / Ponmar region).
+- **Address**: Mambakkam Main Road, Mambakkam, Chennai (near Mandaveli / Mambakkam region).
 - **Inquiries**: For admissions or trial classes, parents can use the interactive contact form on the home page or email meenakshidevarajan@gmail.com / cc venky1302@gmail.com.
