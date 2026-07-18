@@ -6,7 +6,28 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { useAcademy } from '../context/AcademyContext';
-import { MapPin, Clock, Phone, Mail, Award, Zap, MessageCircle, PenTool, Instagram, Facebook, Send, Loader2 } from 'lucide-react';
+import { 
+  MapPin, 
+  Clock, 
+  Phone, 
+  Mail, 
+  Award, 
+  Zap, 
+  MessageCircle, 
+  PenTool, 
+  Instagram, 
+  Facebook, 
+  Send, 
+  Loader2,
+  Laptop,
+  Globe,
+  Users,
+  CheckCircle2,
+  Sparkles,
+  BookOpen,
+  ShieldCheck,
+  Check
+} from 'lucide-react';
 import { AcademyMap } from './AcademyMap';
 import { GoogleReviews } from './GoogleReviews';
 import logoIcon from '../assets/images/logo-icon.png';
@@ -60,6 +81,8 @@ export const LandingPage = ({ navigateTo }: { navigateTo: (path: string) => void
     email: '',
     message: ''
   });
+  const [selectedCourse, setSelectedCourse] = useState('Phonics Mastery');
+  const [selectedMode, setSelectedMode] = useState('Live Online Class');
   const [formStatus, setFormStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
   const [formError, setFormError] = useState('');
   const [formWarning, setFormWarning] = useState('');
@@ -78,13 +101,20 @@ export const LandingPage = ({ navigateTo }: { navigateTo: (path: string) => void
     setFormError('');
     setFormWarning('');
 
+    const formattedMessage = `[Selected Course: ${selectedCourse}] [Preferred Learning Mode: ${selectedMode}]\n\nParent Message:\n${formData.message}`;
+
     try {
       const response = await fetch('/api/enquiry', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          parentName: formData.parentName,
+          mobileNumber: formData.mobileNumber,
+          email: formData.email,
+          message: formattedMessage
+        }),
       });
 
       const data = await response.json();
@@ -131,11 +161,66 @@ export const LandingPage = ({ navigateTo }: { navigateTo: (path: string) => void
     }
   };
 
+  const enrichProgramInfo = (id: string) => {
+    switch (id) {
+      case 'Phonics':
+        return {
+          badge: '⭐ Flagship Program • Live Online',
+          tagline: 'Master English Reading in 4-6 Months',
+          bullets: [
+            'Learn 42 synthetic phonemes & blending secrets',
+            'Independent storybook reading confidence',
+            'Correct speech pronunciation & sound articulation',
+            'Max 6 kids per batch for spoken attention'
+          ]
+        };
+      case 'Abacus':
+        return {
+          badge: '⭐ Brain Development • Live Online',
+          tagline: 'Lightning Fast Mental Math Speed',
+          bullets: [
+            'Boost visual memory & auditory concentration',
+            'Calculate speed math faster than a calculator',
+            'Unlock left & right brain hemispheres together',
+            'Certified Brainobrain levels & criteria'
+          ]
+        };
+      case 'English':
+        return {
+          badge: '⭐ Confidence Builder • Live Online',
+          tagline: 'Fluent Spoken English & Debate Labs',
+          bullets: [
+            'Express thoughts clearly and grammatically',
+            'Overcome stage fear & build vocal posture',
+            'Learn creative writing, essays & comprehension',
+            'Dynamic story building & active listening'
+          ]
+        };
+      case 'Handwriting':
+        return {
+          badge: '⭐ Motor Excellence • Live Online',
+          tagline: 'Scientific Cursive Writing Perfection',
+          bullets: [
+            'Achieve perfect posture & pencil-grip habits',
+            'Master smooth connectors & proportional sizes',
+            'Improve neatness, layout structure & typing speed',
+            'Direct live camera feedback on wrist flexibility'
+          ]
+        };
+      default:
+        return {
+          badge: 'Childhood Enrichment',
+          tagline: 'Interactive Skill Accelerator',
+          bullets: []
+        };
+    }
+  };
+
   return (
     <div className="flex flex-col min-h-screen bg-slate-50/50">
-      {/* Hero Section - Light & Academic Activity Center */}
+      {/* Hero Section - Optimized for Live Online Phonics & Childhood Skills */}
       <section id="prospectus" className="bg-white border-b border-navy-100 relative overflow-hidden">
-        <div className="max-w-7xl mx-auto px-8 py-20 md:py-32 flex flex-col md:flex-row items-center gap-16 relative z-10">
+        <div className="max-w-7xl mx-auto px-8 py-20 md:py-28 flex flex-col lg:flex-row items-center gap-16 relative z-10">
           <motion.div 
             initial="hidden"
             whileInView="visible"
@@ -143,18 +228,43 @@ export const LandingPage = ({ navigateTo }: { navigateTo: (path: string) => void
             variants={containerVariants}
             className="flex-1 space-y-8"
           >
-            <motion.div variants={textRevealVariants} className="inline-flex items-center gap-3">
-              <span className="w-10 h-[2px] bg-yellow-500"></span>
-              <p className="text-navy-500 text-[10px] font-black uppercase tracking-[0.4em] font-sans">Empowering Next Generation</p>
+            <motion.div variants={textRevealVariants} className="inline-flex items-center gap-2 bg-yellow-100/60 border border-yellow-300/50 px-3 py-1.5 rounded-full">
+              <Sparkles className="text-yellow-600 w-3.5 h-3.5 animate-pulse" />
+              <p className="text-navy-900 text-[10px] font-black uppercase tracking-wider font-sans">
+                🏆 Rated #1 Live Online Reading & Phonics Classes
+              </p>
             </motion.div>
-            <motion.h1 variants={textRevealVariants} className="text-5xl md:text-7xl font-bold text-navy-900 tracking-tight leading-[1.1]">
-              A Premier <br/>
-              <span className="text-yellow-600">Learning Center.</span>
+            
+            <motion.h1 variants={textRevealVariants} className="text-4.5xl md:text-6xl lg:text-7xl font-bold text-navy-900 tracking-tight leading-[1.15]">
+              Transform Your Child's <br/>
+              <span className="text-yellow-600">Reading & Confidence.</span>
             </motion.h1>
-            <motion.p variants={textRevealVariants} className="text-navy-500 text-lg md:text-xl font-medium max-w-xl leading-relaxed font-sans">
-              Dedicated to skill development for children ages 4 to 14. We provide a nurturing environment for Abacus, Phonics, English, and Handwriting mastery.
+            
+            <motion.p variants={textRevealVariants} className="text-navy-500 text-base md:text-lg lg:text-xl font-medium max-w-xl leading-relaxed font-sans">
+              Watch your child read books independently in just 4-6 months! We offer premium <strong>Live Online Phonics, Abacus, spoken English, and Handwriting classes</strong> for kids ages 4 to 14. Real-time personal attention in fun, highly engaging small batches.
             </motion.p>
-            <motion.div variants={textRevealVariants} className="flex flex-wrap gap-4 pt-4">
+            
+            {/* Value Highlights */}
+            <motion.div variants={textRevealVariants} className="grid grid-cols-2 gap-y-3 gap-x-4 max-w-lg font-sans text-xs md:text-sm font-semibold text-navy-700 bg-slate-50 p-4 rounded-xl border border-slate-100">
+              <div className="flex items-center gap-2">
+                <Laptop className="text-yellow-600 w-4 h-4 shrink-0" />
+                <span>100% Interactive Live Online Classes</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Users className="text-yellow-600 w-4 h-4 shrink-0" />
+                <span>Small Personal Batches (Max 6-8 Kids)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="text-yellow-600 w-4 h-4 shrink-0" />
+                <span>Certified Child Enrichment Experts</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Globe className="text-yellow-600 w-4 h-4 shrink-0" />
+                <span>Learn Safely From Anywhere in India</span>
+              </div>
+            </motion.div>
+
+            <motion.div variants={textRevealVariants} className="flex flex-wrap items-center gap-4 pt-2">
               <button 
                 onClick={() => {
                   const el = document.getElementById('contact');
@@ -162,7 +272,7 @@ export const LandingPage = ({ navigateTo }: { navigateTo: (path: string) => void
                 }}
                 className="bg-navy-900 text-white px-8 py-4 rounded-sm font-black text-[10px] uppercase tracking-widest hover:bg-yellow-500 hover:text-navy-900 transition-all shadow-2xl shadow-navy-900/20 cursor-pointer"
               >
-                BOOK FREE TRIAL SLOT
+                BOOK FREE LIVE TRIAL SLOT
               </button>
               <button 
                 onClick={() => {
@@ -171,10 +281,15 @@ export const LandingPage = ({ navigateTo }: { navigateTo: (path: string) => void
                 }}
                 className="text-navy-900 border-b-2 border-navy-100 hover:border-yellow-500 px-4 py-4 font-bold text-[10px] uppercase tracking-widest transition-all cursor-pointer"
               >
-                Our Programs
+                Explore Live Courses
               </button>
             </motion.div>
+
+            <motion.p variants={textRevealVariants} className="text-[10px] text-navy-400 font-sans italic">
+              * Also available: offline physical classroom sessions at our premium Ponmar, Chennai hub!
+            </motion.p>
           </motion.div>
+
           <motion.div 
             initial={{ opacity: 0, scale: 1.05, x: 20 }}
             whileInView={{ opacity: 1, scale: 1, x: 0 }}
@@ -190,16 +305,23 @@ export const LandingPage = ({ navigateTo }: { navigateTo: (path: string) => void
           >
             <div className="aspect-[4/3] bg-navy-50 border-4 border-white shadow-2xl relative overflow-hidden rounded-lg group">
                <img 
-                src="https://s3.ap-south-1.amazonaws.com/medias.prithureader.com/rk-websites/dot-in/website/jay-reading-card-1.1.png" 
-                alt="Learning at Rocking Kids Academy" 
-                className="w-full h-full object-cover grayscale-[0.1] group-hover:grayscale-0 transition-all duration-1000 group-hover:scale-105"
+                src="https://images.unsplash.com/photo-1577896851231-70ef18881754?auto=format&fit=crop&q=80&w=1200" 
+                alt="Child happily learning live online with Rocking Kids Academy" 
+                className="w-full h-full object-cover group-hover:scale-105 transition-all duration-1000"
                 fetchPriority="high"
               />
               <div className="absolute inset-0 bg-navy-900/5"></div>
+              
+              {/* Dynamic Overlay Badges */}
+              <div className="absolute top-4 left-4 bg-navy-900/95 text-white px-3 py-1.5 rounded-md text-[9px] font-black uppercase tracking-wider border border-white/10 shadow-lg backdrop-blur-sm">
+                🔴 LIVE CLASS DEMO ACTIVE
+              </div>
+
               <div className="absolute -bottom-1 -right-1 bg-yellow-400 p-8 shadow-xl">
                  <div className="text-navy-900 text-center">
                     <p className="text-3xl font-black">10+</p>
                     <p className="text-[10px] font-black uppercase tracking-widest leading-none">Years Excellence</p>
+                    <p className="text-[9px] font-semibold tracking-wider mt-1.5 opacity-90">5,000+ Kids Trained</p>
                  </div>
               </div>
             </div>
@@ -209,7 +331,137 @@ export const LandingPage = ({ navigateTo }: { navigateTo: (path: string) => void
         <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/notebook.png')]"></div>
       </section>
 
-      {/* Core Academic Curricula */}
+      {/* Why Live Online Learning Works - The Interactive Edge */}
+      <section id="why-online" className="py-24 px-8 bg-slate-50 border-b border-navy-100/50 relative overflow-hidden">
+        <div className="max-w-7xl mx-auto relative z-10">
+          <motion.div 
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.2 }}
+            variants={containerVariants}
+            className="text-center mb-16 space-y-4"
+          >
+            <motion.div variants={textRevealVariants} className="inline-flex items-center gap-3">
+              <span className="w-8 h-[2px] bg-yellow-500"></span>
+              <p className="text-navy-500 text-[10px] font-black uppercase tracking-[0.3em] font-sans">The Online Learning Edge</p>
+              <span className="w-8 h-[2px] bg-yellow-500"></span>
+            </motion.div>
+            <motion.h2 variants={textRevealVariants} className="text-4xl md:text-5xl font-bold text-navy-900 tracking-tight">
+              Why Our Live Online Classes <br/>
+              <span className="text-yellow-600">Actually Work for Young Learners</span>
+            </motion.h2>
+            <motion.p variants={textRevealVariants} className="text-navy-500 max-w-2xl mx-auto text-base md:text-lg font-sans leading-relaxed">
+              We do not offer pre-recorded video tutorials. Our classes are 100% interactive, live video-based sessions where certified trainers engage directly with your child.
+            </motion.p>
+          </motion.div>
+
+          <motion.div 
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.1 }}
+            variants={containerVariants}
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+          >
+            {/* Edge Card 1 */}
+            <motion.div variants={cardVariants} className="bg-white p-8 rounded-lg border border-slate-200/60 shadow-md hover:shadow-xl hover:border-yellow-400 transition-all duration-300 group">
+              <div className="w-12 h-12 rounded bg-yellow-100 flex items-center justify-center mb-6 group-hover:bg-yellow-400 transition-colors">
+                <Users className="text-navy-950" size={24} />
+              </div>
+              <h3 className="text-lg font-black text-navy-900 uppercase tracking-wide font-sans mb-3">
+                Small Batches (Max 6-8 Kids)
+              </h3>
+              <p className="text-navy-500 text-sm leading-relaxed font-sans font-medium">
+                Every child gets active speaking opportunities, personalized coaching, and regular verbal reading practice. No child gets left behind.
+              </p>
+            </motion.div>
+
+            {/* Edge Card 2 */}
+            <motion.div variants={cardVariants} className="bg-white p-8 rounded-lg border border-slate-200/60 shadow-md hover:shadow-xl hover:border-yellow-400 transition-all duration-300 group">
+              <div className="w-12 h-12 rounded bg-yellow-100 flex items-center justify-center mb-6 group-hover:bg-yellow-400 transition-colors">
+                <Sparkles className="text-navy-950" size={24} />
+              </div>
+              <h3 className="text-lg font-black text-navy-900 uppercase tracking-wide font-sans mb-3">
+                Gamified Synthetic Phonics
+              </h3>
+              <p className="text-navy-500 text-sm leading-relaxed font-sans font-medium">
+                We make phonics learning active with digital interactive soundboards, animated stories, songs, and flashcard-based reading quizzes.
+              </p>
+            </motion.div>
+
+            {/* Edge Card 3 */}
+            <motion.div variants={cardVariants} className="bg-white p-8 rounded-lg border border-slate-200/60 shadow-md hover:shadow-xl hover:border-yellow-400 transition-all duration-300 group">
+              <div className="w-12 h-12 rounded bg-yellow-100 flex items-center justify-center mb-6 group-hover:bg-yellow-400 transition-colors">
+                <Laptop className="text-navy-950" size={24} />
+              </div>
+              <h3 className="text-lg font-black text-navy-900 uppercase tracking-wide font-sans mb-3">
+                Expert Certified Mentors
+              </h3>
+              <p className="text-navy-500 text-sm leading-relaxed font-sans font-medium">
+                Our classes are conducted exclusively by certified, friendly child-development mentors skilled in maintaining high energy and attention spans.
+              </p>
+            </motion.div>
+
+            {/* Edge Card 4 */}
+            <motion.div variants={cardVariants} className="bg-white p-8 rounded-lg border border-slate-200/60 shadow-md hover:shadow-xl hover:border-yellow-400 transition-all duration-300 group">
+              <div className="w-12 h-12 rounded bg-yellow-100 flex items-center justify-center mb-6 group-hover:bg-yellow-400 transition-colors">
+                <BookOpen className="text-navy-950" size={24} />
+              </div>
+              <h3 className="text-lg font-black text-navy-900 uppercase tracking-wide font-sans mb-3">
+                Printed Physical Study Kits
+              </h3>
+              <p className="text-navy-500 text-sm leading-relaxed font-sans font-medium">
+                We combine digital delivery with printed worksheets and reading books shipped directly to your home for healthy, off-screen practice.
+              </p>
+            </motion.div>
+
+            {/* Edge Card 5 */}
+            <motion.div variants={cardVariants} className="bg-white p-8 rounded-lg border border-slate-200/60 shadow-md hover:shadow-xl hover:border-yellow-400 transition-all duration-300 group">
+              <div className="w-12 h-12 rounded bg-yellow-100 flex items-center justify-center mb-6 group-hover:bg-yellow-400 transition-colors">
+                <Clock className="text-navy-950" size={24} />
+              </div>
+              <h3 className="text-lg font-black text-navy-900 uppercase tracking-wide font-sans mb-3">
+                Flexible Learning & Schedules
+              </h3>
+              <p className="text-navy-500 text-sm leading-relaxed font-sans font-medium">
+                Easy online slot bookings, flexible session replacements, and zero daily travel stress for parents and kids.
+              </p>
+            </motion.div>
+
+            {/* Edge Card 6 */}
+            <motion.div variants={cardVariants} className="bg-white p-8 rounded-lg border border-slate-200/60 shadow-md hover:shadow-xl hover:border-yellow-400 transition-all duration-300 group">
+              <div className="w-12 h-12 rounded bg-yellow-100 flex items-center justify-center mb-6 group-hover:bg-yellow-400 transition-colors">
+                <Globe className="text-navy-950" size={24} />
+              </div>
+              <h3 className="text-lg font-black text-navy-900 uppercase tracking-wide font-sans mb-3">
+                Proven Milestone Success
+              </h3>
+              <p className="text-navy-500 text-sm leading-relaxed font-sans font-medium">
+                Over 5,000+ graduates have transitioned into highly fluent readers, confident public speakers, and mental math experts.
+              </p>
+            </motion.div>
+          </motion.div>
+
+          {/* Interactive Action Ribbon */}
+          <div className="mt-16 bg-navy-900 text-white rounded-lg p-8 md:p-10 flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl">
+            <div className="space-y-2 text-center md:text-left">
+              <h4 className="text-xl font-bold font-sans">Curious to see how a live online class works?</h4>
+              <p className="text-navy-200 text-xs md:text-sm font-sans">Book a 20-minute live demonstration slot for your child at absolutely zero cost.</p>
+            </div>
+            <button 
+              onClick={() => {
+                const el = document.getElementById('contact');
+                if (el) el.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="bg-yellow-400 hover:bg-yellow-500 text-navy-950 px-6 py-3 rounded font-black text-[10px] uppercase tracking-wider transition-all shadow-lg shrink-0 cursor-pointer"
+            >
+              SCHEDULE A FREE DEMO
+            </button>
+          </div>
+        </div>
+        <div className="absolute inset-0 opacity-[0.02] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/notebook.png')]"></div>
+      </section>
+
+      {/* Core Academic Curricula - Rearranged and Enriched with Live Online Focus */}
       <section id="curriculum" className="py-24 px-8 bg-white">
         <div className="max-w-7xl mx-auto">
           <motion.div 
@@ -219,8 +471,11 @@ export const LandingPage = ({ navigateTo }: { navigateTo: (path: string) => void
             variants={containerVariants}
             className="text-center mb-20 space-y-4"
           >
-            <motion.p variants={textRevealVariants} className="text-yellow-600 text-[10px] font-black uppercase tracking-[0.4em] font-sans">Curriculum Pathways</motion.p>
-            <motion.h2 variants={textRevealVariants} className="text-4xl md:text-5xl font-bold text-navy-900 tracking-tight">Active Learning Tracks</motion.h2>
+            <motion.p variants={textRevealVariants} className="text-yellow-600 text-[10px] font-black uppercase tracking-[0.4em] font-sans">Our Premium Courses</motion.p>
+            <motion.h2 variants={textRevealVariants} className="text-4xl md:text-5xl font-bold text-navy-900 tracking-tight">Explore Live Interactive Programs</motion.h2>
+            <motion.p variants={textRevealVariants} className="text-navy-500 max-w-xl mx-auto text-sm font-sans font-medium">
+              Every course is structured around real-world milestones, guided by expert mentors, and optimized for maximum student-trainer interaction.
+            </motion.p>
             <motion.div variants={textRevealVariants} className="w-12 h-1 bg-navy-100 mx-auto"></motion.div>
           </motion.div>
 
@@ -231,44 +486,61 @@ export const LandingPage = ({ navigateTo }: { navigateTo: (path: string) => void
             variants={containerVariants}
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8"
           >
-            {programs.map((program) => (
-              <motion.div 
-                key={program.id}
-                variants={cardVariants}
-                whileHover={{ y: -10, transition: { type: "spring", stiffness: 300 } }}
-                onClick={() => navigateTo(`/program/${program.id}`)}
-                className="overflow-hidden bg-white border border-slate-100 hover:border-yellow-400 hover:shadow-xl transition-all group rounded-lg flex flex-col cursor-pointer"
-              >
-                <div className={`aspect-[16/10] overflow-hidden relative ${program.id === 'Abacus' ? 'bg-white p-4' : ''}`}>
-                   <img 
-                      src={getProgramImage(program.id)} 
-                      alt={program.title}
-                      className={`w-full h-full ${program.id === 'Abacus' ? 'object-contain' : 'object-cover'} group-hover:scale-110 transition-transform duration-500`}
-                      loading="lazy"
-                   />
-                   <div className="absolute top-4 left-4 w-10 h-10 bg-white/90 backdrop-blur-sm flex items-center justify-center rounded-sm shadow-sm">
-                      {getIcon(program.id)}
-                   </div>
-                </div>
-                <div className="p-8 flex-grow flex flex-col">
-                  <h3 className="text-xl font-bold text-navy-900 mb-4 tracking-tight">{program.title}</h3>
-                  <p className="text-navy-500 text-xs font-medium leading-relaxed font-sans mb-6">
-                    {program.description}
-                  </p>
-                  <div className="mt-auto pt-4 border-t border-slate-50 flex items-center justify-between">
-                    <ul className="flex flex-wrap gap-1.5">
-                       {program.levels.slice(0, 2).map(level => (
-                          <li key={level} className="text-[9px] font-black uppercase tracking-wider text-navy-300 bg-slate-50 px-2 py-1 rounded-sm">{level}</li>
-                       ))}
-                       {program.levels.length > 2 && <li className="text-[9px] font-black uppercase tracking-wider text-yellow-600 bg-yellow-50 px-2 py-1 rounded-sm">+{program.levels.length - 2} More</li>}
-                    </ul>
-                    <span className="text-[10px] font-black uppercase tracking-widest text-navy-400 group-hover:text-yellow-600 transition-colors inline-flex items-center gap-1">
-                      Explore →
-                    </span>
+            {[...programs].sort((a, b) => a.id === 'Phonics' ? -1 : b.id === 'Phonics' ? 1 : 0).map((program) => {
+              const enriched = enrichProgramInfo(program.id);
+              return (
+                <motion.div 
+                  key={program.id}
+                  variants={cardVariants}
+                  whileHover={{ y: -10, transition: { type: "spring", stiffness: 300 } }}
+                  onClick={() => navigateTo(`/program/${program.id}`)}
+                  className="overflow-hidden bg-white border border-slate-100 hover:border-yellow-400 hover:shadow-xl transition-all group rounded-lg flex flex-col cursor-pointer"
+                >
+                  <div className={`aspect-[16/10] overflow-hidden relative ${program.id === 'Abacus' ? 'bg-white p-4' : ''}`}>
+                     <img 
+                        src={getProgramImage(program.id)} 
+                        alt={program.title}
+                        className={`w-full h-full ${program.id === 'Abacus' ? 'object-contain' : 'object-cover'} group-hover:scale-110 transition-transform duration-500`}
+                        loading="lazy"
+                     />
+                     <div className="absolute top-4 left-4 w-10 h-10 bg-white/90 backdrop-blur-sm flex items-center justify-center rounded-sm shadow-sm">
+                        {getIcon(program.id)}
+                     </div>
                   </div>
-                </div>
-              </motion.div>
-            ))}
+                  <div className="p-6 flex-grow flex flex-col">
+                    <span className="text-[8px] font-black uppercase tracking-wider text-yellow-600 bg-yellow-50 px-2 py-1 rounded self-start mb-2.5">
+                      {enriched.badge}
+                    </span>
+                    <h3 className="text-lg font-bold text-navy-900 mb-1 tracking-tight leading-snug group-hover:text-yellow-600 transition-colors">{program.title}</h3>
+                    <p className="text-navy-500 text-[11px] font-bold leading-normal font-sans mb-4 min-h-[32px]">
+                      {enriched.tagline}
+                    </p>
+                    
+                    {/* Bullet Highlights */}
+                    <ul className="space-y-2.5 mb-6 text-navy-700 text-[11px] font-medium font-sans flex-grow">
+                      {enriched.bullets.map((bullet, idx) => (
+                        <li key={idx} className="flex items-start gap-1.5">
+                          <Check className="text-yellow-500 w-3.5 h-3.5 shrink-0 mt-0.5" />
+                          <span>{bullet}</span>
+                        </li>
+                      ))}
+                    </ul>
+
+                    <div className="mt-auto pt-4 border-t border-slate-100 flex items-center justify-between">
+                      <div className="flex flex-wrap gap-1">
+                         {program.levels.slice(0, 1).map(level => (
+                            <span key={level} className="text-[8px] font-black uppercase tracking-wider text-navy-400 bg-slate-50 px-1.5 py-0.5 rounded-sm">{level}</span>
+                         ))}
+                         {program.levels.length > 1 && <span className="text-[8px] font-black uppercase tracking-wider text-yellow-600 bg-yellow-50 px-1.5 py-0.5 rounded-sm">+{program.levels.length - 1} Levels</span>}
+                      </div>
+                      <span className="text-[9px] font-black uppercase tracking-widest text-navy-400 group-hover:text-yellow-600 transition-colors inline-flex items-center gap-1 shrink-0">
+                        Details →
+                      </span>
+                    </div>
+                  </div>
+                </motion.div>
+              );
+            })}
           </motion.div>
         </div>
       </section>
@@ -565,8 +837,10 @@ export const LandingPage = ({ navigateTo }: { navigateTo: (path: string) => void
               className="lg:col-span-7 bg-white p-8 md:p-10 border border-slate-100 rounded-lg shadow-xl shadow-slate-200/40"
             >
               <div className="mb-6">
-                <h3 className="text-xl font-bold text-navy-900 mb-1">Book Free Trial Slot / Send Enquiry</h3>
-                <p className="text-navy-400 text-xs font-sans">Submit your contact info to lock in a trial session at our Ponmar Main Road center.</p>
+                <h3 className="text-xl font-bold text-navy-900 mb-1">Book Your Free Live Interactive Trial Slot</h3>
+                <p className="text-navy-400 text-xs font-sans font-semibold leading-relaxed">
+                  Select your child's learning goals. Our trainers will schedule a 1-on-1 personal diagnostic session with your child completely free!
+                </p>
               </div>
 
               {formStatus === 'success' ? (
@@ -580,9 +854,9 @@ export const LandingPage = ({ navigateTo }: { navigateTo: (path: string) => void
                       <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                     </svg>
                   </div>
-                  <h4 className="text-lg font-bold text-green-900">Enquiry Received!</h4>
+                  <h4 className="text-lg font-bold text-green-900">Trial Slot Requested!</h4>
                   <p className="text-green-700 text-sm font-sans max-w-md mx-auto">
-                    Thank you for reaching out to Rocking Kids Academy. Your inquiry has been processed and logged. Our team is excited to assist you!
+                    We have successfully received your trial request for <strong>{selectedCourse}</strong> ({selectedMode}). Our early childhood mentors will contact you within 24 hours to schedule your preferred live slot.
                   </p>
 
                   {formWarning && (
@@ -599,7 +873,7 @@ export const LandingPage = ({ navigateTo }: { navigateTo: (path: string) => void
                     onClick={() => setFormStatus('idle')}
                     className="mt-4 bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded font-black text-[10px] uppercase tracking-wider transition-colors cursor-pointer"
                   >
-                    Submit Another Enquiry
+                    Submit Another Request
                   </button>
                 </motion.div>
               ) : (
@@ -654,16 +928,46 @@ export const LandingPage = ({ navigateTo }: { navigateTo: (path: string) => void
                     />
                   </div>
 
+                  {/* Course of Interest & Mode Select fields */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div className="space-y-1.5">
+                      <label htmlFor="courseSelect" className="block text-[10px] font-black uppercase tracking-wider text-navy-600">Course of Interest <span className="text-yellow-600">*</span></label>
+                      <select 
+                        id="courseSelect" 
+                        value={selectedCourse}
+                        onChange={(e) => setSelectedCourse(e.target.value)}
+                        className="w-full bg-slate-50 border border-slate-200 focus:border-yellow-500 focus:bg-white px-4 py-3 text-sm rounded outline-none transition-all font-sans text-navy-900"
+                      >
+                        <option value="Phonics Mastery">Phonics Mastery (Reading & Spelling)</option>
+                        <option value="Brainobrain Abacus">Brainobrain Abacus (Mental Math)</option>
+                        <option value="English & Communication">English & Communication (Fluency)</option>
+                        <option value="Handwriting Improvement">Handwriting Improvement (Cursive)</option>
+                      </select>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label htmlFor="modeSelect" className="block text-[10px] font-black uppercase tracking-wider text-navy-600">Preferred Mode <span className="text-yellow-600">*</span></label>
+                      <select 
+                        id="modeSelect" 
+                        value={selectedMode}
+                        onChange={(e) => setSelectedMode(e.target.value)}
+                        className="w-full bg-slate-50 border border-slate-200 focus:border-yellow-500 focus:bg-white px-4 py-3 text-sm rounded outline-none transition-all font-sans text-navy-900"
+                      >
+                        <option value="Live Online Class">Live Online Class (Learn from Anywhere)</option>
+                        <option value="Offline Classroom">Offline Classroom (Ponmar, Chennai Centre)</option>
+                      </select>
+                    </div>
+                  </div>
+
                   <div className="space-y-1.5">
-                    <label htmlFor="message" className="block text-[10px] font-black uppercase tracking-wider text-navy-600">Enquiry Message <span className="text-yellow-600">*</span></label>
+                    <label htmlFor="message" className="block text-[10px] font-black uppercase tracking-wider text-navy-600">Message or Specific Requests <span className="text-navy-400 font-sans uppercase tracking-wider font-bold">(Optional)</span></label>
                     <textarea 
                       id="message" 
                       name="message"
-                      rows={4}
+                      rows={3}
                       value={formData.message}
                       onChange={handleInputChange}
-                      required
-                      placeholder="I would like to enquire about active learning tracks..."
+                      placeholder="E.g., Preferred timings, child's age, specific learning struggles..."
                       className="w-full bg-slate-50 border border-slate-200 focus:border-yellow-500 focus:bg-white px-4 py-3 text-sm rounded outline-none transition-all font-sans text-navy-900 resize-none"
                     ></textarea>
                   </div>
