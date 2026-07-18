@@ -305,7 +305,7 @@ export const LandingPage = ({ navigateTo }: { navigateTo: (path: string) => void
           >
             <div className="aspect-[4/3] bg-navy-50 border-4 border-white shadow-2xl relative overflow-hidden rounded-lg group">
                <img 
-                src="https://images.unsplash.com/photo-1577896851231-70ef18881754?auto=format&fit=crop&q=80&w=1200" 
+                src="https://s3.ap-south-1.amazonaws.com/medias.prithureader.com/rk-websites/dot-in/website/landing-online-teacher.png" 
                 alt="Child happily learning live online with Rocking Kids Academy" 
                 className="w-full h-full object-cover group-hover:scale-105 transition-all duration-1000"
                 fetchPriority="high"
@@ -405,7 +405,7 @@ export const LandingPage = ({ navigateTo }: { navigateTo: (path: string) => void
                 Flexible Learning & Schedules
               </h3>
               <p className="text-navy-500 text-sm leading-relaxed font-sans font-medium">
-                Easy online slot bookings, flexible session replacements, and zero daily travel stress for parents and kids.
+                Flexible session replacements and zero daily travel stress for parents and kids.
               </p>
             </motion.div>
 
@@ -418,7 +418,7 @@ export const LandingPage = ({ navigateTo }: { navigateTo: (path: string) => void
                 Proven Milestone Success
               </h3>
               <p className="text-navy-500 text-sm leading-relaxed font-sans font-medium">
-                Over 1,000+ kids have successfully transitioned into highly fluent readers, confident public speakers, and mental math experts. We train kids aged 4 to 14 (and sometimes at 3 years if the child can sit for 30 minutes in an online class).
+                Over 1,000+ kids have successfully transitioned into highly fluent readers, confident public speakers, and mental math experts. We train kids aged 4 to 14.
               </p>
             </motion.div>
           </motion.div>
@@ -606,8 +606,8 @@ export const LandingPage = ({ navigateTo }: { navigateTo: (path: string) => void
                        <div>
                           <p className="font-bold text-xs uppercase tracking-tight text-navy-900">Location Details</p>
                           <p className="text-[11px] text-navy-400 font-sans mt-1">
-                             Mambakkam Main Road, Near SBIOA<br/>
-                             Chennai 600127
+                             312/2, Ponmar Main Road, Mambakkam<br/>
+                             Chennai, Tamil Nadu 600127
                           </p>
                        </div>
                     </div>
@@ -651,8 +651,8 @@ export const LandingPage = ({ navigateTo }: { navigateTo: (path: string) => void
                 <div className="space-y-1">
                   <p className="text-xs font-black uppercase tracking-widest text-navy-900">Main Campus</p>
                   <p className="text-[11px] text-navy-500 leading-normal font-sans">
-                    Trivesh Complex, Mambakkam Main Road,<br/>
-                    Near SBIOA School, Chennai 600127
+                    312/2, Ponmar Main Road, Mambakkam,<br/>
+                    Near SBIOA School, Chennai, Tamil Nadu 600127
                   </p>
                 </div>
               </div>

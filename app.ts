@@ -87,10 +87,10 @@ export function getDefaultJsonLd(seo: any) {
         "email": "meenakshidevarajan@gmail.com",
         "address": {
           "@type": "PostalAddress",
-          "streetAddress": "Mambakkam Main Road",
+          "streetAddress": "312/2, Ponmar Main Road",
           "addressLocality": "Mambakkam, Chennai",
           "addressRegion": "Tamil Nadu",
-          "postalCode": "600130",
+          "postalCode": "600127",
           "addressCountry": "IN"
         },
         "geo": {
@@ -190,7 +190,7 @@ export function getDefaultJsonLd(seo: any) {
             "name": "Where is Rocking Kids Academy located?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Rocking Kids Academy is located on Mambakkam Main Road, Mambakkam, Chennai, Tamil Nadu (serving Mambakkam, Ponmar, and Medavakkam regions)."
+              "text": "Rocking Kids Academy is located at 312/2, Ponmar Main Road, Mambakkam, Chennai, Tamil Nadu 600127 (serving Mambakkam, Ponmar, and Medavakkam regions)."
             }
           }
         ]
