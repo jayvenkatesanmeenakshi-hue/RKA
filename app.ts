@@ -480,6 +480,84 @@ export async function getOverrideSeo(reqPath: string, baseSeo: any) {
   
   if (reqPath === '/blog') {
     const blogHubImage = "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&q=80&w=1200";
+    let publishedBlogs: any[] = [];
+    try {
+      const blogPosts = await getBlogPosts();
+      publishedBlogs = (blogPosts || []).filter((b: any) => b.published !== false);
+    } catch (e) {
+      console.error("Error fetching blogs for blog hub schema:", e);
+    }
+
+    const blogJsonLd = {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebPage",
+          "@id": `${domain}/blog#webpage`,
+          "url": `${domain}/blog`,
+          "name": "Learning Resource Hub & Blog | Rocking Kids Academy Chennai",
+          "isPartOf": {
+            "@id": `${domain}/#website`
+          },
+          "breadcrumb": {
+            "@id": `${domain}/blog#breadcrumb`
+          }
+        },
+        {
+          "@type": "BreadcrumbList",
+          "@id": `${domain}/blog#breadcrumb`,
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Home",
+              "item": domain
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "Blog",
+              "item": `${domain}/blog`
+            }
+          ]
+        },
+        {
+          "@type": "Blog",
+          "@id": `${domain}/blog#publication`,
+          "name": "Rocking Kids Academy Blog",
+          "description": "Discover research-backed parenting tips, child cognitive development guides, phonics reading keys, and handwriting improvement techniques.",
+          "publisher": {
+            "@type": "Organization",
+            "name": "Rocking Kids Academy",
+            "logo": {
+              "@type": "ImageObject",
+              "url": "https://rockingkidsacademy.in/assets/images/logo_icon_1782800321150.jpg"
+            }
+          },
+          "blogPost": publishedBlogs.slice(0, 15).map((b: any) => {
+            let cover = b.coverImage || "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&q=80&w=1200";
+            if (cover.startsWith('/')) {
+              cover = `${domain}${cover}`;
+            }
+            let pubDate = b.createdAt || b.date || new Date().toISOString();
+            return {
+              "@type": "BlogPosting",
+              "headline": b.title,
+              "description": b.excerpt,
+              "image": cover,
+              "datePublished": pubDate,
+              "dateModified": pubDate,
+              "author": {
+                "@type": "Person",
+                "name": b.author === 'Founder' ? "Meenakshi D. Venkatesan" : (b.author || "Academic Counselor")
+              },
+              "url": `${domain}/blog/${b.slug}`
+            };
+          })
+        }
+      ]
+    };
+
     return {
       ...baseSeo,
       title: "Learning Resource Hub & Blog | Rocking Kids Academy Chennai",
@@ -493,7 +571,80 @@ export async function getOverrideSeo(reqPath: string, baseSeo: any) {
       ogImageSecure: blogHubImage,
       twitterTitle: "Learning Resource Hub & Blog | Rocking Kids Academy Chennai",
       twitterDescription: "Discover research-backed parenting tips, child cognitive development guides, phonics reading keys, and handwriting improvement techniques.",
-      twitterImage: blogHubImage
+      twitterImage: blogHubImage,
+      jsonLd: blogJsonLd
+    };
+  }
+
+  if (reqPath === '/founder') {
+    const founderImage = "https://s3.ap-south-1.amazonaws.com/medias.prithureader.com/rk-websites/dot-in/website/rk-founder.png";
+    const title = "Meenakshi D. Venkatesan | Founder & Director | Rocking Kids Academy";
+    const description = "Meet Meenakshi D. Venkatesan, Founder & Director of Rocking Kids Academy, early literacy specialist and creator of the PrithuReader Early Literacy Programme.";
+    
+    const founderJsonLd = {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "AboutPage",
+          "@id": `${domain}/founder#webpage`,
+          "url": `${domain}/founder`,
+          "name": title,
+          "description": description,
+          "isPartOf": {
+            "@id": `${domain}/#website`
+          },
+          "breadcrumb": {
+            "@id": `${domain}/founder#breadcrumb`
+          }
+        },
+        {
+          "@type": "BreadcrumbList",
+          "@id": `${domain}/founder#breadcrumb`,
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Home",
+              "item": domain
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "Founder",
+              "item": `${domain}/founder`
+            }
+          ]
+        },
+        {
+          "@type": "Person",
+          "@id": `${domain}/founder#person`,
+          "name": "Meenakshi D. Venkatesan",
+          "jobTitle": "Founder & Director",
+          "worksFor": {
+            "@type": "EducationalOrganization",
+            "name": "Rocking Kids Academy"
+          },
+          "image": founderImage,
+          "description": "Founder and Director of Rocking Kids Academy, early literacy specialist, and creator of the PrithuReader Early Literacy Programme."
+        }
+      ]
+    };
+
+    return {
+      ...baseSeo,
+      title,
+      description,
+      canonical: `${domain}/founder`,
+      ogType: "profile",
+      ogSiteName: "Rocking Kids Academy",
+      ogTitle: title,
+      ogDescription: description,
+      ogImage: founderImage,
+      ogImageSecure: founderImage,
+      twitterTitle: title,
+      twitterDescription: description,
+      twitterImage: founderImage,
+      jsonLd: founderJsonLd
     };
   }
   
@@ -525,6 +676,95 @@ export async function getOverrideSeo(reqPath: string, baseSeo: any) {
         canonical: `${domain}${reqPath}`
       };
     }
+
+    let courseDetails: any = null;
+    if (prog === 'Abacus') {
+      courseDetails = {
+        "@type": "Course",
+        "@id": `${domain}/program/Abacus#course`,
+        "name": "Abacus & Mental Math Computation (Brainobrain Certified)",
+        "description": "Boosts brain development, visual memory, concentration, and lightning-fast mental math computations. Certified Brainobrain curriculum.",
+        "provider": {
+          "@type": "Organization",
+          "name": "Rocking Kids Academy"
+        },
+        "educationalCredentialAwarded": "Brainobrain Certified Abacus Level Certificate"
+      };
+    } else if (prog === 'Phonics') {
+      courseDetails = {
+        "@type": "Course",
+        "@id": `${domain}/program/Phonics#course`,
+        "name": "Structured Synthetic Phonics & Early Reading Fluency",
+        "description": "Synthetic phonics training focusing on letter sounds, blending, segmenting, and early reading fluency for children aged 4 to 8.",
+        "provider": {
+          "@type": "Organization",
+          "name": "Rocking Kids Academy"
+        }
+      };
+    } else if (prog === 'English') {
+      courseDetails = {
+        "@type": "Course",
+        "@id": `${domain}/program/English#course`,
+        "name": "English Speaking, Creative Writing & Public Speaking",
+        "description": "Elevates grammar, descriptive vocabulary, creative writing, reading comprehension, and public speaking confidence for children aged 6 to 14.",
+        "provider": {
+          "@type": "Organization",
+          "name": "Rocking Kids Academy"
+        }
+      };
+    } else if (prog === 'Handwriting') {
+      courseDetails = {
+        "@type": "Course",
+        "@id": `${domain}/program/Handwriting#course`,
+        "name": "Scientific Cursive & Print Handwriting Improvement",
+        "description": "Scientific correction of pencil grip, posture, letter formation, spacing, sizing, and writing speed.",
+        "provider": {
+          "@type": "Organization",
+          "name": "Rocking Kids Academy"
+        }
+      };
+    }
+
+    const programJsonLd = {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebPage",
+          "@id": `${domain}/program/${prog}#webpage`,
+          "url": `${domain}/program/${prog}`,
+          "name": title,
+          "description": description,
+          "isPartOf": {
+            "@id": `${domain}/#website`
+          },
+          "breadcrumb": {
+            "@id": `${domain}/program/${prog}#breadcrumb`
+          }
+        },
+        {
+          "@type": "BreadcrumbList",
+          "@id": `${domain}/program/${prog}#breadcrumb`,
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Home",
+              "item": domain
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": prog,
+              "item": `${domain}/program/${prog}`
+            }
+          ]
+        }
+      ]
+    };
+
+    if (courseDetails) {
+      programJsonLd["@graph"].push(courseDetails);
+    }
     
     return {
       ...baseSeo,
@@ -539,7 +779,8 @@ export async function getOverrideSeo(reqPath: string, baseSeo: any) {
       ogImageSecure: coverImage,
       twitterTitle: title,
       twitterDescription: description,
-      twitterImage: coverImage
+      twitterImage: coverImage,
+      jsonLd: programJsonLd
     };
   }
   
@@ -575,30 +816,75 @@ export async function getOverrideSeo(reqPath: string, baseSeo: any) {
           } catch (e) {}
         }
 
-        const articleJsonLd = {
+        const blogJsonLd = {
           "@context": "https://schema.org",
-          "@type": "BlogPosting",
-          "headline": blog.title,
-          "image": [cover],
-          "datePublished": isoDate,
-          "dateModified": isoDate,
-          "author": {
-            "@type": "Person",
-            "name": blog.author === 'Founder' ? "Meenakshi D. Venkatesan" : (blog.author || "Academic Counselor")
-          },
-          "publisher": {
-            "@type": "Organization",
-            "name": "Rocking Kids Academy",
-            "logo": {
-              "@type": "ImageObject",
-              "url": "https://rockingkidsacademy.in/assets/images/logo_icon_1782800321150.jpg"
+          "@graph": [
+            {
+              "@type": "BlogPosting",
+              "@id": `${domain}/blog/${blog.slug}#entry`,
+              "isPartOf": {
+                "@id": `${domain}/blog/${blog.slug}#webpage`
+              },
+              "headline": blog.title,
+              "image": [cover],
+              "datePublished": isoDate,
+              "dateModified": isoDate,
+              "author": {
+                "@type": "Person",
+                "name": blog.author === 'Founder' ? "Meenakshi D. Venkatesan" : (blog.author || "Academic Counselor")
+              },
+              "publisher": {
+                "@type": "Organization",
+                "name": "Rocking Kids Academy",
+                "logo": {
+                  "@type": "ImageObject",
+                  "url": "https://rockingkidsacademy.in/assets/images/logo_icon_1782800321150.jpg"
+                }
+              },
+              "description": excerpt,
+              "mainEntityOfPage": {
+                "@type": "WebPage",
+                "@id": `${domain}/blog/${blog.slug}`
+              }
+            },
+            {
+              "@type": "WebPage",
+              "@id": `${domain}/blog/${blog.slug}#webpage`,
+              "url": `${domain}/blog/${blog.slug}`,
+              "name": fullTitle,
+              "description": excerpt,
+              "isPartOf": {
+                "@id": `${domain}/#website`
+              },
+              "breadcrumb": {
+                "@id": `${domain}/blog/${blog.slug}#breadcrumb`
+              }
+            },
+            {
+              "@type": "BreadcrumbList",
+              "@id": `${domain}/blog/${blog.slug}#breadcrumb`,
+              "itemListElement": [
+                {
+                  "@type": "ListItem",
+                  "position": 1,
+                  "name": "Home",
+                  "item": domain
+                },
+                {
+                  "@type": "ListItem",
+                  "position": 2,
+                  "name": "Blog",
+                  "item": `${domain}/blog`
+                },
+                {
+                  "@type": "ListItem",
+                  "position": 3,
+                  "name": blog.title,
+                  "item": `${domain}/blog/${blog.slug}`
+                }
+              ]
             }
-          },
-          "description": excerpt,
-          "mainEntityOfPage": {
-            "@type": "WebPage",
-            "@id": `${domain}${reqPath}`
-          }
+          ]
         };
 
         return {
@@ -616,7 +902,7 @@ export async function getOverrideSeo(reqPath: string, baseSeo: any) {
           twitterTitle: fullTitle,
           twitterDescription: excerpt,
           twitterImage: cover,
-          jsonLd: articleJsonLd
+          jsonLd: blogJsonLd
         };
       }
     } catch (e) {
