@@ -22,6 +22,7 @@ import {
   Mail,
   Edit3,
   Database,
+  Users,
   Search,
   CheckCircle2,
   Calendar,
@@ -88,8 +89,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigateTo }) => {
   const [loginError, setLoginError] = useState<string>('');
   const [isLoggingIn, setIsLoggingIn] = useState<boolean>(false);
 
-  // Active Tab: 'blogs' | 'enquiries' | 'basic' | 'social' | 'json-ld' | 'llms-txt' | 'robots-txt' | 'sitemap' | 'google-reviews'
-  const [activeTab, setActiveTab] = useState<'blogs' | 'enquiries' | 'basic' | 'social' | 'json-ld' | 'llms-txt' | 'robots-txt' | 'sitemap' | 'google-reviews'>('blogs');
+  // Active Tab: 'blogs' | 'enquiries' | 'subscribers' | 'basic' | 'social' | 'json-ld' | 'llms-txt' | 'robots-txt' | 'sitemap' | 'google-reviews'
+  const [activeTab, setActiveTab] = useState<'blogs' | 'enquiries' | 'subscribers' | 'basic' | 'social' | 'json-ld' | 'llms-txt' | 'robots-txt' | 'sitemap' | 'google-reviews'>('blogs');
   
   // Google Places API & Database Reviews State
   const [googleApiKey, setGoogleApiKey] = useState(() => safeStorage.getItem('google_places_api_key') || '');
@@ -185,6 +186,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigateTo }) => {
   const [enquiries, setEnquiries] = useState<Enquiry[]>([]);
   const [isLoadingEnquiries, setIsLoadingEnquiries] = useState<boolean>(false);
   const [enquirySearch, setEnquirySearch] = useState<string>('');
+
+  // Newsletter Subscriber States
+  const [subscribers, setSubscribers] = useState<any[]>([]);
+  const [isLoadingSubscribers, setIsLoadingSubscribers] = useState<boolean>(false);
+  const [subscriberSearch, setSubscriberSearch] = useState<string>('');
 
   // Sitemap Form Row State
   const [newUrl, setNewUrl] = useState<string>('');
@@ -350,6 +356,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigateTo }) => {
         
         loadBlogs();
         loadEnquiries(tokenToTest, userToTest);
+        loadSubscribers(tokenToTest, userToTest);
       } else {
         safeStorage.removeItem('admin_token');
         safeStorage.removeItem('admin_username');
@@ -413,6 +420,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigateTo }) => {
         // Load blogs and enquiries
         loadBlogs();
         loadEnquiries(cleanPass, cleanUser);
+        loadSubscribers(cleanPass, cleanUser);
       } else {
         setLoginError(resData.error || 'Invalid Administrator Username or Password.');
       }
@@ -698,6 +706,55 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigateTo }) => {
       }
     } catch (err) {
       console.error('Delete enquiry error:', err);
+    }
+  };
+
+  // --- NEWSLETTER SUBSCRIBERS MANAGEMENT ---
+  const loadSubscribers = async (tokenOverride?: string, userOverride?: string) => {
+    setIsLoadingSubscribers(true);
+    const token = tokenOverride || safeStorage.getItem('admin_token') || '';
+    const user = userOverride || safeStorage.getItem('admin_username') || 'admin';
+
+    try {
+      const res = await fetch('/api/admin/newsletter/subscribers', {
+        headers: {
+          'x-admin-token': token,
+          'x-admin-username': user
+        }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setSubscribers(data);
+      }
+    } catch (err) {
+      console.error('Error loading subscribers:', err);
+    } finally {
+      setIsLoadingSubscribers(false);
+    }
+  };
+
+  const handleDeleteSubscriber = async (id: number) => {
+    if (!confirm('Are you sure you want to remove this newsletter subscriber?')) return;
+
+    const token = safeStorage.getItem('admin_token') || '';
+    const user = safeStorage.getItem('admin_username') || 'admin';
+
+    try {
+      const res = await fetch(`/api/admin/newsletter/subscribers/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'x-admin-token': token,
+          'x-admin-username': user
+        }
+      });
+
+      if (res.ok) {
+        setSubscribers(prev => prev.filter(s => s.id !== id));
+      } else {
+        alert('Failed to delete subscriber.');
+      }
+    } catch (err) {
+      console.error('Delete subscriber error:', err);
     }
   };
 
@@ -1160,6 +1217,23 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigateTo }) => {
               </div>
               <span className="px-2 py-0.5 rounded-full text-[10px] bg-slate-950/20 font-bold">
                 {enquiries.length}
+              </span>
+            </button>
+
+            <button
+              onClick={() => { setActiveTab('subscribers'); loadSubscribers(); }}
+              className={`w-full text-left px-4 py-3 rounded-xl text-xs font-semibold flex items-center justify-between transition-all ${
+                activeTab === 'subscribers' 
+                  ? 'bg-yellow-500 text-slate-950 shadow-md shadow-yellow-500/10' 
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+              }`}
+            >
+              <div className="flex items-center gap-2.5">
+                <Users className="w-4 h-4" />
+                <span>Newsletter Subscribers</span>
+              </div>
+              <span className="px-2 py-0.5 rounded-full text-[10px] bg-slate-950/20 font-bold">
+                {subscribers.length}
               </span>
             </button>
 
@@ -1936,6 +2010,101 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigateTo }) => {
                       </div>
                     </div>
                   ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* TAB: NEWSLETTER SUBSCRIBERS */}
+          {activeTab === 'subscribers' && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+                <div>
+                  <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                    <Users className="w-5 h-5 text-yellow-500" />
+                    <span>Newsletter Subscribers (Postgres DB)</span>
+                  </h2>
+                  <p className="text-xs text-slate-400 mt-1">
+                    Manage parents and readers who subscribed to receive updates from your academy.
+                  </p>
+                </div>
+
+                <button
+                  onClick={() => loadSubscribers()}
+                  className="px-3.5 py-2 bg-slate-800 text-slate-200 hover:bg-slate-700 rounded-xl text-xs font-medium flex items-center gap-1.5 transition-colors"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${isLoadingSubscribers ? 'animate-spin' : ''}`} />
+                  <span>Refresh</span>
+                </button>
+              </div>
+
+              {/* Search filter */}
+              <div className="relative">
+                <Search className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <input 
+                  type="text"
+                  value={subscriberSearch}
+                  onChange={(e) => setSubscriberSearch(e.target.value)}
+                  placeholder="Filter subscribers by email or mobile number..."
+                  className="w-full bg-slate-900 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-xs text-white focus:outline-none focus:border-yellow-500"
+                />
+              </div>
+
+              {isLoadingSubscribers ? (
+                <div className="p-12 text-center text-slate-400">
+                  <RefreshCw className="w-8 h-8 animate-spin mx-auto text-yellow-500 mb-2" />
+                  <p className="text-xs">Loading subscribers from Neon Postgres...</p>
+                </div>
+              ) : subscribers.length === 0 ? (
+                <div className="p-12 bg-slate-900 border border-slate-800 rounded-2xl text-center">
+                  <Users className="w-12 h-12 text-slate-600 mx-auto mb-3" />
+                  <h3 className="text-base font-bold text-white">No Subscribers Found</h3>
+                  <p className="text-xs text-slate-400 mt-1">When parents fill in their email on the subscription form, they will appear here.</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {subscribers
+                    .filter(sub => {
+                      const query = subscriberSearch.toLowerCase().trim();
+                      if (!query) return true;
+                      return (
+                        sub.email.toLowerCase().includes(query) ||
+                        (sub.mobile_number && sub.mobile_number.includes(query))
+                      );
+                    })
+                    .map((sub) => (
+                      <div key={sub.id} className="bg-slate-900 border border-slate-800 rounded-2xl p-5 flex items-center justify-between gap-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 bg-yellow-500/10 border border-yellow-500/20 rounded-full flex items-center justify-center text-yellow-500 font-bold text-sm">
+                            {sub.email.charAt(0).toUpperCase()}
+                          </div>
+                          <div>
+                            <h4 className="text-sm font-bold text-white">{sub.email}</h4>
+                            {sub.mobile_number ? (
+                              <p className="text-xs text-slate-400 mt-0.5">
+                                📞 <a href={`tel:${sub.mobile_number}`} className="hover:text-yellow-400 transition-colors">{sub.mobile_number}</a>
+                              </p>
+                            ) : (
+                              <p className="text-xs text-slate-500 mt-0.5 italic">No mobile number provided</p>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-3">
+                          <span className="text-[10px] text-slate-500 bg-slate-950 px-2.5 py-1 rounded-md hidden sm:inline-block">
+                            {new Date(sub.created_at || sub.createdAt).toLocaleString()}
+                          </span>
+                          <button
+                            onClick={() => handleDeleteSubscriber(sub.id)}
+                            className="p-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg border border-red-500/20 transition-colors"
+                            title="Delete Subscriber"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    ))
+                  }
                 </div>
               )}
             </div>

@@ -692,54 +692,6 @@ export const LandingPage = ({ navigateTo }: { navigateTo: (path: string) => void
         </div>
       </section>
 
-      {/* Simplified Footer */}
-      <footer className="py-12 px-8 border-t border-slate-100 bg-white">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-10">
-          <div className="flex flex-col md:flex-row items-center gap-6">
-            <div className="flex items-center gap-3">
-              <img 
-                src={logoIcon} 
-                alt="Rocking Kids Academy Logo" 
-                className="w-10 h-10 object-contain"
-                referrerPolicy="no-referrer"
-                loading="lazy"
-              />
-              <h2 className="text-lg font-bold text-navy-900 tracking-tight">Rocking Kids Academy</h2>
-            </div>
-            <div className="hidden md:block w-px h-6 bg-slate-100"></div>
-            <p className="text-navy-400 text-[10px] font-black uppercase tracking-widest">Chennai 600127</p>
-          </div>
-          
-          <div className="flex items-center gap-8 text-[10px] font-black uppercase tracking-widest text-navy-600">
-            <a href="#curriculum" className="hover:text-yellow-500 transition-colors">Curriculum</a>
-            <a href="#location" className="hover:text-yellow-500 transition-colors">Location</a>
-            <a 
-              href="/founder" 
-              onClick={(e) => { e.preventDefault(); navigateTo('/founder'); }} 
-              className="hover:text-yellow-500 transition-colors"
-            >
-              Founder
-            </a>
-            <a href="#contact" className="hover:text-yellow-500 transition-colors">Contact</a>
-          </div>
-          
-          <div className="flex items-center gap-3">
-            <p className="text-[10px] font-black text-navy-300 uppercase tracking-widest">© 2026</p>
-            <span className="text-slate-200">|</span>
-            <a 
-              href="/admin" 
-              onClick={(e) => {
-                e.preventDefault();
-                window.history.pushState({}, '', '/admin');
-                window.dispatchEvent(new Event('popstate'));
-              }}
-              className="text-[10px] font-black text-navy-300 hover:text-yellow-600 uppercase tracking-widest transition-colors"
-            >
-              SEO Portal
-            </a>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 };

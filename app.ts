@@ -24,7 +24,10 @@ import {
   deleteStoredReview,
   saveManualReview,
   incrementReviewLikes,
-  DEFAULT_5STAR_REVIEWS
+  DEFAULT_5STAR_REVIEWS,
+  saveNewsletterSubscriber,
+  getNewsletterSubscribers,
+  deleteNewsletterSubscriber
 } from "./db.js";
 
 // Load environment variables
@@ -1686,6 +1689,113 @@ apiRouter.post("/enquiry", async (req, res) => {
       message: "Enquiry received and saved to database.",
       previewData: req.body
     });
+  }
+});
+
+// --- NEWSLETTER SUBSCRIPTION ENDPOINTS ---
+apiRouter.post("/newsletter/subscribe", async (req, res) => {
+  try {
+    const { email, mobileNumber } = req.body;
+    if (!email) {
+      res.status(400).json({ success: false, error: "Email address is required" });
+      return;
+    }
+
+    const result = await saveNewsletterSubscriber(email, mobileNumber);
+    if (!result.success) {
+      res.status(500).json({ success: false, error: result.error || "Failed to subscribe" });
+      return;
+    }
+
+    // Attempt to send an email notification if SMTP is configured
+    try {
+      const smtpHost = process.env.SMTP_HOST;
+      const smtpPort = parseInt(process.env.SMTP_PORT || "587", 10);
+      const smtpUser = process.env.SMTP_USER;
+      const smtpPass = process.env.SMTP_PASS;
+      const recipientEmail = process.env.ENQUIRY_RECIPIENT_EMAIL || "meenakshidevarajan@gmail.com";
+
+      if (smtpHost && smtpUser && smtpPass) {
+        const transporter = nodemailer.createTransport({
+          host: smtpHost,
+          port: smtpPort,
+          secure: smtpPort === 465,
+          auth: {
+            user: smtpUser,
+            pass: smtpPass,
+          },
+        });
+
+        const smtpFrom = process.env.SMTP_FROM;
+        const senderEmail = smtpFrom || (smtpUser.includes("@") ? smtpUser : recipientEmail);
+
+        await transporter.sendMail({
+          from: `"Rocking Kids Academy" <${senderEmail}>`,
+          to: recipientEmail,
+          cc: "venky1302@gmail.com",
+          subject: `New Newsletter Subscriber! - ${email}`,
+          html: `
+            <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #f1f5f9; border-radius: 8px;">
+              <h2 style="color: #0f172a; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; margin-bottom: 20px;">New Subscription Update</h2>
+              <p style="font-size: 14px; color: #334155;">A user has subscribed for academy newsletter and updates.</p>
+              <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+                <tr style="background-color: #f8fafc;">
+                  <td style="padding: 10px; font-weight: bold; width: 150px; color: #475569;">Email Address:</td>
+                  <td style="padding: 10px; color: #0f172a;"><a href="mailto:${email}">${email}</a></td>
+                </tr>
+                ${mobileNumber ? `
+                <tr>
+                  <td style="padding: 10px; font-weight: bold; color: #475569;">Mobile Number:</td>
+                  <td style="padding: 10px; color: #0f172a;"><a href="tel:${mobileNumber}">${mobileNumber}</a></td>
+                </tr>` : ''}
+              </table>
+              <div style="margin-top: 30px; padding-top: 15px; border-top: 1px solid #e2e8f0; font-size: 11px; color: #94a3b8; text-align: center;">
+                Received on ${new Date().toLocaleString()} from Rocking Kids Academy Website.
+              </div>
+            </div>
+          `,
+        });
+      }
+    } catch (mailErr) {
+      console.error("Failed to send subscription email notification:", mailErr);
+    }
+
+    res.status(200).json({ 
+      success: true, 
+      alreadySubscribed: result.alreadySubscribed || false,
+      message: result.alreadySubscribed 
+        ? "You are already subscribed to our updates!" 
+        : "Thank you for subscribing to Rocking Kids Academy updates!" 
+    });
+  } catch (error: any) {
+    console.error("Newsletter subscription error:", error);
+    res.status(500).json({ success: false, error: error.message || "An unexpected error occurred" });
+  }
+});
+
+// Admin endpoints for subscribers
+apiRouter.get("/admin/newsletter/subscribers", checkAdminAuth, async (req, res) => {
+  try {
+    const list = await getNewsletterSubscribers();
+    res.status(200).json(list);
+  } catch (error: any) {
+    console.error("Error fetching newsletter subscribers:", error);
+    res.status(500).json({ error: error.message || "An unexpected error occurred" });
+  }
+});
+
+apiRouter.delete("/admin/newsletter/subscribers/:id", checkAdminAuth, async (req, res) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    if (isNaN(id)) {
+      res.status(400).json({ error: "Invalid subscriber ID" });
+      return;
+    }
+    const success = await deleteNewsletterSubscriber(id);
+    res.status(200).json({ success });
+  } catch (error: any) {
+    console.error("Error deleting subscriber:", error);
+    res.status(500).json({ error: error.message || "An unexpected error occurred" });
   }
 });
 

@@ -139,6 +139,12 @@ export const DEFAULT_5STAR_REVIEWS = [
 ];
 
 let memoryStoredReviews = [...DEFAULT_5STAR_REVIEWS];
+let memoryNewsletterSubscribers: Array<{
+  id: number;
+  email: string;
+  mobile_number: string;
+  created_at: string;
+}> = [];
 
 /**
  * Initialize Neon Postgres Database Tables & Seed Defaults
@@ -287,6 +293,16 @@ export async function initDb(): Promise<boolean> {
           source TEXT DEFAULT 'google_places',
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+      `);
+
+      // 7. Newsletter Subscribers table
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS newsletter_subscribers (
+          id SERIAL PRIMARY KEY,
+          email VARCHAR(255) UNIQUE NOT NULL,
+          mobile_number VARCHAR(100),
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
       `);
 
@@ -1050,6 +1066,94 @@ export async function incrementReviewLikes(reviewId: string, delta: number): Pro
   } catch (err) {
     console.error('Error updating review likes in Neon DB:', err);
     return 0;
+  }
+}
+
+/**
+ * Save Newsletter Subscriber
+ */
+export async function saveNewsletterSubscriber(email: string, mobileNumber?: string): Promise<{ success: boolean; alreadySubscribed?: boolean; error?: string }> {
+  const cleanEmail = (email || '').trim().toLowerCase();
+  const cleanMobile = (mobileNumber || '').trim();
+
+  if (!cleanEmail) {
+    return { success: false, error: 'Email address is required' };
+  }
+
+  if (!pool) {
+    const exists = memoryNewsletterSubscribers.some(s => s.email === cleanEmail);
+    if (exists) {
+      return { success: true, alreadySubscribed: true };
+    }
+    memoryNewsletterSubscribers.push({
+      id: memoryNewsletterSubscribers.length + 1,
+      email: cleanEmail,
+      mobile_number: cleanMobile,
+      created_at: new Date().toISOString()
+    });
+    return { success: true };
+  }
+
+  try {
+    await ensureDbInitialized();
+    // Check if already exists
+    const checkRes = await pool.query('SELECT * FROM newsletter_subscribers WHERE email = $1', [cleanEmail]);
+    if (checkRes.rowCount && checkRes.rowCount > 0) {
+      // Already subscribed, return success but with alreadySubscribed flag
+      return { success: true, alreadySubscribed: true };
+    }
+
+    await pool.query(
+      'INSERT INTO newsletter_subscribers (email, mobile_number) VALUES ($1, $2) ON CONFLICT (email) DO NOTHING',
+      [cleanEmail, cleanMobile || null]
+    );
+    return { success: true };
+  } catch (err: any) {
+    console.error('Error saving newsletter subscriber to Neon DB:', err);
+    return { success: false, error: err.message || 'Database error occurred' };
+  }
+}
+
+/**
+ * Get Newsletter Subscribers
+ */
+export async function getNewsletterSubscribers(): Promise<Array<{ id: number; email: string; mobile_number: string; created_at: string }>> {
+  if (!pool) {
+    return [...memoryNewsletterSubscribers];
+  }
+
+  try {
+    await ensureDbInitialized();
+    const res = await pool.query('SELECT * FROM newsletter_subscribers ORDER BY created_at DESC');
+    return res.rows.map(row => ({
+      id: row.id,
+      email: row.email,
+      mobile_number: row.mobile_number || '',
+      created_at: row.created_at
+    }));
+  } catch (err) {
+    console.error('Error fetching newsletter subscribers from Neon DB:', err);
+    return [...memoryNewsletterSubscribers];
+  }
+}
+
+/**
+ * Delete Newsletter Subscriber
+ */
+export async function deleteNewsletterSubscriber(id: number): Promise<boolean> {
+  if (!pool) {
+    const initialLen = memoryNewsletterSubscribers.length;
+    memoryNewsletterSubscribers = memoryNewsletterSubscribers.filter(s => s.id !== id);
+    return memoryNewsletterSubscribers.length < initialLen;
+  }
+
+  try {
+    await ensureDbInitialized();
+    const res = await pool.query('DELETE FROM newsletter_subscribers WHERE id = $1', [id]);
+    return (res.rowCount && res.rowCount > 0) || false;
+  } catch (err) {
+    console.error('Error deleting newsletter subscriber from Neon DB:', err);
+    return false;
   }
 }
 

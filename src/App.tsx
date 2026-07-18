@@ -16,6 +16,7 @@ import { AdminPanel } from './components/AdminPanel';
 import { ProgramDetailsPage } from './components/ProgramDetailsPage';
 import { BlogModule } from './components/BlogModule';
 import { FounderPage } from './components/FounderPage';
+import { Footer } from './components/Footer';
 import { ProgramType } from './types';
 
 function AppContent() {
@@ -95,6 +96,8 @@ function AppContent() {
       <main className="flex-grow">
         {mainContent}
       </main>
+      
+      <Footer navigateTo={navigateTo} />
     </div>
   );
 }

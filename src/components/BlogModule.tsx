@@ -275,7 +275,7 @@ export const BlogModule = ({ currentSlug, navigateTo }: BlogModuleProps) => {
         "dateModified": isoDate,
         "author": {
           "@type": "Person",
-          "name": currentPost.author === 'Founder' ? "Meenakshi D" : (currentPost.author || "Academic Counselor")
+          "name": currentPost.author === 'Founder' ? "Meenakshi Devarajan" : (currentPost.author || "Academic Counselor")
         },
         "publisher": {
           "@type": "Organization",
@@ -508,11 +508,11 @@ export const BlogModule = ({ currentSlug, navigateTo }: BlogModuleProps) => {
                   <>
                     <img 
                       src="https://s3.ap-south-1.amazonaws.com/medias.prithureader.com/rk-websites/dot-in/website/rk-founder.png" 
-                      alt="Meenakshi D" 
+                      alt="Meenakshi Devarajan" 
                       className="w-7 h-7 rounded-full object-cover border border-yellow-200 shadow-sm"
                       referrerPolicy="no-referrer"
                     />
-                    <span className="font-semibold text-navy-900">Meenakshi D</span>
+                    <span className="font-semibold text-navy-900">Meenakshi Devarajan</span>
                     <span className="bg-yellow-100 text-yellow-800 text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border border-yellow-200">Founder</span>
                   </>
                 ) : (
@@ -860,11 +860,11 @@ export const BlogModule = ({ currentSlug, navigateTo }: BlogModuleProps) => {
                               <span className="flex items-center gap-1.5">
                                 <img 
                                   src="https://s3.ap-south-1.amazonaws.com/medias.prithureader.com/rk-websites/dot-in/website/rk-founder.png" 
-                                  alt="Meenakshi D" 
+                                  alt="Meenakshi Devarajan" 
                                   className="w-5 h-5 rounded-full object-cover border border-yellow-200"
                                   referrerPolicy="no-referrer"
                                 />
-                                <span className="font-semibold text-navy-800">Meenakshi D (Founder)</span>
+                                <span className="font-semibold text-navy-800">Meenakshi Devarajan (Founder)</span>
                               </span>
                             ) : (
                               <span className="flex items-center gap-1.5">
@@ -1031,11 +1031,11 @@ export const BlogModule = ({ currentSlug, navigateTo }: BlogModuleProps) => {
                               <>
                                 <img 
                                   src="https://s3.ap-south-1.amazonaws.com/medias.prithureader.com/rk-websites/dot-in/website/rk-founder.png" 
-                                  alt="Meenakshi D" 
+                                  alt="Meenakshi Devarajan" 
                                   className="w-5 h-5 rounded-full object-cover border border-yellow-200"
                                   referrerPolicy="no-referrer"
                                 />
-                                <span className="font-semibold text-navy-800 text-[10px]">Meenakshi D.</span>
+                                <span className="font-semibold text-navy-800 text-[10px]">Meenakshi Devarajan</span>
                               </>
                             ) : (
                               <>
