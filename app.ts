@@ -344,15 +344,15 @@ export async function loadSeoData() {
 
   if (!seoData) {
     seoData = {
-      title: "Rocking Kids Academy | Premier Learning Center for Abacus, Phonics & English",
-      description: "Rocking Kids Academy is a premier learning center dedicated to skill development for children ages 4 to 14. We offer expert-led courses in Abacus, Phonics, English, and Handwriting mastery.",
-      keywords: "Rocking Kids Academy, Abacus for kids, Phonics training, English speaking kids, Handwriting mastery, Child development academy, Skill development classes",
+      title: "Rocking Kids Academy | Live Online & Classroom Courses for Kids",
+      description: "Rocking Kids Academy is a premier child skill development center offering expert-led live interactive online classes globally and premium offline classes in Mambakkam, Chennai. Specializing in Abacus, Phonics, English, and Handwriting for kids aged 4 to 14.",
+      keywords: "live online classes, online abacus classes, online phonics class, English speaking kids, handwriting mastery, Mambakkam Chennai learning center, Rocking Kids Academy, child skill development, mental math abacus, interactive phonics",
       canonical: "https://rockingkidsacademy.in",
-      ogTitle: "Rocking Kids Academy | Premier Learning Center for Abacus, Phonics & English",
-      ogDescription: "Dedicated to skill development for children ages 4 to 14. Discover our nurturing environment for Abacus, Phonics, English, and Handwriting mastery.",
+      ogTitle: "Rocking Kids Academy | Live Online & Classroom Courses for Kids",
+      ogDescription: "Nurturing skill development for children ages 4 to 14. Join our live interactive online classes globally or premium offline classroom sessions in Mambakkam, Chennai.",
       ogImage: "https://rockingkidsacademy.in/assets/images/logo-icon.png",
-      twitterTitle: "Rocking Kids Academy | Premier Learning Center for Abacus, Phonics & English",
-      twitterDescription: "Dedicated to skill development for children ages 4 to 14. Discover our nurturing environment for Abacus, Phonics, English, and Handwriting mastery.",
+      twitterTitle: "Rocking Kids Academy | Live Online & Classroom Courses for Kids",
+      twitterDescription: "Nurturing skill development for children ages 4 to 14. Join our live interactive online classes globally or premium offline classroom sessions in Mambakkam, Chennai.",
       twitterImage: "https://rockingkidsacademy.in/assets/images/logo-icon.png",
       sitemapUrls: [
         { url: "/", changefreq: "daily", priority: "1.0" },
