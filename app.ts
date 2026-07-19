@@ -243,7 +243,7 @@ export function getDefaultRobotsTxt(seo: any) {
 User-agent: *
 Allow: /
 Disallow: /admin
-Disallow: /api/
+Disallow: /api/admin
 
 # Explicitly Allow Major AI Search & Agent Crawlers
 User-agent: GPTBot
@@ -382,7 +382,13 @@ export async function loadSeoData() {
 // Helper to serve robots.txt dynamically
 export async function serveRobotsTxt(req: express.Request, res: express.Response) {
   const seo = await loadSeoData();
-  const content = seo.robotsTxt || getDefaultRobotsTxt(seo);
+  let content = seo.robotsTxt || getDefaultRobotsTxt(seo);
+  
+  // Fix legacy /api/ disallow rule that blocks crawlers from accessing dynamic blog posts and reviews
+  if (content.includes("Disallow: /api/")) {
+    content = content.replace("Disallow: /api/", "Disallow: /api/admin");
+  }
+  
   res.header("Content-Type", "text/plain; charset=utf-8");
   res.status(200).send(content);
 }
@@ -1216,7 +1222,7 @@ apiRouter.post("/seo", checkAdminAuth, async (req, res) => {
     sitemapUrls: sitemapUrls || existingSeo.sitemapUrls || [],
     jsonLd: jsonLd || existingSeo.jsonLd || getDefaultJsonLd(existingSeo),
     llmsTxt: llmsTxt || existingSeo.llmsTxt || getDefaultLlmsTxt(existingSeo),
-    robotsTxt: robotsTxt || existingSeo.robotsTxt || getDefaultRobotsTxt(existingSeo)
+    robotsTxt: (robotsTxt || existingSeo.robotsTxt || getDefaultRobotsTxt(existingSeo)).replace(/Disallow:\s*\/api\/?(?!\w)/g, "Disallow: /api/admin")
   };
   
   await saveSeoData(newSeo);
