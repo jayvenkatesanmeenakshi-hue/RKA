@@ -147,7 +147,7 @@ export const FounderPage = ({ navigateTo }: FounderPageProps) => {
               
               <div className="relative bg-white p-2.5 rounded-xl overflow-hidden max-w-sm sm:max-w-md">
                 <img 
-                  src="https://s3.ap-south-1.amazonaws.com/medias.prithureader.com/rk-websites/dot-in/website/rk-founder.png" 
+                  src="https://s3.ap-south-1.amazonaws.com/medias.prithureader.com/rk-websites/dot-in/website/rk-founder.png?id=1" 
                   alt="Meenakshi Devarajan" 
                   className="w-full h-auto object-cover rounded-lg aspect-[4/5]"
                   referrerPolicy="no-referrer"
