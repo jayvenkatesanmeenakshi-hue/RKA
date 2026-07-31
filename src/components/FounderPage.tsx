@@ -143,9 +143,9 @@ export const FounderPage = ({ navigateTo }: FounderPageProps) => {
           >
             <div className="relative group">
               {/* Animated Accent Frame */}
-              <div className="absolute -inset-2 bg-gradient-to-r from-yellow-100 via-amber-200 to-yellow-300 rounded-2xl opacity-75 blur-md group-hover:opacity-100 transition-opacity duration-500" />
+              <div className="absolute -inset-2 rounded-2xl opacity-75 blur-md group-hover:opacity-100 transition-opacity duration-500" />
               
-              <div className="relative bg-white p-2.5 rounded-xl shadow-xl border border-slate-100 overflow-hidden max-w-sm sm:max-w-md">
+              <div className="relative bg-white p-2.5 rounded-xl overflow-hidden max-w-sm sm:max-w-md">
                 <img 
                   src="https://s3.ap-south-1.amazonaws.com/medias.prithureader.com/rk-websites/dot-in/website/rk-founder.png" 
                   alt="Meenakshi Devarajan" 
