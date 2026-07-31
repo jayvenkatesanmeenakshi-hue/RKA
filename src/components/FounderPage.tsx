@@ -156,9 +156,9 @@ export const FounderPage = ({ navigateTo }: FounderPageProps) => {
                 />
                 
                 {/* Embedded Floating Tag */}
-                <div className="absolute bottom-6 left-6 right-6 bg-navy-900/95 backdrop-blur-md text-white p-4 rounded-lg shadow-lg border border-white/10">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-yellow-400 mb-1">Founder & Director</p>
-                  <h3 className="text-lg font-bold font-serif text-white">Meenakshi Devarajan</h3>
+                <div className="absolute bottom-4 left-4 right-4 text-center">
+                  <h3 className="text-lg font-bold font-serif text-navy-900">Meenakshi Devarajan</h3>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-amber-600 mt-0.5">Founder & Director</p>
                 </div>
               </div>
             </div>
